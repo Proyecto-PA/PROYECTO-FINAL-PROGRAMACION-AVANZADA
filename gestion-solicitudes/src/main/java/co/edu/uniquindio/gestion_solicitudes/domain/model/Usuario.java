@@ -1,5 +1,6 @@
 package co.edu.uniquindio.gestion_solicitudes.domain.model;
 
+import co.edu.uniquindio.gestion_solicitudes.domain.enums.RolUsuario;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,5 +28,10 @@ public class Usuario {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Eumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RolUsuario rol;
+
+    @Column(nullable = false)
+    private boolean activo = true;
 }
