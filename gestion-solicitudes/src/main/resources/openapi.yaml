@@ -255,13 +255,47 @@ paths:
   /solicitudes/{id}/marcar-atendida:
     put:
       tags: [Estado]
-      summary: Avanzar el estado de la solicitud
+      summary: Marcar solicitud como atendida
       description: |
-        Cambia el estado validando la transición con el ValidadorTransicionEstado (RF-04).
-        Cubre las transiciones T2 y T3 definidas en `x-maquina-estados`.
-        Para cerrar una solicitud use `PUT /solicitudes/{id}/cerrar`.
+        Transición de EN_ATENCION -> ATENTIDA.
         Roles: DOCENTE, ADMINISTRATIVO.
-      operationId: cambiarEstado
+      operationId:  marcarAtendida
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SolicitudId'
+      requestBody:
+        required: false
+        content: 
+          application/json:
+            schema:
+              type: object
+              properties: 
+                observacion:
+                  type: string
+                  maxLength: 500
+                  example: "Se completó el trámite exitosamente."
+      responses:
+        '200':
+          description:  Solicitud marcada como atendida
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/SolicitudResponse'
+        '409':
+          $ref: '#/components/responses/TransicionInvalida'
+
+  /solicitudes/{id}/cerrar:
+    put:
+      tags: [Solicitudes]
+      summary:  Cerrar solicitud
+      description:  |
+        Transición de ATENDIDA -> CERRADA.
+        Finaliza el ciclo de vida de la solicitud.
+        Requiere una observación obligatoria.
+        Una vez cerrada, la solicitud no puede modificarse.
+        Roles: DOCENTE, ADMINISTRATIVO.
+      operationId: cerrarSolicitud
       security:
         - bearerAuth: []
       parameters:
@@ -271,13 +305,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CambiarEstadoRequest'
-            example:
-              nuevoEstado: EN_ATENCION
-              observacion: "Derivada al equipo de registro académico para gestión."
+              type: object
+              required:  [observacion]
+              properties:
+                observacion:
+                  type: string
+                  minLength: 10
+                  maxLength: 1000
+                  example: "Solicitud resuelta exitosamente. Se realizó el registro académico."
       responses:
         '200':
-          description: Estado actualizado correctamente
+          description: Solicitud cerrada correctamente
           content:
             application/json:
               schema:
@@ -290,6 +328,45 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          description: La solicitud no está en estado ATENDIDA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /solicitudes/{id}/cancelar:
+    put:
+      tags: [Solicitudes]
+      summary: Cancelar solicitud
+      description: |
+        Cancelación lógica (no elimina el registro).
+        Transición de REGISTRADA -> CANCELADA.
+        Roles: ESTUDIANTE, ADMINISTRATIVO
+      operationId: cancelarSolicitud
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SolicitudId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [observacion]
+              properties:
+                observacion:
+                  type: string
+                  minLength: 5
+                  example: "Cancelada por error en la solicitud."
+      responses:
+        '200':
+          description: Solicitud cancelada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudResponse'
         '409':
           $ref: '#/components/responses/TransicionInvalida'
 
@@ -343,57 +420,6 @@ paths:
                 error: "Unprocessable Entity"
                 mensaje: "No se puede asignar al usuario 5 porque su cuenta está inactiva."
                 path: "/api/solicitudes/1/responsable"
-
-  /solicitudes/{id}/cerrar:
-    put:
-      tags: [Solicitudes]
-      summary: Cerrar solicitud
-      description: |
-        Finaliza el ciclo de vida de la solicitud (RF-08). Corresponde a la
-        transición T4 en `x-maquina-estados`. La solicitud debe estar en ATENDIDA
-        y la observación de cierre es obligatoria.
-        Una vez cerrada no puede modificarse de ninguna forma.
-        Roles: DOCENTE, ADMINISTRATIVO.
-      operationId: cerrarSolicitud
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/SolicitudId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CerrarSolicitudRequest'
-            example:
-              observacion: "Solicitud resuelta favorablemente. Se realizó el registro de la asignatura en el sistema académico."
-      responses:
-        '200':
-          description: Solicitud cerrada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SolicitudResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          description: La solicitud no está en estado ATENDIDA
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                timestamp: "2026-03-01T10:00:00"
-                status: 409
-                error: "Conflict"
-                mensaje: "Solo se pueden cerrar solicitudes en estado ATENDIDA. Estado actual: EN_ATENCION."
-                path: "/api/solicitudes/1/cerrar"
 
   /solicitudes/{id}/historial:
     get:
@@ -630,6 +656,7 @@ components:
         - EN_ATENCION
         - ATENDIDA
         - CERRADA
+        - CANCELADA
 
     Prioridad:
       type: string
@@ -977,6 +1004,14 @@ x-maquina-estados:
       es_terminal: true
 
   transiciones:
+    - id: T0
+      desde: REGISTRADA
+      hacia: CANCELADA
+      descripcion: Cancelación lógica de la solicitud
+      endpoint: PUT /api/solicitudes/{id}/cancelar
+      quien_puede:  [ESTUDIANTE, ADMINISTRATIVO]
+      condiciones:
+        - La solicitud debe estar en REGISTRADA
 
     - id: T1
       desde: REGISTRADA
