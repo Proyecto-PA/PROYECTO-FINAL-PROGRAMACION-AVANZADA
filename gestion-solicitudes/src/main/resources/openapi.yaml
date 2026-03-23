@@ -218,7 +218,41 @@ paths:
         '409':
           $ref: '#/components/responses/TransicionInvalida'
 
-  /solicitudes/{id}/estado:
+  /solicitudes/{id}/iniciar-atencion:
+    put:
+      tags: [Estado]
+      summary:  Iniciar atención de la solicitud
+      description: |
+        Transición de CLASIFICADA -> EN_ATENCION.
+        El backend define el estado, no el cliente.
+        Roles: DOCENTE, ADMINISTRATIVO.
+      operationId: iniciarAtencion
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SolicitudId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                observacion:
+                  type: string
+                  maxLength: 500
+                  example: "Se inicia revisión por parte del área académica."
+      responses:
+        '200':
+          description: Solicitud en atención
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudResponse'
+        '409':
+          $ref: '#/components/responses/TransicionInvalida'
+  
+  /solicitudes/{id}/marcar-atendida:
     put:
       tags: [Estado]
       summary: Avanzar el estado de la solicitud
