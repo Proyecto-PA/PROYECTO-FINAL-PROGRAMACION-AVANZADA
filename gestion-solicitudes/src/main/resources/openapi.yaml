@@ -961,14 +961,18 @@ components:
 x-maquina-estados:
   entidad: SolicitudAcademica
   descripcion: >
-    Una solicitud académica pasa por cinco estados a lo largo de su ciclo de vida.
+    Una solicitud académica pasa por varios estados a lo largo de su ciclo de vida.
     El flujo es siempre hacia adelante: no se puede retroceder ni saltar estados.
-    Cuando llega a CERRADA ya no puede modificarse.
+    Existen dos estados terminales: CERRADA (flujo completo) y CANCELADA (cancelación temprana).
+    Una vez en estado termianl, la solicitud no puede modificarse.
+
   estado_inicial: REGISTRADA
-  estado_terminal: CERRADA
+  estado_terminal: [CERRADA, CANCELADA]
 
   diagrama: |
     REGISTRADA → CLASIFICADA → EN_ATENCION → ATENDIDA → CERRADA
+         │
+         └────────────→ CANCELADA
 
   estados:
 
@@ -980,9 +984,8 @@ x-maquina-estados:
 
     CLASIFICADA:
       descripcion: >
-        Alguien revisó la solicitud y le asignó un tipo (homologación, registro
-        de asignaturas, etc.). A partir de aquí ya se puede calcular la prioridad
-        con el motor de reglas.
+        La solicitud fue revisada y categorizada. A partir de aquí 
+        calcular la prioridad y asignar responsables.
       es_terminal: false
 
     EN_ATENCION:
@@ -1003,7 +1006,14 @@ x-maquina-estados:
         y ya no puede tocarse bajo ningún concepto.
       es_terminal: true
 
+    CANCELADA:
+      descripcion: >
+        Estado terminal alternativo. La solicitud fue cancelada por el usuario antes
+        de iniciar su procesamiento. No se elimina del sistema.
+      es_terminakl: true
+
   transiciones:
+    -
     - id: T0
       desde: REGISTRADA
       hacia: CANCELADA
@@ -1026,7 +1036,7 @@ x-maquina-estados:
       desde: CLASIFICADA
       hacia: EN_ATENCION
       descripcion: Se da inicio formal a la atención del trámite
-      endpoint: PUT /api/solicitudes/{id}/estado
+      endpoint: PUT /api/solicitudes/{id}/iniciar-atencion
       quien_puede: [DOCENTE, ADMINISTRATIVO]
       condiciones:
         - La solicitud debe estar en CLASIFICADA
@@ -1035,7 +1045,7 @@ x-maquina-estados:
       desde: EN_ATENCION
       hacia: ATENDIDA
       descripcion: El responsable indica que ya resolvió la solicitud
-      endpoint: PUT /api/solicitudes/{id}/estado
+      endpoint: PUT /api/solicitudes/{id}/marcar_atendida
       quien_puede: [DOCENTE, ADMINISTRATIVO]
       condiciones:
         - La solicitud debe estar en EN_ATENCION
@@ -1054,13 +1064,20 @@ x-maquina-estados:
     descripcion: >
       El ValidadorTransicionEstado bloquea cualquier movimiento que no esté
       en la lista de arriba. Algunos ejemplos de lo que no está permitido:
+
     ejemplos:
       - caso: intentar reabrir una solicitud cerrada
         desde: CERRADA
         hacia: cualquier estado
+
+      - caso: intentar modificar una solicitud cancelada
+        desde: CANCELADA
+        hacia: cualquier estado
+
       - caso: retroceder en el flujo
         desde: EN_ATENCION
         hacia: REGISTRADA
+
       - caso: saltar estados intermedios
         desde: REGISTRADA
         hacia: ATENDIDA
