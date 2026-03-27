@@ -24,11 +24,82 @@ tags:
   - name: Responsables
     description: Asignación de responsables
   - name: Historial
-    description: Consulta del historial auditable
+    description: Consulta del historial auditable de una solicitud
   - name: IA
     description: Funcionalidades opcionales asistidas por IA
+  - name: Auth
+    description: Registro e inicio de sesión de usuarios
 
 paths:
+
+  /auth/registro:
+    post:
+      tags: [Auth]
+      summary: Registrar nuevo usuario
+      description: |
+        Crea un nuevo usuario en el sistem y devuelve un token JWT.
+        Este enpoint es público, no requiere autenticación.
+      operationId: registrarUsuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistroRequest'
+              example:
+                nombre: "Estudiante Ejemplo"
+                email: "estudiante@uniquindio.edu"
+                password: "123456"
+                rol: ESTUDIANTE
+      responses:
+        '201':
+          description: Usuario creado correctamente, token generado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Ya existen un usuario con ese email
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      description: |
+        Autentica un usuario con email y contraseña.
+        Devuelve un token JWT para usar en los demás endpoints
+        como Bearer Token en el header Authorization.
+      operationId: loginUsuario
+      requestBody:
+        required: true
+        content: 
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "estudiante@uniquindio.edu"
+              password: "123456"
+      responses:
+        '200':
+          description: Login exitoso, token generado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /solicitudes:
     post:
@@ -524,6 +595,63 @@ paths:
         '409':
           $ref: '#/components/responses/Conflict'
 
+  /historial/{solicitudId}:
+    get:
+      tags: [Historial]
+      summary: Consultar historial de una solicitud
+      description: |
+        Devuelve todas las acciones registradas sobre una solicitud
+        ordenadas cronológicamente de más antigua a más reciente (RF-06).
+        Cualquier usuario autenticado puede consultar el historial.
+      operationId: consultarHistorial
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: solicitudId
+          in: path
+          required: true
+          description: ID  de la solicitud académica
+          schema:
+            type:  integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: Historial encontrado
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HistorialSolicitudResponse'
+                example:
+                  - id: 1
+                    fechaAccion: "2026-03-01T09:00:00"
+                    accionRealizada: "Solicitud registrada en el sistema"
+                    usuarioResponsable:
+                      id: 3
+                      nombre: "Estudiante Ejemplo"
+                      email: "estudiante@uniquindio.edu"
+                      rol: ESTUDIANTE
+                    observaciones: null
+                    estadoAnterior: null
+                    estadoNuevo: REGISTRADA
+                  - id: 2
+                    fechaAccion: "2026-03-01T10:30:00"
+                    accionRealizada: "Cambio de estado: REGISTRADA a CLASIFICADA"
+                    usuarioResponnsable:
+                      id: 2
+                      nombre: "Docente Ejemplo"
+                      email: "docente@uniquindio.edu"
+                      rol: DOCENTE
+                    observaciones: "Clasificada como HOMOLOGACION"
+                    estadoAnterior: REGISTRADA
+                    estadoNuevo: CLASIFICADA
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
 components:
 
   securitySchemes:
@@ -556,19 +684,6 @@ components:
             status: 400
             error: "Bad Request"
             mensaje: "El campo 'descripcion' es requerido y no puede estar vacío."
-            path: "/api/solicitudes"
-
-    Unauthorized:
-      description: Token de autenticación ausente, inválido o expirado
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            timestamp: "2026-03-01T10:00:00"
-            status: 401
-            error: "Unauthorized"
-            mensaje: "Se requiere autenticación para acceder a este recurso."
             path: "/api/solicitudes"
 
     Forbidden:
@@ -624,6 +739,19 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
 
+    Unauthorized:
+      description: No autenticado. Se requiere un token JWT válido en el header Authorization
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2026-03-01T09:00:00"
+            status: 401
+            error: "Unauthorized"
+            mensaje: "Token JWT ausente o inválido."
+            path: "/api/solicitudes"
+
   schemas:
 
     TipoSolicitud:
@@ -676,6 +804,36 @@ components:
         - ADMINISTRATIVO
 
     # Requests
+    RegistroRequest:
+      type: object
+      required: [nombre, email, password, rol]
+      properties:
+        nombre:
+          type: string
+          example: "Estidaonte Ejemplo"
+        email:
+          type: string
+          format: email
+          example: "estudiante@uniquindio.edu"
+        password:
+          type: string
+          minLength: 6
+          example: "123456"
+        rol:
+          $ref: '#/components/schemas/RolUsuario'
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "estudiante@uniquindio.edu"
+        password:
+          type: string
+          example: "123456"
+
     SolicitudRequest:
       type: object
       description: Cuerpo para registrar una nueva solicitud académica
@@ -785,6 +943,27 @@ components:
           description: Prioridad corregida por el usuario si difiere de la sugerencia
 
     # Responses
+    AuthResponse:
+      type: object
+      description: Respuesta de autenticación conn token JWT
+      properties:
+        token:
+          type: string
+          description: Token JWT para usar como Bearer en Authorization
+          example: "bcfubSUE8agde5..."
+        usuarioId:
+          type: integer
+          format: int64
+          example: 1
+        nombre:
+          type: string
+          example: "Estudiante Ejemplo"
+        email:
+          type: string
+          example: "estudiante@uniquindio.edu"
+        rol:
+          $ref: '#/components/schemas/RolUsuario'
+
     UsuarioResumen:
       type: object
       description: Datos básicos de un usuario incluidos en las respuestas
@@ -957,6 +1136,7 @@ components:
           type: string
           description: Endpoint donde ocurrió el error
           example: "/api/solicitudes/99"
+
 
 x-maquina-estados:
   entidad: SolicitudAcademica
