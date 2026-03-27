@@ -9,7 +9,7 @@ import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
 import org.springframework.data.domain.Pageable;
 
 public interface SolicitudService {
-    SolicitudResponse registrar(SolicitudRequest request);
+    SolicitudResponse registrar(SolicitudRequest request, Long solicitanteId);
     SolicitudResponse obtenerPorId(Long id);
     SolicitudPageResponse consultar (EstadoSolicitud estado, TipoSolicitud tipo, Prioridad prioridad,
                                      Long responsableId, Long solicitanteId, Pageable pageable);

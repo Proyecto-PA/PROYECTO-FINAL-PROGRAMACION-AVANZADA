@@ -25,9 +25,9 @@ public class SolicitudServiceImpl implements SolicitudService {
 
     @Override
     @Transactional
-    public SolicitudResponse registrar(SolicitudRequest request){
-        Usuario solicitante = usuarioRepository.findById(request.getSolicitanteId()).orElseThrow(() -> new ResourceNotFoundException(
-                        "No existe un usuario con id  " + request.getSolicitanteId()));
+    public SolicitudResponse registrar(SolicitudRequest request, Long solicitanteId){
+        Usuario solicitante = usuarioRepository.findById(solicitanteId).orElseThrow(() -> new ResourceNotFoundException(
+                        "No existe un usuario con id  " + solicitanteId));
 
         SolicitudAcademica solicitud = SolicitudAcademica.builder()
                 .tipo(request.getTipo())

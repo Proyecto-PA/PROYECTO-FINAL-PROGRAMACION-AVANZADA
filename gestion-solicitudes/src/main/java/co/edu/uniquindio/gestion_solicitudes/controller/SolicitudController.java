@@ -4,6 +4,7 @@ import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.SolicitudRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.*;
 import co.edu.uniquindio.gestion_solicitudes.service.SolicitudService;
+import co.edu.uniquindio.gestion_solicitudes.util.JwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -18,11 +19,20 @@ import org.springframework.web.bind.annotation.*;
 public class SolicitudController {
 
     private final SolicitudService solicitudService;
+    private final JwtUtil jwtUtil;
 
     // POST /api/solicitudes
     @PostMapping
-    public ResponseEntity<SolicitudResponse> registrar(@Valid @RequestBody SolicitudRequest request){
-        return ResponseEntity.status(HttpStatus.CREATED).body(solicitudService.registrar(request));
+    public ResponseEntity<SolicitudResponse> registrar(
+            @Valid @RequestBody SolicitudRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+
+        // Extraer el userId desde el token JWT
+        String token = authHeader.substring(7);
+        Long solicitanteId = jwtUtil.extraerUserId(token);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(solicitudService.registrar(request, solicitanteId));
     }
 
     // GET /api/solicitudes/{id}
