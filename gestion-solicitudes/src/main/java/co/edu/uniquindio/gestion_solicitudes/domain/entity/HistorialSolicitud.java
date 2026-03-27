@@ -2,10 +2,7 @@ package co.edu.uniquindio.gestion_solicitudes.domain.entity;
 
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.EstadoSolicitud;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -13,6 +10,7 @@ import java.time.LocalDateTime;
 @Table(name = "historial_solicitudes")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
+@Builder
 public class HistorialSolicitud {
 
     @Id
@@ -38,7 +36,7 @@ public class HistorialSolicitud {
 
     @ManyToOne (fetch = FetchType.LAZY)
     @JoinColumn(name = "solicitud_id", nullable = false)
-    private SolicitudAcademica solicitudAcademica;
+    private SolicitudAcademica solicitud;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_responsable_id")

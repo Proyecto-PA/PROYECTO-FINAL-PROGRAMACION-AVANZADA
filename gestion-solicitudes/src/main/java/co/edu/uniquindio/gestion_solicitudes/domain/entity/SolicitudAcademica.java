@@ -1,9 +1,6 @@
 package co.edu.uniquindio.gestion_solicitudes.domain.entity;
 
-import co.edu.uniquindio.gestion_solicitudes.domain.enums.CanalOrigen;
-import co.edu.uniquindio.gestion_solicitudes.domain.enums.EstadoSolicitud;
-import co.edu.uniquindio.gestion_solicitudes.domain.enums.Prioridad;
-import co.edu.uniquindio.gestion_solicitudes.domain.enums.TipoSolicitud;
+import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,7 +11,8 @@ import java.util.List;
 @Entity
 @Table(name = "solicitudes_academicas")
 @Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class SolicitudAcademica {
 
@@ -24,7 +22,7 @@ public class SolicitudAcademica {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TipoSolicitud tipoSolicitud;
+    private TipoSolicitud tipo;
 
     @Column(nullable = false, length = 1000)
     private String descripcion;
@@ -41,7 +39,7 @@ public class SolicitudAcademica {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private EstadoSolicitud estadoSolicitud;
+    private EstadoSolicitud estado;
 
     @Enumerated(EnumType.STRING)
     private Prioridad prioridad;
@@ -50,7 +48,7 @@ public class SolicitudAcademica {
     private Integer impactoAcademico; // 1 a 5
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "solicitante:id", nullable = false)
+    @JoinColumn(name = "solicitante_id", nullable = false)
     private Usuario solicitante;
 
     @ManyToOne(fetch =  FetchType.LAZY)
@@ -63,7 +61,7 @@ public class SolicitudAcademica {
 
     //Métodos
     public void clasificarSolicitud(TipoSolicitud tipoSolicitud){
-        this.tipoSolicitud = tipoSolicitud;
+        this.tipo = tipo;
     }
 
     public void asignarResponsable(Usuario usuario){
@@ -71,10 +69,10 @@ public class SolicitudAcademica {
     }
 
     public void cambiarEstado(EstadoSolicitud nuevoEstado){
-        this.estadoSolicitud = nuevoEstado;
+        this.estado = nuevoEstado;
     }
 
     public boolean estaCerrada(){
-        return this.estadoSolicitud == EstadoSolicitud.CERRADA || this.estadoSolicitud == EstadoSolicitud.CANCELADA;
+        return this.estado == EstadoSolicitud.CERRADA || this.estado == EstadoSolicitud.CANCELADA;
     }
 }

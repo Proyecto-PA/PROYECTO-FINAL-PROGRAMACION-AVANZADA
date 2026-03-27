@@ -12,11 +12,12 @@ import java.time.LocalDateTime;
 @Data @Builder
 public class SolicitudResponse {
     private Long id;
-    private TipoSolicitud tipoSolicitud;
+    private TipoSolicitud tipo;
     private String descripcion;
     private CanalOrigen canalOrigen;
     private LocalDateTime fechaRegistro;
-    private EstadoSolicitud estadoSolicitud;
+    private LocalDateTime fechaLimite;
+    private EstadoSolicitud estado;
     private Prioridad prioridad;
     private Integer impactoAcademico;
     private UsuarioResumenResponse solicitante;

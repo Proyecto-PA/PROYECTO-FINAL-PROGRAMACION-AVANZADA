@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class SolicitudRequest {
 
     @NotNull(message = "El tipo de solicitud es obligatorio")
-    private TipoSolicitud tipoSolicitud;
+    private TipoSolicitud tipo;
 
     @NotBlank(message = "La descripción es oblogatoria")
    @Size(min = 10, max = 1000, message = "La descripcion debe tener entre 10 y 1000 caracteres")
