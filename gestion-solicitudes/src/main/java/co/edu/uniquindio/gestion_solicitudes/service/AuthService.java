@@ -56,6 +56,10 @@ public class AuthService {
             throw new IllegalStateException("Credenciales inválidas");
         }
 
+        if(!usuario.estaActivo()){
+            throw new IllegalStateException("El usuario no está activo");
+        }
+
         String token = jwtUtil.generarToken(
                 usuario.getEmail(),
                 usuario.getRol().name(),
