@@ -4,6 +4,7 @@ import co.edu.uniquindio.gestion_solicitudes.domain.entity.Usuario;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.LoginRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.RegistroRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.AuthResponse;
+import co.edu.uniquindio.gestion_solicitudes.exception.CredencialesInvalidasException;
 import co.edu.uniquindio.gestion_solicitudes.exception.ResourceNotFoundException;
 import co.edu.uniquindio.gestion_solicitudes.repository.UsuarioRepository;
 import co.edu.uniquindio.gestion_solicitudes.util.JwtUtil;
@@ -53,7 +54,7 @@ public class AuthService {
 
         if (!passwordEncoder.matches(request.getPassword(), usuario.getPasswordHash()))
         {
-            throw new IllegalStateException("Credenciales inválidas");
+            throw new CredencialesInvalidasException("Credenciales inválidas");
         }
 
         if(!usuario.estaActivo()){

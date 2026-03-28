@@ -61,7 +61,7 @@ public class SolicitudAcademica {
 
     //Métodos
     public void clasificarSolicitud(TipoSolicitud tipoSolicitud){
-        this.tipo = tipo;
+        this.tipo = tipoSolicitud;
     }
 
     public void asignarResponsable(Usuario usuario){

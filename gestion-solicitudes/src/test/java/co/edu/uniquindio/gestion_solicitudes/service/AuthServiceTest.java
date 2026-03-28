@@ -4,6 +4,7 @@ import co.edu.uniquindio.gestion_solicitudes.domain.enums.RolUsuario;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.LoginRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.RegistroRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.AuthResponse;
+import co.edu.uniquindio.gestion_solicitudes.exception.CredencialesInvalidasException;
 import co.edu.uniquindio.gestion_solicitudes.exception.ResourceNotFoundException;
 import co.edu.uniquindio.gestion_solicitudes.repository.UsuarioRepository;
 import co.edu.uniquindio.gestion_solicitudes.util.JwtUtil;
@@ -105,7 +106,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Login con contraseña incorrecta lanza IllegalStateException")
+    @DisplayName("Login con contraseña incorrecta lanza CredencialesInvalidasException")
     void login_passwordIncorrecta_lanzaExcepcion() {
         LoginRequest request = TestDataFactory.crearLoginRequest("test1@universidad.edu");
         Usuario usuario = TestDataFactory.crearUsuario(1L, RolUsuario.ESTUDIANTE);
@@ -116,7 +117,7 @@ public class AuthServiceTest {
                 .thenReturn(false);
 
         assertThatThrownBy(() -> authService.login(request))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(CredencialesInvalidasException.class)
                 .hasMessageContaining("Credenciales inválidas");
     }
 

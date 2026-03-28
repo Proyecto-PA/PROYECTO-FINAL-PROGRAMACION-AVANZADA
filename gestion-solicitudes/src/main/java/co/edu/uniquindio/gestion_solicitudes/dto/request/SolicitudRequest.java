@@ -4,8 +4,6 @@ import co.edu.uniquindio.gestion_solicitudes.domain.enums.CanalOrigen;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.TipoSolicitud;
 import jakarta.validation.constraints.*;
 import lombok.Data;
-import lombok.NonNull;
-import org.aspectj.bridge.IMessage;
 
 import java.time.LocalDateTime;
 

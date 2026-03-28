@@ -60,7 +60,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Transactional(readOnly = true)
     public SolicitudResponse obtenerPorId(Long id){
         SolicitudAcademica solicitud = solicitudRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(
-                "No eciste una solicitud con id " + id));
+                "No existe una solicitud con id " + id));
         return toResponse(solicitud);
     }
 
