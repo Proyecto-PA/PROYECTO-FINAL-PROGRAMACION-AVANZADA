@@ -3,7 +3,7 @@ import co.edu.uniquindio.gestion_solicitudes.domain.enums.EstadoSolicitud;
 import java.util.Map;
 import java.util.Set;
 
-public class ValidatorTransicionEstado {
+public class ValidadorTransicionEstado {
    
     private static final Map<EstadoSolicitud, Set<EstadoSolicitud>> TRANSICIONES_VALIDAS =
         Map.of(

@@ -14,7 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
-import co.edu.uniquindio.gestion_solicitudes.domain.validator.ValidatorTransicionEstado;
+import co.edu.uniquindio.gestion_solicitudes.domain.validator.ValidadorTransicionEstado;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest;
 
 @Service
@@ -119,7 +119,7 @@ public class SolicitudServiceImpl implements SolicitudService {
             "No existe un usuario con id " + usuarioId));
 
     // Validar transición REGISTRADA → CLASIFICADA
-    ValidatorTransicionEstado.validarOLanzar(solicitud.getEstado(), EstadoSolicitud.CLASIFICADA);
+    ValidadorTransicionEstado.validarOLanzar(solicitud.getEstado(), EstadoSolicitud.CLASIFICADA);
 
     EstadoSolicitud estadoAnterior = solicitud.getEstado();
 
