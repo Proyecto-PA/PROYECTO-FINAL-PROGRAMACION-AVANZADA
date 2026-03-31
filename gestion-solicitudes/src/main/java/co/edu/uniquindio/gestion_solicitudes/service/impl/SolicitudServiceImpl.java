@@ -14,6 +14,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import co.edu.uniquindio.gestion_solicitudes.domain.validator.ValidatorTransicionEstado;
+import co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -102,4 +104,47 @@ public class SolicitudServiceImpl implements SolicitudService {
                 .rol(usuario.getRol())
                 .build();
     }
+
+    //Método para clasificar la solicitud, que es el paso siguiente a registrarla solicitud
+    @Override
+    @Transactional
+    public SolicitudResponse clasificar(Long id, ClasificarRequest request, Long usuarioId) {
+
+    SolicitudAcademica solicitud = solicitudRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No existe una solicitud con id " + id));
+
+    Usuario usuario = usuarioRepository.findById(usuarioId)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No existe un usuario con id " + usuarioId));
+
+    // Validar transición REGISTRADA → CLASIFICADA
+    ValidatorTransicionEstado.validarOLanzar(solicitud.getEstado(), EstadoSolicitud.CLASIFICADA);
+
+    EstadoSolicitud estadoAnterior = solicitud.getEstado();
+
+    // Actualizar tipo y estado
+    solicitud.clasificarSolicitud(request.getTipo());
+    solicitud.cambiarEstado(EstadoSolicitud.CLASIFICADA);
+    solicitud = solicitudRepository.save(solicitud);
+
+    // Registrar en historial
+    String observacion = request.getObservacion() != null
+        ? request.getObservacion()
+        : "Clasificada como " + request.getTipo().name();
+
+    HistorialSolicitud historial = HistorialSolicitud.builder()
+        .solicitud(solicitud)
+        .fechaAccion(LocalDateTime.now())
+        .accionRealizada("Cambio de estado: " + estadoAnterior + " → " + EstadoSolicitud.CLASIFICADA)
+        .usuarioResponsable(usuario)
+        .estadoAnterior(estadoAnterior)
+        .estadoNuevo(EstadoSolicitud.CLASIFICADA)
+        .observaciones(observacion)
+        .build();
+
+    historialRepository.save(historial);
+
+    return toResponse(solicitud);
+}
 }

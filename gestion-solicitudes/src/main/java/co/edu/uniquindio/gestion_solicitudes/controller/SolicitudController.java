@@ -11,7 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest;
 
 @RestController
 @RequestMapping("/solicitudes")
@@ -53,5 +53,19 @@ public class SolicitudController {
             @RequestParam(defaultValue = "20") int size
             ){
         return ResponseEntity.ok(solicitudService.consultar(estado, tipo, prioridad, responsableId, solicitanteId, PageRequest.of(page,size)));
+    }
+
+    // PUT /api/solicitudes/{id}/clasificar
+    @PutMapping("/{id}/clasificar")
+    public ResponseEntity<SolicitudResponse> clasificar(
+            @PathVariable Long id,
+            @Valid @RequestBody ClasificarRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+
+        // Extraer el userId desde el token JWT
+        String token = authHeader.substring(7);
+        Long usuarioId = jwtUtil.extraerUserId(token);
+
+        return ResponseEntity.ok(solicitudService.clasificar(id, request, usuarioId));
     }
 }
