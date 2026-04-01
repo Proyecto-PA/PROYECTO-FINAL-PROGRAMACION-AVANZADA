@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest;
+import co.edu.uniquindio.gestion_solicitudes.dto.request.CambiarEstadoRequest;
+import co.edu.uniquindio.gestion_solicitudes.dto.request.CerrarSolicitudRequest;
 
 @RestController
 @RequestMapping("/solicitudes")
@@ -68,4 +70,53 @@ public class SolicitudController {
 
         return ResponseEntity.ok(solicitudService.clasificar(id, request, usuarioId));
     }
+
+    // PUT /api/solicitudes/{id}/iniciar-atencion
+    @PutMapping("/{id}/iniciar-atencion")
+    public ResponseEntity<SolicitudResponse> iniciarAtencion(
+            @PathVariable Long id,
+            @RequestBody(required = false) CambiarEstadoRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String token = authHeader.substring(7);
+        Long usuarioId = jwtUtil.extraerUserId(token);
+        return ResponseEntity.ok(solicitudService.iniciarAtencion(id, request, usuarioId));
+    }
+
+    // PUT /api/solicitudes/{id}/marcar-atendida
+    @PutMapping("/{id}/marcar-atendida")
+    public ResponseEntity<SolicitudResponse> marcarAtendida(
+            @PathVariable Long id,
+            @RequestBody(required = false) CambiarEstadoRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String token = authHeader.substring(7);
+        Long usuarioId = jwtUtil.extraerUserId(token);
+        return ResponseEntity.ok(solicitudService.marcarAtendida(id, request, usuarioId));
+    }
+
+    // PUT /api/solicitudes/{id}/cerrar
+    @PutMapping("/{id}/cerrar")
+    public ResponseEntity<SolicitudResponse> cerrar(
+            @PathVariable Long id,
+            @Valid @RequestBody CerrarSolicitudRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String token = authHeader.substring(7);
+        Long usuarioId = jwtUtil.extraerUserId(token);
+        return ResponseEntity.ok(solicitudService.cerrar(id, request, usuarioId));
+    }
+
+    // PUT /api/solicitudes/{id}/cancelar
+    @PutMapping("/{id}/cancelar")
+    public ResponseEntity<SolicitudResponse> cancelar(
+            @PathVariable Long id,
+            @RequestBody(required = false) CambiarEstadoRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String token = authHeader.substring(7);
+        Long usuarioId = jwtUtil.extraerUserId(token);
+        return ResponseEntity.ok(solicitudService.cancelar(id, request, usuarioId));
+    }
+
 }

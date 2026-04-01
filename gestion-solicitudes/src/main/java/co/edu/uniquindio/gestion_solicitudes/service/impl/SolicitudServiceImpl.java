@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import co.edu.uniquindio.gestion_solicitudes.domain.validator.ValidadorTransicionEstado;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest;
+import co.edu.uniquindio.gestion_solicitudes.dto.request.CambiarEstadoRequest;
+import co.edu.uniquindio.gestion_solicitudes.dto.request.CerrarSolicitudRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -146,5 +148,143 @@ public class SolicitudServiceImpl implements SolicitudService {
     historialRepository.save(historial);
 
     return toResponse(solicitud);
+    }
+
+    // Fase 4: implementación de transiciones con el validador
+    @Override
+    @Transactional
+    public SolicitudResponse iniciarAtencion(Long id, CambiarEstadoRequest request, Long usuarioId) {
+
+    SolicitudAcademica solicitud = solicitudRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No existe una solicitud con id " + id));
+
+    Usuario usuario = usuarioRepository.findById(usuarioId)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No existe un usuario con id " + usuarioId));
+
+    ValidadorTransicionEstado.validarOLanzar(solicitud.getEstado(), EstadoSolicitud.EN_ATENCION);
+
+    EstadoSolicitud estadoAnterior = solicitud.getEstado();
+    solicitud.cambiarEstado(EstadoSolicitud.EN_ATENCION);
+    solicitud = solicitudRepository.save(solicitud);
+
+    String observacion = request != null && request.getObservacion() != null
+        ? request.getObservacion()
+        : "Se inició la atención de la solicitud";
+
+    historialRepository.save(HistorialSolicitud.builder()
+        .solicitud(solicitud)
+        .fechaAccion(LocalDateTime.now())
+        .accionRealizada("Cambio de estado: " + estadoAnterior + " → " + EstadoSolicitud.EN_ATENCION)
+        .usuarioResponsable(usuario)
+        .estadoAnterior(estadoAnterior)
+        .estadoNuevo(EstadoSolicitud.EN_ATENCION)
+        .observaciones(observacion)
+        .build());
+
+    return toResponse(solicitud);
 }
+
+@Override
+@Transactional
+public SolicitudResponse marcarAtendida(Long id, CambiarEstadoRequest request, Long usuarioId) {
+
+    SolicitudAcademica solicitud = solicitudRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No existe una solicitud con id " + id));
+
+    Usuario usuario = usuarioRepository.findById(usuarioId)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No existe un usuario con id " + usuarioId));
+
+    ValidadorTransicionEstado.validarOLanzar(solicitud.getEstado(), EstadoSolicitud.ATENDIDA);
+
+    EstadoSolicitud estadoAnterior = solicitud.getEstado();
+    solicitud.cambiarEstado(EstadoSolicitud.ATENDIDA);
+    solicitud = solicitudRepository.save(solicitud);
+
+    String observacion = request != null && request.getObservacion() != null
+        ? request.getObservacion()
+        : "Solicitud marcada como atendida";
+
+    historialRepository.save(HistorialSolicitud.builder()
+        .solicitud(solicitud)
+        .fechaAccion(LocalDateTime.now())
+        .accionRealizada("Cambio de estado: " + estadoAnterior + " → " + EstadoSolicitud.ATENDIDA)
+        .usuarioResponsable(usuario)
+        .estadoAnterior(estadoAnterior)
+        .estadoNuevo(EstadoSolicitud.ATENDIDA)
+        .observaciones(observacion)
+        .build());
+
+    return toResponse(solicitud);
+}
+
+@Override
+@Transactional
+public SolicitudResponse cerrar(Long id, CerrarSolicitudRequest request, Long usuarioId) {
+
+    SolicitudAcademica solicitud = solicitudRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No existe una solicitud con id " + id));
+
+    Usuario usuario = usuarioRepository.findById(usuarioId)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No existe un usuario con id " + usuarioId));
+
+    ValidadorTransicionEstado.validarOLanzar(solicitud.getEstado(), EstadoSolicitud.CERRADA);
+
+    EstadoSolicitud estadoAnterior = solicitud.getEstado();
+    solicitud.cambiarEstado(EstadoSolicitud.CERRADA);
+    solicitud = solicitudRepository.save(solicitud);
+
+    historialRepository.save(HistorialSolicitud.builder()
+        .solicitud(solicitud)
+        .fechaAccion(LocalDateTime.now())
+        .accionRealizada("Cambio de estado: " + estadoAnterior + " → " + EstadoSolicitud.CERRADA)
+        .usuarioResponsable(usuario)
+        .estadoAnterior(estadoAnterior)
+        .estadoNuevo(EstadoSolicitud.CERRADA)
+        .observaciones(request.getObservacion())
+        .build());
+
+    return toResponse(solicitud);
+}
+
+@Override
+@Transactional
+public SolicitudResponse cancelar(Long id, CambiarEstadoRequest request, Long usuarioId) {
+
+    SolicitudAcademica solicitud = solicitudRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No existe una solicitud con id " + id));
+
+    Usuario usuario = usuarioRepository.findById(usuarioId)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No existe un usuario con id " + usuarioId));
+
+    ValidadorTransicionEstado.validarOLanzar(solicitud.getEstado(), EstadoSolicitud.CANCELADA);
+
+    EstadoSolicitud estadoAnterior = solicitud.getEstado();
+    solicitud.cambiarEstado(EstadoSolicitud.CANCELADA);
+    solicitud = solicitudRepository.save(solicitud);
+
+    String observacion = request != null && request.getObservacion() != null
+        ? request.getObservacion()
+        : "Solicitud cancelada";
+
+    historialRepository.save(HistorialSolicitud.builder()
+        .solicitud(solicitud)
+        .fechaAccion(LocalDateTime.now())
+        .accionRealizada("Cambio de estado: " + estadoAnterior + " → " + EstadoSolicitud.CANCELADA)
+        .usuarioResponsable(usuario)
+        .estadoAnterior(estadoAnterior)
+        .estadoNuevo(EstadoSolicitud.CANCELADA)
+        .observaciones(observacion)
+        .build());
+
+    return toResponse(solicitud);
+    }
+
 }
