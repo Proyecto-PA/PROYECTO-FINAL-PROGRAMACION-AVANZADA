@@ -163,6 +163,7 @@ public class SolicitudServiceImpl implements SolicitudService {
         .orElseThrow(() -> new ResourceNotFoundException(
             "No existe un usuario con id " + usuarioId));
 
+    // Validar transición REGISTRADA → EN_ATENCION
     ValidadorTransicionEstado.validarOLanzar(solicitud.getEstado(), EstadoSolicitud.EN_ATENCION);
 
     EstadoSolicitud estadoAnterior = solicitud.getEstado();
