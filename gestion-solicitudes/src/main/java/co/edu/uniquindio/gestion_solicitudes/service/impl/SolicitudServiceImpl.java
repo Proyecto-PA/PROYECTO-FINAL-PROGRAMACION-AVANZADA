@@ -2,13 +2,14 @@ package co.edu.uniquindio.gestion_solicitudes.service.impl;
 
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.*;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
+import co.edu.uniquindio.gestion_solicitudes.dto.request.AsignarResponsableRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.SolicitudRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.*;
 import co.edu.uniquindio.gestion_solicitudes.exception.ResourceNotFoundException;
 import co.edu.uniquindio.gestion_solicitudes.repository.*;
+import co.edu.uniquindio.gestion_solicitudes.service.MotorReglasPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.service.SolicitudService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final SolicitudRepository solicitudRepository;
     private final UsuarioRepository usuarioRepository;
     private final HistorialRepository historialRepository;
+    private final MotorReglasPrioridad motorReglasPrioridad;
 
     @Override
     @Transactional
@@ -92,6 +94,7 @@ public class SolicitudServiceImpl implements SolicitudService {
                 .fechaLimite(solicitud.getFechaLimite())
                 .estado(solicitud.getEstado())
                 .prioridad(solicitud.getPrioridad())
+                .justificacionPrioridad(solicitud.getJustificacionPrioridad())
                 .impactoAcademico(solicitud.getImpactoAcademico())
                 .solicitante(toUsuarioResumen(solicitud.getSolicitante()))
                 .responsable(solicitud.getResponsable() != null ? toUsuarioResumen(solicitud.getResponsable()) : null)
@@ -286,6 +289,80 @@ public SolicitudResponse cancelar(Long id, CambiarEstadoRequest request, Long us
         .build());
 
     return toResponse(solicitud);
+}
+
+    // Fase 6: Priorización automática por motor de reglas
+    @Override
+    @Transactional
+    public SolicitudResponse priorizar(Long id, Long usuarioId) {
+
+        SolicitudAcademica solicitud = solicitudRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "No existe una solicitud con id " + id));
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "No existe un usuario con id " + usuarioId));
+
+        MotorReglasPrioridad.ResultadoPrioridad resultado = motorReglasPrioridad.calcular(solicitud);
+
+        solicitud.setPrioridad(resultado.prioridad());
+        solicitud.setJustificacionPrioridad(resultado.justificacion());
+        solicitud = solicitudRepository.save(solicitud);
+
+        historialRepository.save(HistorialSolicitud.builder()
+            .solicitud(solicitud)
+            .fechaAccion(LocalDateTime.now())
+            .accionRealizada("Prioridad asignada automáticamente: " + resultado.prioridad().name())
+            .usuarioResponsable(usuario)
+            .estadoAnterior(solicitud.getEstado())
+            .estadoNuevo(solicitud.getEstado())
+            .observaciones(resultado.justificacion())
+            .build());
+
+        return toResponse(solicitud);
+    }
+
+    // Fase 7: Asignación de responsable
+    @Override
+    @Transactional
+    public SolicitudResponse asignarResponsable(Long id, AsignarResponsableRequest request, Long usuarioId) {
+
+        SolicitudAcademica solicitud = solicitudRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "No existe una solicitud con id " + id));
+
+        Usuario solicitanteAccion = usuarioRepository.findById(usuarioId)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "No existe un usuario con id " + usuarioId));
+
+        Usuario responsable = usuarioRepository.findById(request.getResponsableId())
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "No existe un usuario con id " + request.getResponsableId()));
+
+        if (!responsable.estaActivo()) {
+            throw new IllegalStateException(
+                "El usuario con id " + request.getResponsableId() + " no está activo");
+        }
+
+        solicitud.asignarResponsable(responsable);
+        solicitud = solicitudRepository.save(solicitud);
+
+        String observacion = request.getObservacion() != null
+            ? request.getObservacion()
+            : "Responsable asignado: " + responsable.getNombre();
+
+        historialRepository.save(HistorialSolicitud.builder()
+            .solicitud(solicitud)
+            .fechaAccion(LocalDateTime.now())
+            .accionRealizada("RESPONSABLE_ASIGNADO: " + responsable.getNombre())
+            .usuarioResponsable(solicitanteAccion)
+            .estadoAnterior(solicitud.getEstado())
+            .estadoNuevo(solicitud.getEstado())
+            .observaciones(observacion)
+            .build());
+
+        return toResponse(solicitud);
     }
 
 }

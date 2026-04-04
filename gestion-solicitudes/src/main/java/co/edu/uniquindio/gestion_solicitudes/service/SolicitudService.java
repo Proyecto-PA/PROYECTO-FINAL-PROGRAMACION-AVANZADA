@@ -3,6 +3,7 @@ package co.edu.uniquindio.gestion_solicitudes.service;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.EstadoSolicitud;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.Prioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.TipoSolicitud;
+import co.edu.uniquindio.gestion_solicitudes.dto.request.AsignarResponsableRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.CambiarEstadoRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.CerrarSolicitudRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest;
@@ -24,4 +25,10 @@ public interface SolicitudService {
     SolicitudResponse marcarAtendida(Long id, CambiarEstadoRequest request, Long usuarioId);
     SolicitudResponse cerrar(Long id, CerrarSolicitudRequest request, Long usuarioId);
     SolicitudResponse cancelar(Long id, CambiarEstadoRequest request, Long usuarioId);
+
+    // Fase 6: Priorización automática
+    SolicitudResponse priorizar(Long id, Long usuarioId);
+
+    // Fase 7: Asignación de responsable
+    SolicitudResponse asignarResponsable(Long id, AsignarResponsableRequest request, Long usuarioId);
 }

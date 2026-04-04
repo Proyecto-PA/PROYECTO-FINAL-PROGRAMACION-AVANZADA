@@ -44,6 +44,9 @@ public class SolicitudAcademica {
     @Enumerated(EnumType.STRING)
     private Prioridad prioridad;
 
+    @Column(name = "justificacion_prioridad", length = 1000)
+    private String justificacionPrioridad;
+
     @Column(name = "impacto_academico")
     private Integer impactoAcademico; // 1 a 5
 

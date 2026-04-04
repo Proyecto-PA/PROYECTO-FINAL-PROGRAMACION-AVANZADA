@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import co.edu.uniquindio.gestion_solicitudes.dto.request.AsignarResponsableRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.CambiarEstadoRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.CerrarSolicitudRequest;
@@ -117,6 +118,29 @@ public class SolicitudController {
         String token = authHeader.substring(7);
         Long usuarioId = jwtUtil.extraerUserId(token);
         return ResponseEntity.ok(solicitudService.cancelar(id, request, usuarioId));
+    }
+
+    // PUT /api/solicitudes/{id}/priorizar — Fase 6
+    @PutMapping("/{id}/priorizar")
+    public ResponseEntity<SolicitudResponse> priorizar(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String token = authHeader.substring(7);
+        Long usuarioId = jwtUtil.extraerUserId(token);
+        return ResponseEntity.ok(solicitudService.priorizar(id, usuarioId));
+    }
+
+    // PUT /api/solicitudes/{id}/responsable — Fase 7
+    @PutMapping("/{id}/responsable")
+    public ResponseEntity<SolicitudResponse> asignarResponsable(
+            @PathVariable Long id,
+            @Valid @RequestBody AsignarResponsableRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String token = authHeader.substring(7);
+        Long usuarioId = jwtUtil.extraerUserId(token);
+        return ResponseEntity.ok(solicitudService.asignarResponsable(id, request, usuarioId));
     }
 
 }

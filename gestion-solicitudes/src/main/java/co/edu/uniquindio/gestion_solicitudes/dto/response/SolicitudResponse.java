@@ -19,6 +19,7 @@ public class SolicitudResponse {
     private LocalDateTime fechaLimite;
     private EstadoSolicitud estado;
     private Prioridad prioridad;
+    private String justificacionPrioridad;
     private Integer impactoAcademico;
     private UsuarioResumenResponse solicitante;
     private UsuarioResumenResponse responsable;

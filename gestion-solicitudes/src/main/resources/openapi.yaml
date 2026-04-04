@@ -275,11 +275,11 @@ paths:
         - $ref: '#/components/parameters/SolicitudId'
       responses:
         '200':
-          description: Prioridad calculada y asignada a la solicitud
+          description: Prioridad calculada y asignada a la solicitud (incluye justificacionPrioridad)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultadoPrioridadResponse'
+                $ref: '#/components/schemas/SolicitudResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
