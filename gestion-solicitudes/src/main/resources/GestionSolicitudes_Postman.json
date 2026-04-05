@@ -1,0 +1,1808 @@
+{
+  "info": {
+    "name": "Sistema de Gestión de Solicitudes Académicas",
+    "description": "Colección completa para probar el backend del sistema de triage y gestión de solicitudes académicas - UniQuindío. Base URL: http://localhost:8080/api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "token_estudiante",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_docente",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_admin",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "solicitud_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "usuario_id_docente",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "usuario_id_admin",
+      "value": "3",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Registro - Estudiante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token_estudiante', json.token);",
+                  "    console.log('Token estudiante guardado:', json.token);",
+                  "}",
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Tiene token JWT', () => pm.expect(pm.response.json().token).to.be.a('string'));",
+                  "pm.test('Rol es ESTUDIANTE', () => pm.expect(pm.response.json().rol).to.eql('ESTUDIANTE'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana García\",\n  \"email\": \"ana.garcia@uniquindio.edu\",\n  \"password\": \"123456\",\n  \"rol\": \"ESTUDIANTE\"\n}"
+            },
+            "url": "{{base_url}}/auth/registro",
+            "description": "Registra un nuevo usuario con rol ESTUDIANTE. Guarda automáticamente el token en la variable de colección."
+          }
+        },
+        {
+          "name": "Registro - Docente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token_docente', json.token);",
+                  "    pm.collectionVariables.set('usuario_id_docente', json.usuarioId.toString());",
+                  "    console.log('Token docente guardado:', json.token);",
+                  "}",
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Rol es DOCENTE', () => pm.expect(pm.response.json().rol).to.eql('DOCENTE'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Carlos Ramírez\",\n  \"email\": \"carlos.ramirez@uniquindio.edu\",\n  \"password\": \"123456\",\n  \"rol\": \"DOCENTE\"\n}"
+            },
+            "url": "{{base_url}}/auth/registro",
+            "description": "Registra un nuevo usuario con rol DOCENTE."
+          }
+        },
+        {
+          "name": "Registro - Administrativo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token_admin', json.token);",
+                  "    pm.collectionVariables.set('usuario_id_admin', json.usuarioId.toString());",
+                  "    console.log('Token admin guardado:', json.token);",
+                  "}",
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Rol es ADMINISTRATIVO', () => pm.expect(pm.response.json().rol).to.eql('ADMINISTRATIVO'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"María López\",\n  \"email\": \"maria.lopez@uniquindio.edu\",\n  \"password\": \"123456\",\n  \"rol\": \"ADMINISTRATIVO\"\n}"
+            },
+            "url": "{{base_url}}/auth/registro",
+            "description": "Registra un nuevo usuario con rol ADMINISTRATIVO."
+          }
+        },
+        {
+          "name": "Registro - Email Duplicado (Error 409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Mensaje de error presente', () => pm.expect(pm.response.json().mensaje).to.include('Ya existe'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana García\",\n  \"email\": \"ana.garcia@uniquindio.edu\",\n  \"password\": \"123456\",\n  \"rol\": \"ESTUDIANTE\"\n}"
+            },
+            "url": "{{base_url}}/auth/registro",
+            "description": "Intenta registrar un email ya existente. Debe retornar 409 Conflict."
+          }
+        },
+        {
+          "name": "Registro - Datos Inválidos (Error 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"\",\n  \"email\": \"no-es-un-email\",\n  \"password\": \"123\",\n  \"rol\": \"ESTUDIANTE\"\n}"
+            },
+            "url": "{{base_url}}/auth/registro",
+            "description": "Datos con validaciones fallidas: nombre vacío, email inválido, password corto."
+          }
+        },
+        {
+          "name": "Login - Estudiante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token_estudiante', json.token);",
+                  "    console.log('Token estudiante actualizado');",
+                  "}",
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Tiene token', () => pm.expect(pm.response.json().token).to.be.a('string'));",
+                  "pm.test('Email correcto', () => pm.expect(pm.response.json().email).to.eql('ana.garcia@uniquindio.edu'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana.garcia@uniquindio.edu\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": "{{base_url}}/auth/login",
+            "description": "Login del estudiante. Actualiza el token en la variable de colección."
+          }
+        },
+        {
+          "name": "Login - Docente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token_docente', json.token);",
+                  "    pm.collectionVariables.set('usuario_id_docente', json.usuarioId.toString());",
+                  "}",
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"carlos.ramirez@uniquindio.edu\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": "{{base_url}}/auth/login",
+            "description": "Login del docente."
+          }
+        },
+        {
+          "name": "Login - Administrativo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token_admin', json.token);",
+                  "    pm.collectionVariables.set('usuario_id_admin', json.usuarioId.toString());",
+                  "}",
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"maria.lopez@uniquindio.edu\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": "{{base_url}}/auth/login",
+            "description": "Login del administrativo."
+          }
+        },
+        {
+          "name": "Login - Credenciales Inválidas (Error 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana.garcia@uniquindio.edu\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": "{{base_url}}/auth/login",
+            "description": "Intenta login con contraseña incorrecta. Debe retornar 401."
+          }
+        },
+        {
+          "name": "Login - Email No Existe (Error 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"noexiste@uniquindio.edu\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": "{{base_url}}/auth/login",
+            "description": "Login con email que no existe en el sistema."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Solicitudes - CRUD",
+      "item": [
+        {
+          "name": "Registrar Solicitud - Homologación (Estudiante)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('solicitud_id', json.id.toString());",
+                  "    console.log('Solicitud ID guardado:', json.id);",
+                  "}",
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Estado es REGISTRADA', () => pm.expect(pm.response.json().estado).to.eql('REGISTRADA'));",
+                  "pm.test('Tiene ID', () => pm.expect(pm.response.json().id).to.be.a('number'));",
+                  "pm.test('Tiene solicitante', () => pm.expect(pm.response.json().solicitante).to.be.an('object'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_estudiante}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"HOMOLOGACION\",\n  \"descripcion\": \"Solicito homologación de la asignatura Cálculo II cursada en la Universidad Nacional con nota de 4.2. Adjunto certificado de notas y contenido programático.\",\n  \"canalOrigen\": \"CSU\",\n  \"fechaLimite\": \"2026-05-15T23:59:59\",\n  \"impactoAcademico\": 4\n}"
+            },
+            "url": "{{base_url}}/solicitudes",
+            "description": "Registra una nueva solicitud de homologación. Guarda el ID en variable de colección para usar en los siguientes requests."
+          }
+        },
+        {
+          "name": "Registrar Solicitud - Registro Asignaturas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Estado es REGISTRADA', () => pm.expect(pm.response.json().estado).to.eql('REGISTRADA'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_estudiante}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"REGISTRO_ASIGNATURAS\",\n  \"descripcion\": \"Solicito registro en Arquitectura Empresarial (código AE-401). Tengo aprobados todos los prerequisitos según mi historia académica actualizada.\",\n  \"canalOrigen\": \"CORREO\",\n  \"fechaLimite\": \"2026-04-30T23:59:59\",\n  \"impactoAcademico\": 3\n}"
+            },
+            "url": "{{base_url}}/solicitudes",
+            "description": "Registra una solicitud de registro de asignaturas."
+          }
+        },
+        {
+          "name": "Registrar Solicitud - Cancelación de Asignaturas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_estudiante}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"CANCELACION_ASIGNATURAS\",\n  \"descripcion\": \"Solicito cancelación de la asignatura Física II por problemas de salud. Adjunto certificado médico que justifica la inasistencia prolongada.\",\n  \"canalOrigen\": \"PRESENCIAL\",\n  \"impactoAcademico\": 5\n}"
+            },
+            "url": "{{base_url}}/solicitudes",
+            "description": "Registra una solicitud de cancelación de asignaturas sin fecha límite."
+          }
+        },
+        {
+          "name": "Registrar Solicitud - Solicitud Cupos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_estudiante}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"SOLICITUD_CUPOS\",\n  \"descripcion\": \"Solicito apertura de cupos adicionales en el grupo 01 de Ingeniería de Software. El grupo está lleno y necesito esta asignatura para graduarme en el próximo semestre.\",\n  \"canalOrigen\": \"SAC\",\n  \"fechaLimite\": \"2026-04-20T17:00:00\",\n  \"impactoAcademico\": 5\n}"
+            },
+            "url": "{{base_url}}/solicitudes",
+            "description": "Registra una solicitud de cupos con alto impacto académico."
+          }
+        },
+        {
+          "name": "Registrar Solicitud - Consulta Académica",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_estudiante}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"CONSULTA_ACADEMICA\",\n  \"descripcion\": \"Necesito información sobre los requisitos para cambio de plan de estudios del programa de Ingeniería de Sistemas al programa de Ingeniería Informática.\",\n  \"canalOrigen\": \"TELEFONO\",\n  \"impactoAcademico\": 1\n}"
+            },
+            "url": "{{base_url}}/solicitudes",
+            "description": "Registra una consulta académica con bajo impacto por teléfono."
+          }
+        },
+        {
+          "name": "Registrar Solicitud - Sin Token (Error 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"CONSULTA_ACADEMICA\",\n  \"descripcion\": \"Esta solicitud no debería crearse sin token.\",\n  \"canalOrigen\": \"CORREO\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes",
+            "description": "Intenta crear solicitud sin token JWT. Debe retornar 401."
+          }
+        },
+        {
+          "name": "Registrar Solicitud - Datos Inválidos (Error 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_estudiante}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"HOMOLOGACION\",\n  \"descripcion\": \"Corta\",\n  \"canalOrigen\": \"CSU\",\n  \"impactoAcademico\": 10\n}"
+            },
+            "url": "{{base_url}}/solicitudes",
+            "description": "Descripción demasiado corta e impacto fuera de rango (1-5). Debe retornar 400."
+          }
+        },
+        {
+          "name": "Obtener Solicitud por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('ID correcto', () => pm.expect(pm.response.json().id).to.eql(parseInt(pm.collectionVariables.get('solicitud_id'))));",
+                  "pm.test('Tiene estado', () => pm.expect(pm.response.json().estado).to.be.a('string'));",
+                  "pm.test('Tiene tipo', () => pm.expect(pm.response.json().tipo).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_estudiante}}"}],
+            "url": "{{base_url}}/solicitudes/{{solicitud_id}}",
+            "description": "Obtiene el detalle completo de una solicitud por su ID."
+          }
+        },
+        {
+          "name": "Obtener Solicitud - No Existe (Error 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('Mensaje de error', () => pm.expect(pm.response.json().mensaje).to.include('999'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_estudiante}}"}],
+            "url": "{{base_url}}/solicitudes/999999",
+            "description": "Solicitud con ID que no existe. Debe retornar 404."
+          }
+        },
+        {
+          "name": "Listar Solicitudes - Sin Filtros (Docente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Tiene paginación', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.contenido).to.be.an('array');",
+                  "    pm.expect(json.totalElementos).to.be.a('number');",
+                  "    pm.expect(json.totalPaginas).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_docente}}"}],
+            "url": {
+              "raw": "{{base_url}}/solicitudes?page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["solicitudes"],
+              "query": [
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "10"}
+              ]
+            },
+            "description": "Lista todas las solicitudes paginadas (docente ve todas)."
+          }
+        },
+        {
+          "name": "Listar Solicitudes - Filtro por Estado REGISTRADA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Todas en estado REGISTRADA', () => {",
+                  "    const json = pm.response.json();",
+                  "    json.contenido.forEach(s => pm.expect(s.estado).to.eql('REGISTRADA'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_docente}}"}],
+            "url": {
+              "raw": "{{base_url}}/solicitudes?estado=REGISTRADA&page=0&size=20",
+              "host": ["{{base_url}}"],
+              "path": ["solicitudes"],
+              "query": [
+                {"key": "estado", "value": "REGISTRADA"},
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "20"}
+              ]
+            },
+            "description": "Filtra solicitudes por estado REGISTRADA."
+          }
+        },
+        {
+          "name": "Listar Solicitudes - Filtro por Tipo HOMOLOGACION",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_admin}}"}],
+            "url": {
+              "raw": "{{base_url}}/solicitudes?tipo=HOMOLOGACION&page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["solicitudes"],
+              "query": [
+                {"key": "tipo", "value": "HOMOLOGACION"},
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "10"}
+              ]
+            },
+            "description": "Filtra solicitudes por tipo HOMOLOGACION."
+          }
+        },
+        {
+          "name": "Listar Solicitudes - Filtro por Prioridad CRITICA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_admin}}"}],
+            "url": {
+              "raw": "{{base_url}}/solicitudes?prioridad=CRITICA&page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["solicitudes"],
+              "query": [
+                {"key": "prioridad", "value": "CRITICA"},
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "10"}
+              ]
+            },
+            "description": "Filtra solicitudes por prioridad CRITICA."
+          }
+        },
+        {
+          "name": "Listar Solicitudes - Múltiples Filtros",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_admin}}"}],
+            "url": {
+              "raw": "{{base_url}}/solicitudes?estado=REGISTRADA&tipo=HOMOLOGACION&page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["solicitudes"],
+              "query": [
+                {"key": "estado", "value": "REGISTRADA"},
+                {"key": "tipo", "value": "HOMOLOGACION"},
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "10"}
+              ]
+            },
+            "description": "Combina filtros de estado y tipo."
+          }
+        },
+        {
+          "name": "Listar Solicitudes - Estudiante Solo Ve Las Suyas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Solo solicitudes del estudiante', () => {",
+                  "    const json = pm.response.json();",
+                  "    if (json.contenido.length > 0) {",
+                  "        const emailEstudiante = 'ana.garcia@uniquindio.edu';",
+                  "        json.contenido.forEach(s => pm.expect(s.solicitante.email).to.eql(emailEstudiante));",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_estudiante}}"}],
+            "url": {
+              "raw": "{{base_url}}/solicitudes?page=0&size=20",
+              "host": ["{{base_url}}"],
+              "path": ["solicitudes"],
+              "query": [
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "20"}
+              ]
+            },
+            "description": "El estudiante solo puede ver sus propias solicitudes (filtro automático por rol)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔄 Ciclo de Vida - Transiciones",
+      "item": [
+        {
+          "name": "1. Clasificar Solicitud (Docente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Estado es CLASIFICADA', () => pm.expect(pm.response.json().estado).to.eql('CLASIFICADA'));",
+                  "pm.test('Tipo actualizado', () => pm.expect(pm.response.json().tipo).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_docente}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"HOMOLOGACION\",\n  \"observacion\": \"Revisada la documentación. Se confirma como solicitud de homologación de asignatura.\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_id}}/clasificar",
+            "description": "Clasifica la solicitud. Solo DOCENTE o ADMINISTRATIVO pueden hacerlo. Transición: REGISTRADA → CLASIFICADA."
+          }
+        },
+        {
+          "name": "Clasificar - Sin Permiso Estudiante (Error 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_estudiante}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"HOMOLOGACION\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_id}}/clasificar",
+            "description": "Un ESTUDIANTE no puede clasificar solicitudes. Debe retornar 403 Forbidden."
+          }
+        },
+        {
+          "name": "Clasificar - Transición Inválida (Error 409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Mensaje de transición inválida', () => pm.expect(pm.response.json().mensaje).to.include('posible pasar'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_docente}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"OTRO\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_id}}/clasificar",
+            "description": "Intenta clasificar una solicitud que ya está en CLASIFICADA. Debe retornar 409."
+          }
+        },
+        {
+          "name": "2. Priorizar Solicitud (Docente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Tiene prioridad asignada', () => pm.expect(pm.response.json().prioridad).to.be.oneOf(['CRITICA', 'ALTA', 'MEDIA', 'BAJA']));",
+                  "pm.test('Tiene justificación', () => pm.expect(pm.response.json().justificacionPrioridad).to.be.a('string').and.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token_docente}}"}
+            ],
+            "url": "{{base_url}}/solicitudes/{{solicitud_id}}/priorizar",
+            "description": "Ejecuta el motor de reglas para calcular la prioridad automáticamente. No requiere body."
+          }
+        },
+        {
+          "name": "3. Asignar Responsable (Administrativo)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Tiene responsable asignado', () => pm.expect(pm.response.json().responsable).to.be.an('object'));",
+                  "pm.test('ID responsable correcto', () => pm.expect(pm.response.json().responsable.id).to.be.a('number'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_admin}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responsableId\": {{usuario_id_docente}},\n  \"observacion\": \"Asignado al coordinador del área de registro académico por especialidad en el tema.\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_id}}/responsable",
+            "description": "Asigna un responsable activo a la solicitud. Solo ADMINISTRATIVO puede hacerlo."
+          }
+        },
+        {
+          "name": "Asignar Responsable - Sin Permiso Docente (Error 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_docente}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responsableId\": 1\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_id}}/responsable",
+            "description": "Un DOCENTE no puede asignar responsables. Solo ADMINISTRATIVO. Debe retornar 403."
+          }
+        },
+        {
+          "name": "4. Iniciar Atención (Docente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Estado es EN_ATENCION', () => pm.expect(pm.response.json().estado).to.eql('EN_ATENCION'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_docente}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observacion\": \"Se inicia la revisión de la documentación de homologación. Se verificará con el departamento académico.\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_id}}/iniciar-atencion",
+            "description": "Transición CLASIFICADA → EN_ATENCION."
+          }
+        },
+        {
+          "name": "4. Iniciar Atención - Sin Body (Observación Opcional)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK o 409', () => pm.expect(pm.response.code).to.be.oneOf(['200', '409']));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token_docente}}"}
+            ],
+            "url": "{{base_url}}/solicitudes/{{solicitud_id}}/iniciar-atencion",
+            "description": "Inicia atención sin cuerpo (observación es opcional). Retornará 409 si ya está en atención."
+          }
+        },
+        {
+          "name": "5. Marcar como Atendida (Docente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Estado es ATENDIDA', () => pm.expect(pm.response.json().estado).to.eql('ATENDIDA'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_docente}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observacion\": \"Se verificó con el departamento de registros. La homologación fue aprobada según el artículo 25 del reglamento estudiantil.\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_id}}/marcar-atendida",
+            "description": "Transición EN_ATENCION → ATENDIDA."
+          }
+        },
+        {
+          "name": "6. Cerrar Solicitud (Administrativo)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Estado es CERRADA', () => pm.expect(pm.response.json().estado).to.eql('CERRADA'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_admin}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observacion\": \"Homologación aprobada y registrada en el sistema académico. La asignatura Cálculo II fue homologada con nota de 4.2. Expediente archivado en registro académico.\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_id}}/cerrar",
+            "description": "Cierre formal de la solicitud. Requiere observación obligatoria. Transición: ATENDIDA → CERRADA."
+          }
+        },
+        {
+          "name": "Cerrar - Sin Observación (Error 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_admin}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observacion\": \"\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_id}}/cerrar",
+            "description": "Intenta cerrar sin observación. Debe retornar 400."
+          }
+        },
+        {
+          "name": "Cerrar - Solicitud Ya Cerrada (Error 409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_admin}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observacion\": \"Intento de cierre duplicado sobre solicitud ya cerrada.\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_id}}/cerrar",
+            "description": "Intenta cerrar una solicitud que ya está CERRADA. Debe retornar 409."
+          }
+        }
+      ]
+    },
+    {
+      "name": "❌ Cancelación",
+      "item": [
+        {
+          "name": "Registrar Solicitud para Cancelar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('solicitud_cancelar_id', json.id.toString());",
+                  "    console.log('ID solicitud a cancelar:', json.id);",
+                  "}",
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Crea una solicitud nueva para cancelar"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_estudiante}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"CONSULTA_ACADEMICA\",\n  \"descripcion\": \"Esta solicitud va a ser cancelada en la siguiente petición del flujo de prueba.\",\n  \"canalOrigen\": \"CORREO\",\n  \"impactoAcademico\": 1\n}"
+            },
+            "url": "{{base_url}}/solicitudes",
+            "description": "Crea una solicitud específicamente para probar la cancelación."
+          }
+        },
+        {
+          "name": "Cancelar Solicitud (Estudiante)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Estado es CANCELADA', () => pm.expect(pm.response.json().estado).to.eql('CANCELADA'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_estudiante}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observacion\": \"Se cancela por error en la descripción de la solicitud.\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_cancelar_id}}/cancelar",
+            "description": "El estudiante cancela su propia solicitud desde estado REGISTRADA."
+          }
+        },
+        {
+          "name": "Cancelar - Solicitud Ya Cancelada (Error 409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_estudiante}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observacion\": \"Doble cancelación.\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_cancelar_id}}/cancelar",
+            "description": "Intenta cancelar una solicitud ya cancelada. Estado terminal, debe retornar 409."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📜 Historial",
+      "item": [
+        {
+          "name": "Consultar Historial de Solicitud",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Es un array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.test('Tiene al menos una entrada', () => pm.expect(pm.response.json().length).to.be.above(0));",
+                  "pm.test('Primera entrada sin estado anterior', () => {",
+                  "    const historial = pm.response.json();",
+                  "    pm.expect(historial[0].estadoAnterior).to.be.null;",
+                  "    pm.expect(historial[0].estadoNuevo).to.eql('REGISTRADA');",
+                  "});",
+                  "pm.test('Cada entrada tiene campos requeridos', () => {",
+                  "    const historial = pm.response.json();",
+                  "    historial.forEach(h => {",
+                  "        pm.expect(h.fechaAccion).to.be.a('string');",
+                  "        pm.expect(h.accionRealizada).to.be.a('string');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_docente}}"}],
+            "url": "{{base_url}}/historial/{{solicitud_id}}",
+            "description": "Obtiene el historial completo de acciones de una solicitud, ordenado cronológicamente."
+          }
+        },
+        {
+          "name": "Consultar Historial - Solicitud Inexistente (Error 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_docente}}"}],
+            "url": "{{base_url}}/historial/999999",
+            "description": "Historial de solicitud inexistente. Debe retornar 404."
+          }
+        },
+        {
+          "name": "Consultar Historial - Sin Token (Error 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/historial/{{solicitud_id}}",
+            "description": "Intenta acceder al historial sin token. Debe retornar 401."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🤖 Asistente IA",
+      "item": [
+        {
+          "name": "Registrar Solicitud para Prueba IA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('solicitud_ia_id', json.id.toString());",
+                  "}",
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_estudiante}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"OTRO\",\n  \"descripcion\": \"Necesito apoyo para tramitar la homologación de varias asignaturas cursadas en el exterior durante un intercambio académico. Tengo los documentos notariados pero no sé cuál es el procedimiento correcto.\",\n  \"canalOrigen\": \"CORREO\",\n  \"fechaLimite\": \"2026-05-01T17:00:00\",\n  \"impactoAcademico\": 4\n}"
+            },
+            "url": "{{base_url}}/solicitudes",
+            "description": "Crea solicitud con descripción ambigua para que la IA la analice."
+          }
+        },
+        {
+          "name": "Obtener Sugerencia IA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK o 503', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf(['200', '503']);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.test('Tiene tipo sugerido', () => pm.expect(json.tipoSugerido).to.be.a('string'));",
+                  "    pm.test('Tiene prioridad sugerida', () => pm.expect(json.prioridadSugerida).to.be.a('string'));",
+                  "    pm.test('Tiene resumen', () => pm.expect(json.resumen).to.be.a('string'));",
+                  "    pm.test('No está confirmada por defecto', () => pm.expect(json.confirmada).to.be.false);",
+                  "    console.log('Sugerencia IA:', JSON.stringify(json, null, 2));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_docente}}"}],
+            "url": "{{base_url}}/solicitudes/{{solicitud_ia_id}}/sugerencia-ia",
+            "description": "Consulta la IA para obtener sugerencias de clasificación, prioridad y resumen. Puede retornar 503 si la IA no está disponible (el sistema sigue funcionando)."
+          }
+        },
+        {
+          "name": "Confirmar Sugerencia IA - Aplicar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Tipo actualizado', () => pm.expect(pm.response.json().tipo).to.eql('HOMOLOGACION'));",
+                  "pm.test('Prioridad actualizada', () => pm.expect(pm.response.json().prioridad).to.eql('ALTA'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_docente}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"aplicar\": true,\n  \"tipoAjustado\": \"HOMOLOGACION\",\n  \"prioridadAjustada\": \"ALTA\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_ia_id}}/sugerencia-ia/confirmar",
+            "description": "El usuario acepta y aplica la sugerencia de la IA con ajustes manuales."
+          }
+        },
+        {
+          "name": "Confirmar Sugerencia IA - Descartar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Solicitud sin cambios de tipo', () => {",
+                  "    console.log('Sugerencia descartada, estado:', pm.response.json().estado);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_docente}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"aplicar\": false\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_ia_id}}/sugerencia-ia/confirmar",
+            "description": "El usuario descarta la sugerencia de la IA. La solicitud no se modifica."
+          }
+        },
+        {
+          "name": "Confirmar Sugerencia - Sin Body (Error 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_docente}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": "{{base_url}}/solicitudes/{{solicitud_ia_id}}/sugerencia-ia/confirmar",
+            "description": "El campo 'aplicar' es obligatorio. Debe retornar 400."
+          }
+        },
+        {
+          "name": "Sugerencia IA - Sin Token (Error 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/solicitudes/{{solicitud_ia_id}}/sugerencia-ia",
+            "description": "Acceso a IA sin token. Debe retornar 401."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔁 Flujo Completo (Runner)",
+      "description": "Ejecuta este folder en orden con el Collection Runner para probar el flujo completo: Registro → Clasificar → Priorizar → Asignar Responsable → Iniciar Atención → Marcar Atendida → Cerrar",
+      "item": [
+        {
+          "name": "PASO 1: Login Admin (obtiene todos los tokens)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login admin OK', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('token_admin', pm.response.json().token);",
+                  "pm.collectionVariables.set('usuario_id_admin', pm.response.json().usuarioId.toString());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"maria.lopez@uniquindio.edu\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "PASO 2: Login Docente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login docente OK', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('token_docente', pm.response.json().token);",
+                  "pm.collectionVariables.set('usuario_id_docente', pm.response.json().usuarioId.toString());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"carlos.ramirez@uniquindio.edu\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "PASO 3: Login Estudiante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login estudiante OK', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('token_estudiante', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana.garcia@uniquindio.edu\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "PASO 4: Crear Solicitud",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Solicitud creada', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('flujo_id', pm.response.json().id.toString());",
+                  "console.log('ID flujo completo:', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_estudiante}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"CANCELACION_ASIGNATURAS\",\n  \"descripcion\": \"Solicito cancelación de Física II por problemas de salud graves debidamente documentados con certificado médico expedido por el hospital universitario.\",\n  \"canalOrigen\": \"PRESENCIAL\",\n  \"fechaLimite\": \"2026-04-10T17:00:00\",\n  \"impactoAcademico\": 5\n}"
+            },
+            "url": "{{base_url}}/solicitudes"
+          }
+        },
+        {
+          "name": "PASO 5: Clasificar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Clasificada', () => pm.response.to.have.status(200));",
+                  "pm.test('Estado CLASIFICADA', () => pm.expect(pm.response.json().estado).to.eql('CLASIFICADA'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_docente}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"CANCELACION_ASIGNATURAS\",\n  \"observacion\": \"Clasificada como cancelación de asignatura según documentación presentada.\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{flujo_id}}/clasificar"
+          }
+        },
+        {
+          "name": "PASO 6: Priorizar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Priorizada', () => pm.response.to.have.status(200));",
+                  "pm.test('Tiene prioridad', () => pm.expect(pm.response.json().prioridad).to.be.a('string'));",
+                  "console.log('Prioridad asignada:', pm.response.json().prioridad);",
+                  "console.log('Justificación:', pm.response.json().justificacionPrioridad);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_docente}}"}],
+            "url": "{{base_url}}/solicitudes/{{flujo_id}}/priorizar"
+          }
+        },
+        {
+          "name": "PASO 7: Asignar Responsable",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responsable asignado', () => pm.response.to.have.status(200));",
+                  "pm.test('Tiene responsable', () => pm.expect(pm.response.json().responsable).to.be.an('object'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_admin}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responsableId\": {{usuario_id_docente}},\n  \"observacion\": \"Asignado al coordinador académico.\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{flujo_id}}/responsable"
+          }
+        },
+        {
+          "name": "PASO 8: Iniciar Atención",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('En atención', () => pm.response.to.have.status(200));",
+                  "pm.test('Estado EN_ATENCION', () => pm.expect(pm.response.json().estado).to.eql('EN_ATENCION'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_docente}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observacion\": \"Revisando documentación y certificado médico.\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{flujo_id}}/iniciar-atencion"
+          }
+        },
+        {
+          "name": "PASO 9: Marcar Atendida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Atendida', () => pm.response.to.have.status(200));",
+                  "pm.test('Estado ATENDIDA', () => pm.expect(pm.response.json().estado).to.eql('ATENDIDA'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_docente}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observacion\": \"Certificado médico verificado. Cancelación aprobada por el comité.\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{flujo_id}}/marcar-atendida"
+          }
+        },
+        {
+          "name": "PASO 10: Cerrar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Cerrada', () => pm.response.to.have.status(200));",
+                  "pm.test('Estado CERRADA', () => pm.expect(pm.response.json().estado).to.eql('CERRADA'));",
+                  "console.log('✅ Flujo completo exitoso! Solicitud ID:', pm.collectionVariables.get('flujo_id'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_admin}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observacion\": \"Cancelación de Física II procesada exitosamente. Se registró en el sistema académico. El estudiante fue notificado vía correo institucional.\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/{{flujo_id}}/cerrar"
+          }
+        },
+        {
+          "name": "PASO 11: Verificar Historial Completo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Historial obtenido', () => pm.response.to.have.status(200));",
+                  "const historial = pm.response.json();",
+                  "pm.test('Al menos 4 entradas en historial', () => pm.expect(historial.length).to.be.above(3));",
+                  "pm.test('Primera entrada es REGISTRADA', () => pm.expect(historial[0].estadoNuevo).to.eql('REGISTRADA'));",
+                  "pm.test('Última entrada es CERRADA', () => pm.expect(historial[historial.length - 1].estadoNuevo).to.eql('CERRADA'));",
+                  "console.log('Total entradas historial:', historial.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_admin}}"}],
+            "url": "{{base_url}}/historial/{{flujo_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛡️ Seguridad - JWT y Roles",
+      "item": [
+        {
+          "name": "Token Inválido (Error 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer token.invalido.123"}],
+            "url": "{{base_url}}/solicitudes",
+            "description": "Token malformado. Debe retornar 401."
+          }
+        },
+        {
+          "name": "Token Ausente en Endpoint Protegido (Error 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/solicitudes",
+            "description": "Sin header Authorization. Debe retornar 401."
+          }
+        },
+        {
+          "name": "Estudiante Intenta Clasificar (Error 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_estudiante}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"HOMOLOGACION\"\n}"
+            },
+            "url": "{{base_url}}/solicitudes/1/clasificar",
+            "description": "ESTUDIANTE no puede clasificar (solo DOCENTE o ADMINISTRATIVO). Debe retornar 403."
+          }
+        },
+        {
+          "name": "Estudiante Intenta Priorizar (Error 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_estudiante}}"}],
+            "url": "{{base_url}}/solicitudes/1/priorizar",
+            "description": "ESTUDIANTE no puede priorizar. Debe retornar 403."
+          }
+        },
+        {
+          "name": "Docente Intenta Asignar Responsable (Error 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token_docente}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responsableId\": 1\n}"
+            },
+            "url": "{{base_url}}/solicitudes/1/responsable",
+            "description": "DOCENTE no puede asignar responsables (solo ADMINISTRATIVO). Debe retornar 403."
+          }
+        },
+        {
+          "name": "Endpoints Públicos - Login Sin Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status no es 401 (endpoint público)', () => pm.expect(pm.response.code).to.not.equal('401'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@test.com\",\n  \"password\": \"wrong\"\n}"
+            },
+            "url": "{{base_url}}/auth/login",
+            "description": "El endpoint de login es público y no requiere token previo."
+          }
+        }
+      ]
+    }
+  ]
+}
