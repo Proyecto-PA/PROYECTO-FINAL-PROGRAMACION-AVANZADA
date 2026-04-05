@@ -29,8 +29,6 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -47,7 +45,6 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.POST, "/solicitudes").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/solicitudes/*/clasificar").hasAnyRole("DOCENTE", "ADMINISTRATIVO")
                         .requestMatchers(HttpMethod.PUT, "/solicitudes/*/priorizar").hasAnyRole("DOCENTE", "ADMINISTRATIVO")
@@ -70,18 +67,5 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return username -> {
-            throw new UsernameNotFoundException("No se usa UserDetailsService con JWT");
-        };
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
     }
 }
