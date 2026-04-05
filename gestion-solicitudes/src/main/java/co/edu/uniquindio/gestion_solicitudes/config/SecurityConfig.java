@@ -51,6 +51,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/solicitudes/*/responsable").hasRole("ADMINISTRATIVO")
                         .requestMatchers(HttpMethod.GET, "/solicitudes/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/historial/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/solicitudes/*/sugerencia-ia").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/solicitudes/*/sugerencia-ia/confirmar").hasAnyRole("DOCENTE", "ADMINISTRATIVO")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
