@@ -122,7 +122,7 @@ public class AsistenteIA {
                     .path("candidates").get(0)
                     .path("content")
                     .path("parts").get(0)
-                    .path("texts").asText();
+                    .path("text").asText();
 
             textoIA = textoIA.replaceAll("```json", "").replaceAll("```", "").trim();
 

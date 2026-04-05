@@ -53,8 +53,15 @@ public class SolicitudController {
             @RequestParam(required = false) Long responsableId,
             @RequestParam(required = false) Long solicitanteId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-            ){
+            @RequestParam(defaultValue = "20") int size,
+            @RequestHeader("Authorization") String authHeader)
+            {
+                String token = authHeader.substring(7);
+                String rol = jwtUtil.extraerRol(token);
+
+                if("ESTUDIANTE".equals(rol)){
+                    solicitanteId = jwtUtil.extraerUserId(token);
+                }
         return ResponseEntity.ok(solicitudService.consultar(estado, tipo, prioridad, responsableId, solicitanteId, PageRequest.of(page,size)));
     }
 

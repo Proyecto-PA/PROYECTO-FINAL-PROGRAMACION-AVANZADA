@@ -96,7 +96,7 @@ public class IAServiceImpl implements  IAService {
                 .prioridad(solicitudAcademica.getPrioridad())
                 .justificacionPrioridad(solicitudAcademica.getJustificacionPrioridad())
                 .impactoAcademico(solicitudAcademica.getImpactoAcademico())
-                .solicitante(toUsuarioResumen(solicitudAcademica.getResponsable()))
+                .solicitante(toUsuarioResumen(solicitudAcademica.getSolicitante()))
                 .responsable(solicitudAcademica.getResponsable() != null ? toUsuarioResumen(solicitudAcademica.getResponsable()) : null)
                 .build();
     }
