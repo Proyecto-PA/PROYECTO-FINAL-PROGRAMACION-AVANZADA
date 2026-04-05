@@ -104,25 +104,31 @@ public class AsistenteIA {
     private String llamarAPI(String prompt){
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(iaApiKey);
 
-        String urlConKey = iaApiUrl + "?key=" +  iaApiKey;
-        Map<String, Object> body = Map.of("contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))));
-
+        Map<String, Object> body = Map.of("model", iaModel, "messages", List.of(Map.of("role", "user", "content", prompt)), "temperature", 0.3);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-        ResponseEntity<String> response = restTemplate.exchange(urlConKey, HttpMethod.POST, entity, String.class);
-        return response.getBody();
+
+        try{
+            ResponseEntity<String> response = restTemplate.exchange(iaApiUrl, HttpMethod.POST, entity, String.class);
+            log.info("Respuesta Groq status: {}", response.getStatusCode());
+            return response.getBody();
+        } catch (org.springframework.web.client.HttpClientErrorException e){
+            log.error("Error HTTP Groq - Status: {} - Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw e;
+        }
     }
+
     // Parseo de la respuesta
     private SugerenciaIAResponse parsearRespuesta(String respuestaRaw) {
         try{
             JsonNode root = objectMapper.readTree(respuestaRaw);
 
-            // Estructura de respuesta de Gemini
+            // Estructura de respuesta OpenIa/Groq
             String textoIA = root
-                    .path("candidates").get(0)
-                    .path("content")
-                    .path("parts").get(0)
-                    .path("text").asText();
+                    .path("choices").get(0)
+                    .path("message")
+                    .path("content").asText();
 
             textoIA = textoIA.replaceAll("```json", "").replaceAll("```", "").trim();
 
@@ -136,6 +142,7 @@ public class AsistenteIA {
                     .fechaSugerencia(LocalDateTime.now())
                     .build();
         } catch (Exception e) {
+            log.error("Error parseando respuesta Groq: {}", e.getMessage());
             throw new ServicioIANoDisponibleException("La IA devolvió una respuesta inválida");
         }
     }

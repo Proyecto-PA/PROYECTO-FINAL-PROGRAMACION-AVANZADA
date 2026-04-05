@@ -23,6 +23,7 @@ public class IAServiceImpl implements  IAService {
     private final HistorialRepository historialRepository;
     private final AsistenteIA asistenteIA;
 
+
     //Generar sugerencia
     @Override
     @Transactional(readOnly = true)

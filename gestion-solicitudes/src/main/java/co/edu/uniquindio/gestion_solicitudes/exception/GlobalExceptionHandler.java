@@ -73,7 +73,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ServicioIANoDisponibleException.class)
-    public ResponseEntity<ErrorResponse> handleServicioIANoDisponible( ServicioIANoDisponibleException ex, HttpServletRequest request){
+    public ResponseEntity<ErrorResponse> handleServicioIANoDisponible(
+            ServicioIANoDisponibleException ex, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(503)

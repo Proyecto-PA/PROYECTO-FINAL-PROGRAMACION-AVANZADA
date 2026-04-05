@@ -115,42 +115,42 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Transactional
     public SolicitudResponse clasificar(Long id, ClasificarRequest request, Long usuarioId) {
 
-    SolicitudAcademica solicitud = solicitudRepository.findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "No existe una solicitud con id " + id));
+        SolicitudAcademica solicitud = solicitudRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "No existe una solicitud con id " + id));
 
-    Usuario usuario = usuarioRepository.findById(usuarioId)
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "No existe un usuario con id " + usuarioId));
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "No existe un usuario con id " + usuarioId));
 
-    // Validar transición REGISTRADA → CLASIFICADA
-    ValidadorTransicionEstado.validarOLanzar(solicitud.getEstado(), EstadoSolicitud.CLASIFICADA);
+        // Validar transición REGISTRADA → CLASIFICADA
+        ValidadorTransicionEstado.validarOLanzar(solicitud.getEstado(), EstadoSolicitud.CLASIFICADA);
 
-    EstadoSolicitud estadoAnterior = solicitud.getEstado();
+        EstadoSolicitud estadoAnterior = solicitud.getEstado();
 
-    // Actualizar tipo y estado
-    solicitud.clasificarSolicitud(request.getTipo());
-    solicitud.cambiarEstado(EstadoSolicitud.CLASIFICADA);
-    solicitud = solicitudRepository.save(solicitud);
+        // Actualizar tipo y estado
+        solicitud.clasificarSolicitud(request.getTipo());
+        solicitud.cambiarEstado(EstadoSolicitud.CLASIFICADA);
+        solicitud = solicitudRepository.save(solicitud);
 
-    // Registrar en historial
-    String observacion = request.getObservacion() != null
-        ? request.getObservacion()
-        : "Clasificada como " + request.getTipo().name();
+        // Registrar en historial
+        String observacion = request.getObservacion() != null
+            ? request.getObservacion()
+            : "Clasificada como " + request.getTipo().name();
 
-    HistorialSolicitud historial = HistorialSolicitud.builder()
-        .solicitud(solicitud)
-        .fechaAccion(LocalDateTime.now())
-        .accionRealizada("Cambio de estado: " + estadoAnterior + " → " + EstadoSolicitud.CLASIFICADA)
-        .usuarioResponsable(usuario)
-        .estadoAnterior(estadoAnterior)
-        .estadoNuevo(EstadoSolicitud.CLASIFICADA)
-        .observaciones(observacion)
-        .build();
+        HistorialSolicitud historial = HistorialSolicitud.builder()
+            .solicitud(solicitud)
+            .fechaAccion(LocalDateTime.now())
+            .accionRealizada("Cambio de estado: " + estadoAnterior + " → " + EstadoSolicitud.CLASIFICADA)
+            .usuarioResponsable(usuario)
+            .estadoAnterior(estadoAnterior)
+            .estadoNuevo(EstadoSolicitud.CLASIFICADA)
+            .observaciones(observacion)
+            .build();
 
-    historialRepository.save(historial);
+        historialRepository.save(historial);
 
-    return toResponse(solicitud);
+        return toResponse(solicitud);
     }
 
     // Fase 4: implementación de transiciones con el validador
@@ -158,24 +158,24 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Transactional
     public SolicitudResponse iniciarAtencion(Long id, CambiarEstadoRequest request, Long usuarioId) {
 
-    SolicitudAcademica solicitud = solicitudRepository.findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "No existe una solicitud con id " + id));
+        SolicitudAcademica solicitud = solicitudRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "No existe una solicitud con id " + id));
 
-    Usuario usuario = usuarioRepository.findById(usuarioId)
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "No existe un usuario con id " + usuarioId));
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "No existe un usuario con id " + usuarioId));
 
-    // Validar transición REGISTRADA → EN_ATENCION
-    ValidadorTransicionEstado.validarOLanzar(solicitud.getEstado(), EstadoSolicitud.EN_ATENCION);
+        // Validar transición REGISTRADA → EN_ATENCION
+        ValidadorTransicionEstado.validarOLanzar(solicitud.getEstado(), EstadoSolicitud.EN_ATENCION);
 
-    EstadoSolicitud estadoAnterior = solicitud.getEstado();
-    solicitud.cambiarEstado(EstadoSolicitud.EN_ATENCION);
-    solicitud = solicitudRepository.save(solicitud);
+        EstadoSolicitud estadoAnterior = solicitud.getEstado();
+        solicitud.cambiarEstado(EstadoSolicitud.EN_ATENCION);
+        solicitud = solicitudRepository.save(solicitud);
 
-    String observacion = request != null && request.getObservacion() != null
-        ? request.getObservacion()
-        : "Se inició la atención de la solicitud";
+        String observacion = request != null && request.getObservacion() != null
+            ? request.getObservacion()
+            : "Se inició la atención de la solicitud";
 
     historialRepository.save(HistorialSolicitud.builder()
         .solicitud(solicitud)
@@ -304,6 +304,9 @@ public SolicitudResponse cancelar(Long id, CambiarEstadoRequest request, Long us
             .orElseThrow(() -> new ResourceNotFoundException(
                 "No existe un usuario con id " + usuarioId));
 
+        if(solicitud.getEstado() != EstadoSolicitud.CLASIFICADA){
+            throw new IllegalStateException("Solo se puede priorizar una solicitud en estado CLASIFICADA. " + "Estado actual: " + solicitud.getEstado());
+        }
         MotorReglasPrioridad.ResultadoPrioridad resultado = motorReglasPrioridad.calcular(solicitud);
 
         solicitud.setPrioridad(resultado.prioridad());

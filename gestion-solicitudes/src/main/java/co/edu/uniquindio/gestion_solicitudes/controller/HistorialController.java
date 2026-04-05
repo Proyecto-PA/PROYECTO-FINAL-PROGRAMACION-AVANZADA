@@ -4,6 +4,7 @@ import co.edu.uniquindio.gestion_solicitudes.dto.response.HistorialSolicitudResp
 import co.edu.uniquindio.gestion_solicitudes.service.HistorialService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +20,7 @@ public class HistorialController {
     private final HistorialService historialService;
 
     @GetMapping("/{solicitudId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<HistorialSolicitudResponse>> consultar (
             @PathVariable Long solicitudId){
         return ResponseEntity.ok(historialService.consultarPorSolicitud(solicitudId));

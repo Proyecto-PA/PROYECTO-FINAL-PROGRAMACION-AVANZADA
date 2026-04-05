@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -20,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
@@ -42,21 +44,21 @@ public class SecurityConfig {
                         }
                         """.formatted(request.getRequestURI()));
                         })
+                        .accessDeniedHandler(((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json");
+                            response.getWriter().write("""
+                                    {
+                                        "status": 403
+                                        "error": "Forbidden",
+                                        "mensaje": "No tienes permisos para realizar esta acción.",
+                                        "path": "%s"
+                                    }
+                                    """.formatted(request.getRequestURI()));
+                        }))
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/solicitudes").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/solicitudes/*/clasificar").hasAnyRole("DOCENTE", "ADMINISTRATIVO")
-                        .requestMatchers(HttpMethod.PUT, "/solicitudes/*/priorizar").hasAnyRole("DOCENTE", "ADMINISTRATIVO")
-                        .requestMatchers(HttpMethod.PUT, "/solicitudes/*/iniciar-atencion").hasAnyRole("DOCENTE", "ADMINISTRATIVO")
-                        .requestMatchers(HttpMethod.PUT, "/solicitudes/*/marcar-atendida").hasAnyRole("DOCENTE", "ADMINISTRATIVO")
-                        .requestMatchers(HttpMethod.PUT, "/solicitudes/*/cerrar").hasAnyRole("DOCENTE", "ADMINISTRATIVO")
-                        .requestMatchers(HttpMethod.PUT, "/solicitudes/*/cancelar").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/solicitudes/*/responsable").hasRole("ADMINISTRATIVO")
-                        .requestMatchers(HttpMethod.GET, "/solicitudes/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/historial/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/solicitudes/*/sugerencia-ia").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/solicitudes/*/sugerencia-ia/confirmar").hasAnyRole("DOCENTE", "ADMINISTRATIVO")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

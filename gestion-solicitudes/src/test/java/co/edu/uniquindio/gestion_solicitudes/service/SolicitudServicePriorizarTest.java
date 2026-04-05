@@ -104,4 +104,18 @@ class SolicitudServicePriorizarTest {
 
         assertThat(response.getPrioridad()).isEqualTo(Prioridad.BAJA);
     }
+
+    //Debe lanzar IllegalStateException
+    @Test
+    void priorizar_solicitudNoClasificada(){
+        solicitud.setEstado(EstadoSolicitud.REGISTRADA);
+        when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(admin));
+
+        assertThatThrownBy(() -> solicitudService.priorizar(10L, 1L)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("CLASIFICADA");
+
+        verify(motorReglasPrioridad, never()).calcular(any());
+        verify(historialRepository, never()).save(any());
+    }
 }
