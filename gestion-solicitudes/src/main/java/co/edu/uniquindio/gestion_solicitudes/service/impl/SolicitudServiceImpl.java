@@ -306,7 +306,7 @@ public SolicitudResponse cancelar(Long id, CambiarEstadoRequest request, Long us
     return toResponse(solicitud);
 }
 
-    // Fase 6: Priorización automática por motor de reglas
+    // Fase 6: Priorización manual por motor de reglas
     @Override
     @Transactional
     public SolicitudResponse priorizar(Long id, Long usuarioId) {
