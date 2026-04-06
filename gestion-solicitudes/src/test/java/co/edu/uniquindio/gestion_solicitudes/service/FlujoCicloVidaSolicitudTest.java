@@ -26,6 +26,7 @@ public class FlujoCicloVidaSolicitudTest {
     @Mock private SolicitudRepository solicitudRepository;
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private HistorialRepository historialRepository;
+    @Mock private MotorReglasPrioridad motorReglasPrioridad;
 
     @InjectMocks private SolicitudServiceImpl solicitudService;
 
@@ -88,6 +89,10 @@ public class FlujoCicloVidaSolicitudTest {
             .thenReturn(solicitudGuardadaEn(EstadoSolicitud.CERRADA));
 
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
+        
+        when(motorReglasPrioridad.calcular(any()))
+            .thenReturn(new MotorReglasPrioridad.ResultadoPrioridad(
+                Prioridad.MEDIA, "Prioridad asignada automáticamente durante flujo de prueba"));
 
         ClasificarRequest clasificarReq = new ClasificarRequest();
         clasificarReq.setTipo(TipoSolicitud.HOMOLOGACION);
@@ -106,8 +111,9 @@ public class FlujoCicloVidaSolicitudTest {
             1L, obsCierre("Solicitud cerrada formalmente."), 2L);
         assertThat(r4.getEstado()).isEqualTo(EstadoSolicitud.CERRADA);
 
-        // El historial se guardó 4 veces (una por cada transición)
-        verify(historialRepository, times(4)).save(any(HistorialSolicitud.class));
+        // El historial se guardó 5 veces: 2 en clasificar (cambio de estado + prioridad)
+        // + 1 en iniciarAtencion + 1 en marcarAtendida + 1 en cerrar
+        verify(historialRepository, times(5)).save(any(HistorialSolicitud.class));
         verify(solicitudRepository, times(4)).save(any(SolicitudAcademica.class));
     }
 

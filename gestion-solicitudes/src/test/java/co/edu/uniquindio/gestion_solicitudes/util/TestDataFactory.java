@@ -2,13 +2,11 @@ package co.edu.uniquindio.gestion_solicitudes.util;
 
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.Usuario;
+import co.edu.uniquindio.gestion_solicitudes.dto.request.*;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.CanalOrigen;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.EstadoSolicitud;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.RolUsuario;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.TipoSolicitud;
-import co.edu.uniquindio.gestion_solicitudes.dto.request.LoginRequest;
-import co.edu.uniquindio.gestion_solicitudes.dto.request.RegistroRequest;
-import co.edu.uniquindio.gestion_solicitudes.dto.request.SolicitudRequest;
 
 import java.time.LocalDateTime;
 
@@ -45,6 +43,26 @@ public class TestDataFactory {
         request.setDescripcion("Descripción de prueba suficientemente larga");
         request.setCanalOrigen(CanalOrigen.CSU);
         request.setFechaLimite(LocalDateTime.now().plusDays(10));
+        return request;
+    }
+
+    public static ClasificarRequest crearClasificarRequest(TipoSolicitud tipo, Integer impacto, String obs) {
+        ClasificarRequest request = new ClasificarRequest();
+        request.setTipo(tipo);
+        request.setImpactoAcademico(impacto);
+        request.setObservacion(obs);
+        return request;
+    }
+
+    public static CambiarEstadoRequest crearCambiarEstadoRequest(String observacion) {
+        CambiarEstadoRequest request = new CambiarEstadoRequest();
+        request.setObservacion(observacion);
+        return request;
+    }
+
+    public static CerrarSolicitudRequest crearCerrarRequest(String observacion) {
+        CerrarSolicitudRequest request = new CerrarSolicitudRequest();
+        request.setObservacion(observacion);
         return request;
     }
 

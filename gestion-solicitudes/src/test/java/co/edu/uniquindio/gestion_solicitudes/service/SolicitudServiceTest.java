@@ -29,6 +29,7 @@ public class SolicitudServiceTest {
     @Mock private SolicitudRepository solicitudRepository;
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private HistorialRepository historialRepository;
+    @Mock private MotorReglasPrioridad motorReglasPrioridad;
 
     @InjectMocks private SolicitudServiceImpl solicitudService;
 

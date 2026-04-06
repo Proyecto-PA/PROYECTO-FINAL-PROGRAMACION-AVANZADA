@@ -43,6 +43,7 @@ class SolicitudServicePriorizarTest {
     void setUp() {
         admin    = TestDataFactory.crearUsuario(1L, RolUsuario.ADMINISTRATIVO);
         solicitud = TestDataFactory.crearSolicitud(10L, admin);
+        solicitud.setEstado(EstadoSolicitud.CLASIFICADA);
         solicitud.setImpactoAcademico(5);
         solicitud.setFechaLimite(LocalDateTime.now().plusDays(1));
     }
