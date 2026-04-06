@@ -22,8 +22,4 @@ public class SolicitudRequest {
 
     private LocalDateTime fechaLimite;
 
-    @Min(value = 1, message = "El impacto académico mínimo es 1")
-    @Max(value = 5, message = "El impacto académico máximo es 5")
-    private Integer impactoAcademico;
-
 }

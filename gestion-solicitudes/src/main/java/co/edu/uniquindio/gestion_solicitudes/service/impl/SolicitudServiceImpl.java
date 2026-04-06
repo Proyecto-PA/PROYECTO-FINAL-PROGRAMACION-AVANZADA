@@ -43,7 +43,6 @@ public class SolicitudServiceImpl implements SolicitudService {
                 .fechaLimite(request.getFechaLimite())
                 .estado(EstadoSolicitud.REGISTRADA)
                 .solicitante(solicitante)
-                .impactoAcademico(request.getImpactoAcademico())
                 .build();
 
         solicitud = solicitudRepository.save(solicitud);
@@ -130,13 +129,14 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         // Actualizar tipo y estado
         solicitud.clasificarSolicitud(request.getTipo());
+        solicitud.setImpactoAcademico(request.getImpactoAcademico());
         solicitud.cambiarEstado(EstadoSolicitud.CLASIFICADA);
         solicitud = solicitudRepository.save(solicitud);
 
         // Registrar en historial
         String observacion = request.getObservacion() != null
             ? request.getObservacion()
-            : "Clasificada como " + request.getTipo().name();
+            : "Clasificada como " + request.getTipo().name() + " con impacto académico " + request.getImpactoAcademico();
 
         HistorialSolicitud historial = HistorialSolicitud.builder()
             .solicitud(solicitud)

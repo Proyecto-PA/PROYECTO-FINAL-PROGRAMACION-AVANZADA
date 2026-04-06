@@ -69,7 +69,7 @@ public class SolicitudController {
 
     // PUT /api/solicitudes/{id}/clasificar
     @PutMapping("/{id}/clasificar")
-    @PreAuthorize("hasAnyRole('DOCENTE', 'ADMINISTRATIVO')")
+    @PreAuthorize("hasAnyRole( 'ADMINISTRATIVO')")
     public ResponseEntity<SolicitudResponse> clasificar(
             @PathVariable Long id,
             @Valid @RequestBody ClasificarRequest request,
@@ -136,7 +136,7 @@ public class SolicitudController {
 
     // PUT /api/solicitudes/{id}/priorizar — Fase 6
     @PutMapping("/{id}/priorizar")
-    @PreAuthorize("hasAnyRole('DOCENTE', 'ADMINISTRATIVO')")
+    @PreAuthorize("hasAnyRole( 'ADMINISTRATIVO')")
     public ResponseEntity<SolicitudResponse> priorizar(
             @PathVariable Long id,
             @RequestHeader("Authorization") String authHeader) {

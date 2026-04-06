@@ -108,7 +108,7 @@ paths:
       description: |
         Crea una solicitud académica en el sistema (RF-01). El estado inicial
         es REGISTRADA y se genera la primera entrada en el historial automáticamente.
-        Cualquier usuario autenticado puede registrar solicitudes.
+        El ESTUDIANTE puede registrar solicitudes académicas.
       operationId: registrarSolicitud
       security:
         - bearerAuth: []
@@ -227,7 +227,7 @@ paths:
       description: |
         Asigna el tipo definitivo a la solicitud (RF-02). Solo es válido si la
         solicitud está en REGISTRADA. Ver transición T1 en `x-maquina-estados`.
-        Roles: DOCENTE, ADMINISTRATIVO.
+        Roles: ADMINISTRATIVO.
       operationId: clasificarSolicitud
       security:
         - bearerAuth: []
@@ -267,7 +267,7 @@ paths:
         Ejecuta el motor de reglas sobre la solicitud para calcular su prioridad (RF-03).
         Toma en cuenta el tipo, el impacto académico y la fecha límite.
         La solicitud debe estar en CLASIFICADA.
-        Roles: DOCENTE, ADMINISTRATIVO.
+        Roles: ADMINISTRATIVO.
       operationId: priorizarSolicitud
       security:
         - bearerAuth: []
@@ -859,12 +859,6 @@ components:
           nullable: true
           description: Si la solicitud tiene fecha límite, se usa para calcular la prioridad
           example: "2026-03-15T23:59:59"
-        impactoAcademico:
-          type: integer
-          minimum: 1
-          maximum: 5
-          description: Qué tan crítica es esta solicitud para el avance académico (1=bajo, 5=alto)
-          example: 4
         solicitanteId:
           type: integer
           format: int64
@@ -876,9 +870,19 @@ components:
       description: Indica el tipo al que pertenece la solicitud
       required:
         - tipo
+        - impactoAcademico
       properties:
         tipo:
           $ref: '#/components/schemas/TipoSolicitud'
+        impactoAcademico:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Nivel de impacto académico evaluado por el docente (1=bajo, 5=alto)
+          example: 4
+        observacion:
+          type: string
+          nullable: true
 
     CambiarEstadoRequest:
       type: object
@@ -1152,7 +1156,7 @@ x-maquina-estados:
   diagrama: |
     REGISTRADA → CLASIFICADA → EN_ATENCION → ATENDIDA → CERRADA
          │
-         └────────────→ CANCELADA
+          -------------→ CANCELADA
 
   estados:
 
@@ -1208,7 +1212,7 @@ x-maquina-estados:
       hacia: CLASIFICADA
       descripcion: Se revisa la solicitud y se le asigna un tipo
       endpoint: PUT /api/solicitudes/{id}/clasificar
-      quien_puede: [DOCENTE, ADMINISTRATIVO]
+      quien_puede: [ADMINISTRATIVO]
       condiciones:
         - La solicitud debe estar en REGISTRADA
 

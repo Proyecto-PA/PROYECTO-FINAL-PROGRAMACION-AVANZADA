@@ -45,7 +45,6 @@ public class TestDataFactory {
         request.setDescripcion("Descripción de prueba suficientemente larga");
         request.setCanalOrigen(CanalOrigen.CSU);
         request.setFechaLimite(LocalDateTime.now().plusDays(10));
-        request.setImpactoAcademico(3);
         return request;
     }
 
