@@ -127,10 +127,16 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         EstadoSolicitud estadoAnterior = solicitud.getEstado();
 
-        // Actualizar tipo y estado
+        // Actualizar tipo, impacto y estado
         solicitud.clasificarSolicitud(request.getTipo());
         solicitud.setImpactoAcademico(request.getImpactoAcademico());
         solicitud.cambiarEstado(EstadoSolicitud.CLASIFICADA);
+
+        // Calcular prioridad automáticamente al clasificar (RF-03)
+        MotorReglasPrioridad.ResultadoPrioridad resultadoPrioridad = motorReglasPrioridad.calcular(solicitud);
+        solicitud.setPrioridad(resultadoPrioridad.prioridad());
+        solicitud.setJustificacionPrioridad(resultadoPrioridad.justificacion());
+
         solicitud = solicitudRepository.save(solicitud);
 
         // Registrar en historial
@@ -138,17 +144,26 @@ public class SolicitudServiceImpl implements SolicitudService {
             ? request.getObservacion()
             : "Clasificada como " + request.getTipo().name() + " con impacto académico " + request.getImpactoAcademico();
 
-        HistorialSolicitud historial = HistorialSolicitud.builder()
-            .solicitud(solicitud)
-            .fechaAccion(LocalDateTime.now())
-            .accionRealizada("Cambio de estado: " + estadoAnterior + " → " + EstadoSolicitud.CLASIFICADA)
-            .usuarioResponsable(usuario)
-            .estadoAnterior(estadoAnterior)
-            .estadoNuevo(EstadoSolicitud.CLASIFICADA)
-            .observaciones(observacion)
-            .build();
+        historialRepository.save(HistorialSolicitud.builder()
+                .solicitud(solicitud)
+                .fechaAccion(LocalDateTime.now())
+                .accionRealizada("Cambio de estado: " + estadoAnterior + " -> " + EstadoSolicitud.CLASIFICADA)
+                .usuarioResponsable(usuario)
+                .estadoAnterior(estadoAnterior)
+                .estadoNuevo(EstadoSolicitud.CLASIFICADA)
+                .observaciones(observacion)
+                .build());
 
-        historialRepository.save(historial);
+        // Registro de priorización automática en historial
+        historialRepository.save(HistorialSolicitud.builder()
+                .solicitud(solicitud)
+                .fechaAccion(LocalDateTime.now())
+                .accionRealizada("Prioridad asignada automáticamente: " + resultadoPrioridad.prioridad())
+                .usuarioResponsable(usuario)
+                .estadoAnterior(EstadoSolicitud.CLASIFICADA)
+                .estadoNuevo(EstadoSolicitud.CLASIFICADA)
+                .observaciones(resultadoPrioridad.justificacion())
+                .build());
 
         return toResponse(solicitud);
     }

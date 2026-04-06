@@ -49,7 +49,7 @@ public class SecurityConfig {
                             response.setContentType("application/json");
                             response.getWriter().write("""
                                     {
-                                        "status": 403
+                                        "status": 403,
                                         "error": "Forbidden",
                                         "mensaje": "No tienes permisos para realizar esta acción.",
                                         "path": "%s"
