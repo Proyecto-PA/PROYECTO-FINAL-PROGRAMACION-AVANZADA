@@ -3,6 +3,7 @@ package co.edu.uniquindio.gestion_solicitudes.service;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.Prioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.ReglaPrioridad;
+import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.impl.ReglaPorCanalOrigen;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.impl.ReglaPorFechaLimite;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.impl.ReglaPorImpactoAcademico;
@@ -30,7 +31,6 @@ public class MotorReglasPrioridad {
             Prioridad.BAJA,    1
     );
 
-    public record ResultadoPrioridad(Prioridad prioridad, String justificacion) {}
 
     public ResultadoPrioridad calcular(SolicitudAcademica solicitud) {
         int puntajeTotal = 0;

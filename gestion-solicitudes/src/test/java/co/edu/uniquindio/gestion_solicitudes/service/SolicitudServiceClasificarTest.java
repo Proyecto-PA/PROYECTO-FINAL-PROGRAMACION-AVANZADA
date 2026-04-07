@@ -63,7 +63,7 @@ public class SolicitudServiceClasificarTest {
         when(solicitudRepository.save(any())).thenReturn(clasificada);
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
         when(motorReglasPrioridad.calcular(any())).thenReturn(
-            new MotorReglasPrioridad.ResultadoPrioridad(Prioridad.MEDIA, "Test justificación"));
+            motorReglasPrioridad.calcular(solicitud));
 
         SolicitudResponse response = solicitudService.clasificar(
             1L, crearRequest(TipoSolicitud.HOMOLOGACION, 3, "Clasificada manualmente"), 2L);
@@ -178,7 +178,7 @@ public class SolicitudServiceClasificarTest {
         when(solicitudRepository.save(any())).thenReturn(clasificada);
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
         when(motorReglasPrioridad.calcular(any())).thenReturn(
-            new MotorReglasPrioridad.ResultadoPrioridad(Prioridad.ALTA, "Test justificación"));
+            motorReglasPrioridad.calcular(solicitud));
 
         // observacion = null → debe usar texto por defecto
         SolicitudResponse response = solicitudService.clasificar(
@@ -212,7 +212,7 @@ public class SolicitudServiceClasificarTest {
         when(solicitudRepository.save(any())).thenReturn(clasificada);
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
         when(motorReglasPrioridad.calcular(any())).thenReturn(
-            new MotorReglasPrioridad.ResultadoPrioridad(Prioridad.BAJA, "Test justificación"));
+            motorReglasPrioridad.calcular(solicitud));
 
         solicitudService.clasificar(1L, crearRequest(TipoSolicitud.SOLICITUD_CUPOS, 2, "obs"), 2L);
 

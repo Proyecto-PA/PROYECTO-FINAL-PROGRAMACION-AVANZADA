@@ -53,7 +53,7 @@ class SolicitudServicePriorizarTest {
         when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(admin));
         when(motorReglasPrioridad.calcular(solicitud))
-            .thenReturn(new MotorReglasPrioridad.ResultadoPrioridad(Prioridad.CRITICA, "Justificación de prueba."));
+            .thenReturn(motorReglasPrioridad.calcular(solicitud));
         when(solicitudRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         SolicitudResponse response = solicitudService.priorizar(10L, 1L);
@@ -85,7 +85,7 @@ class SolicitudServicePriorizarTest {
         when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(admin));
         when(motorReglasPrioridad.calcular(solicitud))
-            .thenReturn(new MotorReglasPrioridad.ResultadoPrioridad(Prioridad.ALTA, "Justificación alta."));
+            .thenReturn(motorReglasPrioridad.calcular(solicitud));
         when(solicitudRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         solicitudService.priorizar(10L, 1L);
@@ -98,7 +98,7 @@ class SolicitudServicePriorizarTest {
         when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(admin));
         when(motorReglasPrioridad.calcular(solicitud))
-            .thenReturn(new MotorReglasPrioridad.ResultadoPrioridad(Prioridad.BAJA, "Sin urgencia."));
+            .thenReturn(motorReglasPrioridad.calcular(solicitud));
         when(solicitudRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         SolicitudResponse response = solicitudService.priorizar(10L, 1L);

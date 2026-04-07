@@ -2,6 +2,7 @@ package co.edu.uniquindio.gestion_solicitudes.service.impl;
 
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.*;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
+import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.AsignarResponsableRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.SolicitudRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.*;
@@ -28,6 +29,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final UsuarioRepository usuarioRepository;
     private final HistorialRepository historialRepository;
     private final MotorReglasPrioridad motorReglasPrioridad;
+    private final ValidadorTransicionEstado validadorTransicionEstado;
 
     @Override
     @Transactional
@@ -133,9 +135,9 @@ public class SolicitudServiceImpl implements SolicitudService {
         solicitud.cambiarEstado(EstadoSolicitud.CLASIFICADA);
 
         // Calcular prioridad automáticamente al clasificar (RF-03)
-        MotorReglasPrioridad.ResultadoPrioridad resultadoPrioridad = motorReglasPrioridad.calcular(solicitud);
-        solicitud.setPrioridad(resultadoPrioridad.prioridad());
-        solicitud.setJustificacionPrioridad(resultadoPrioridad.justificacion());
+        ResultadoPrioridad resultadoPrioridad = motorReglasPrioridad.calcular(solicitud);
+        solicitud.setPrioridad(resultadoPrioridad.getPrioridad());
+        solicitud.setJustificacionPrioridad(resultadoPrioridad.getJustificacion());
 
         solicitud = solicitudRepository.save(solicitud);
 
@@ -158,11 +160,11 @@ public class SolicitudServiceImpl implements SolicitudService {
         historialRepository.save(HistorialSolicitud.builder()
                 .solicitud(solicitud)
                 .fechaAccion(LocalDateTime.now())
-                .accionRealizada("Prioridad asignada automáticamente: " + resultadoPrioridad.prioridad())
-                .usuarioResponsable(usuario)
-                .estadoAnterior(EstadoSolicitud.CLASIFICADA)
-                .estadoNuevo(EstadoSolicitud.CLASIFICADA)
-                .observaciones(resultadoPrioridad.justificacion())
+                .accionRealizada("Prioridad asignada automáticamente: "+ resultadoPrioridad.getJustificacion())
+                        .usuarioResponsable(usuario)
+                        .estadoAnterior(EstadoSolicitud.CLASIFICADA)
+                        .estadoNuevo(EstadoSolicitud.CLASIFICADA)
+                        .observaciones(resultadoPrioridad.getJustificacion())
                 .build());
 
         return toResponse(solicitud);
@@ -322,20 +324,20 @@ public SolicitudResponse cancelar(Long id, CambiarEstadoRequest request, Long us
         if(solicitud.getEstado() != EstadoSolicitud.CLASIFICADA){
             throw new IllegalStateException("Solo se puede priorizar una solicitud en estado CLASIFICADA. " + "Estado actual: " + solicitud.getEstado());
         }
-        MotorReglasPrioridad.ResultadoPrioridad resultado = motorReglasPrioridad.calcular(solicitud);
 
-        solicitud.setPrioridad(resultado.prioridad());
-        solicitud.setJustificacionPrioridad(resultado.justificacion());
+        ResultadoPrioridad resultado = motorReglasPrioridad.calcular(solicitud);
+        solicitud.setPrioridad(resultado.getPrioridad());
+        solicitud.setJustificacionPrioridad(resultado.getJustificacion());
         solicitud = solicitudRepository.save(solicitud);
 
         historialRepository.save(HistorialSolicitud.builder()
             .solicitud(solicitud)
             .fechaAccion(LocalDateTime.now())
-            .accionRealizada("Prioridad asignada automáticamente: " + resultado.prioridad().name())
+            .accionRealizada("Prioridad asignada automáticamente: " + resultado.getPrioridad().name())
             .usuarioResponsable(usuario)
             .estadoAnterior(solicitud.getEstado())
             .estadoNuevo(solicitud.getEstado())
-            .observaciones(resultado.justificacion())
+            .observaciones(resultado.getJustificacion())
             .build());
 
         return toResponse(solicitud);

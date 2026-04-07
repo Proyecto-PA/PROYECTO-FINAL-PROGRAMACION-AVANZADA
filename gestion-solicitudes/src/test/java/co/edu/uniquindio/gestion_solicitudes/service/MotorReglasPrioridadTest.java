@@ -2,6 +2,7 @@ package co.edu.uniquindio.gestion_solicitudes.service;
 
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
+import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.util.TestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,10 +28,10 @@ class MotorReglasPrioridadTest {
         solicitud.setTipo(TipoSolicitud.HOMOLOGACION);
         solicitud.setCanalOrigen(CanalOrigen.CSU);
 
-        MotorReglasPrioridad.ResultadoPrioridad resultado = motor.calcular(solicitud);
+        ResultadoPrioridad resultado = motor.calcular(solicitud);
 
-        assertThat(resultado.prioridad()).isEqualTo(Prioridad.CRITICA);
-        assertThat(resultado.justificacion()).isNotBlank();
+        assertThat(resultado.getPrioridad()).isEqualTo(Prioridad.CRITICA);
+        assertThat(resultado.getJustificacion()).isNotBlank();
     }
 
     @Test
@@ -41,9 +42,9 @@ class MotorReglasPrioridadTest {
         solicitud.setTipo(TipoSolicitud.CONSULTA_ACADEMICA);
         solicitud.setCanalOrigen(CanalOrigen.TELEFONO);
 
-        MotorReglasPrioridad.ResultadoPrioridad resultado = motor.calcular(solicitud);
+        ResultadoPrioridad resultado = motor.calcular(solicitud);
 
-        assertThat(resultado.prioridad()).isEqualTo(Prioridad.BAJA);
+        assertThat(resultado.getPrioridad()).isEqualTo(Prioridad.BAJA);
     }
 
     @Test
@@ -54,9 +55,9 @@ class MotorReglasPrioridadTest {
         solicitud.setTipo(TipoSolicitud.HOMOLOGACION);
         solicitud.setCanalOrigen(CanalOrigen.CSU);
 
-        MotorReglasPrioridad.ResultadoPrioridad resultado = motor.calcular(solicitud);
+        ResultadoPrioridad resultado = motor.calcular(solicitud);
 
-        assertThat(resultado.prioridad()).isIn(Prioridad.ALTA, Prioridad.CRITICA);
+        assertThat(resultado.getPrioridad()).isIn(Prioridad.ALTA, Prioridad.CRITICA);
     }
 
     @Test
@@ -67,9 +68,9 @@ class MotorReglasPrioridadTest {
         solicitud.setTipo(TipoSolicitud.REGISTRO_ASIGNATURAS);
         solicitud.setCanalOrigen(CanalOrigen.CORREO);
 
-        MotorReglasPrioridad.ResultadoPrioridad resultado = motor.calcular(solicitud);
+        ResultadoPrioridad resultado = motor.calcular(solicitud);
 
-        assertThat(resultado.justificacion()).contains("Prioridad final calculada");
+        assertThat(resultado.getJustificacion()).contains("Prioridad final calculada");
     }
 
     @Test
@@ -78,9 +79,9 @@ class MotorReglasPrioridadTest {
         solicitud.setImpactoAcademico(null);
         solicitud.setFechaLimite(null);
 
-        MotorReglasPrioridad.ResultadoPrioridad resultado = motor.calcular(solicitud);
+        ResultadoPrioridad resultado = motor.calcular(solicitud);
 
-        assertThat(resultado.prioridad()).isNotNull();
-        assertThat(resultado.justificacion()).isNotBlank();
+        assertThat(resultado.getPrioridad()).isNotNull();
+        assertThat(resultado.getJustificacion()).isNotBlank();
     }
 }
