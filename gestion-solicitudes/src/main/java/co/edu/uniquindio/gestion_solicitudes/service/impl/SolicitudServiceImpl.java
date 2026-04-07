@@ -29,7 +29,6 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final UsuarioRepository usuarioRepository;
     private final HistorialRepository historialRepository;
     private final MotorReglasPrioridad motorReglasPrioridad;
-    private final ValidadorTransicionEstado validadorTransicionEstado;
 
     @Override
     @Transactional

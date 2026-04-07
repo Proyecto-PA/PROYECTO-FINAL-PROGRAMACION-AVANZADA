@@ -29,7 +29,7 @@ public class ValidadorTransicionEstado {
     public static void validarOLanzar(EstadoSolicitud actual, EstadoSolicitud nuevo) {
         if (!esValida(actual, nuevo)){
             throw new IllegalStateException(
-                    "No es posible pasar de " + actual + "  a " + nuevo + ". Transición no permitida"
+                    "No es posible pasar de " + actual + " a " + nuevo + ". Transición no permitida"
             );
         }
     } 

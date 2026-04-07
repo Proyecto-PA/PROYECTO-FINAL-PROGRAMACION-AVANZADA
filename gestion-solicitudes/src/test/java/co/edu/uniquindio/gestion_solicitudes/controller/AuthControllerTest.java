@@ -6,7 +6,6 @@ import co.edu.uniquindio.gestion_solicitudes.dto.request.RegistroRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.AuthResponse;
 import co.edu.uniquindio.gestion_solicitudes.service.AuthService;
 import co.edu.uniquindio.gestion_solicitudes.util.TestDataFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
