@@ -16,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.Set;
+
 import co.edu.uniquindio.gestion_solicitudes.domain.validator.ValidadorTransicionEstado;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.CambiarEstadoRequest;
@@ -31,6 +33,16 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final MotorReglasPrioridad motorReglasPrioridad;
     private final ValidadorTransicionEstado validadorTransicionEstado;
 
+    private static final Set<RolUsuario> ROLES_RESPONSABLE_VALIDOS =
+            Set.of(RolUsuario.DOCENTE, RolUsuario.ADMINISTRATIVO);
+
+    private void validarNoTerminada(SolicitudAcademica solicitudAcademica){
+        if (solicitudAcademica.estaCerrada()){
+            throw new IllegalStateException(
+                    "La solicitud con id " + solicitudAcademica.getId() + " está en estado " + solicitudAcademica.getEstado().name() + " y no puede ser modificada."
+            );
+        }
+    }
     @Override
     @Transactional
     public SolicitudResponse registrar(SolicitudRequest request, Long solicitanteId){
@@ -120,6 +132,8 @@ public class SolicitudServiceImpl implements SolicitudService {
             .orElseThrow(() -> new ResourceNotFoundException(
                 "No existe una solicitud con id " + id));
 
+        validarNoTerminada(solicitud);
+
         Usuario usuario = usuarioRepository.findById(usuarioId)
             .orElseThrow(() -> new ResourceNotFoundException(
                 "No existe un usuario con id " + usuarioId));
@@ -179,6 +193,8 @@ public class SolicitudServiceImpl implements SolicitudService {
             .orElseThrow(() -> new ResourceNotFoundException(
                 "No existe una solicitud con id " + id));
 
+        validarNoTerminada(solicitud);
+
         Usuario usuario = usuarioRepository.findById(usuarioId)
             .orElseThrow(() -> new ResourceNotFoundException(
                 "No existe un usuario con id " + usuarioId));
@@ -215,6 +231,8 @@ public SolicitudResponse marcarAtendida(Long id, CambiarEstadoRequest request, L
         .orElseThrow(() -> new ResourceNotFoundException(
             "No existe una solicitud con id " + id));
 
+    validarNoTerminada(solicitud);
+
     Usuario usuario = usuarioRepository.findById(usuarioId)
         .orElseThrow(() -> new ResourceNotFoundException(
             "No existe un usuario con id " + usuarioId));
@@ -250,6 +268,8 @@ public SolicitudResponse cerrar(Long id, CerrarSolicitudRequest request, Long us
         .orElseThrow(() -> new ResourceNotFoundException(
             "No existe una solicitud con id " + id));
 
+    validarNoTerminada(solicitud);
+
     Usuario usuario = usuarioRepository.findById(usuarioId)
         .orElseThrow(() -> new ResourceNotFoundException(
             "No existe un usuario con id " + usuarioId));
@@ -281,9 +301,15 @@ public SolicitudResponse cancelar(Long id, CambiarEstadoRequest request, Long us
         .orElseThrow(() -> new ResourceNotFoundException(
             "No existe una solicitud con id " + id));
 
+    validarNoTerminada(solicitud);
+
     Usuario usuario = usuarioRepository.findById(usuarioId)
         .orElseThrow(() -> new ResourceNotFoundException(
             "No existe un usuario con id " + usuarioId));
+
+    if(usuario.getRol() == RolUsuario.ESTUDIANTE && !solicitud.getSolicitante().getId().equals(usuarioId)){
+        throw new IllegalStateException("Un estudiante solo puede cancelar sus propias solicitudes");
+    }
 
     ValidadorTransicionEstado.validarOLanzar(solicitud.getEstado(), EstadoSolicitud.CANCELADA);
 
@@ -309,6 +335,10 @@ public SolicitudResponse cancelar(Long id, CambiarEstadoRequest request, Long us
 }
 
     // Fase 6: Priorización manual por motor de reglas
+    // Nota: Clasificar () ya calcula y persiste la prioridad automáticamente.
+    // Este endpoint sigue disponible para que un ADMINISTRATIVO fuerce un recálculo explícito
+    // si los datos de la solicitud fueron modificados sin pasar por clasificar de nuevo.
+    // No produce un resultadi diferente a menos que los datos hayan cambiado.
     @Override
     @Transactional
     public SolicitudResponse priorizar(Long id, Long usuarioId) {
@@ -316,6 +346,8 @@ public SolicitudResponse cancelar(Long id, CambiarEstadoRequest request, Long us
         SolicitudAcademica solicitud = solicitudRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(
                 "No existe una solicitud con id " + id));
+
+        validarNoTerminada(solicitud);
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
             .orElseThrow(() -> new ResourceNotFoundException(
@@ -352,6 +384,8 @@ public SolicitudResponse cancelar(Long id, CambiarEstadoRequest request, Long us
             .orElseThrow(() -> new ResourceNotFoundException(
                 "No existe una solicitud con id " + id));
 
+        validarNoTerminada(solicitud);
+
         Usuario solicitanteAccion = usuarioRepository.findById(usuarioId)
             .orElseThrow(() -> new ResourceNotFoundException(
                 "No existe un usuario con id " + usuarioId));
@@ -365,6 +399,10 @@ public SolicitudResponse cancelar(Long id, CambiarEstadoRequest request, Long us
                 "El usuario con id " + request.getResponsableId() + " no está activo");
         }
 
+        if(!ROLES_RESPONSABLE_VALIDOS.contains(responsable.getRol())){
+            throw new IllegalStateException("El usuario con id " + request.getResponsableId() + " tiene rol "
+            + responsable.getRol().name() + " Solo un DOCENTE o ADMINISTRATIVO puede ser asignado como responsable.");
+        }
         solicitud.asignarResponsable(responsable);
         solicitud = solicitudRepository.save(solicitud);
 
