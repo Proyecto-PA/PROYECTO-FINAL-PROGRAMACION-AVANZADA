@@ -1133,7 +1133,9 @@
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "pm.test('Estado es CLASIFICADA', () => pm.expect(pm.response.json().estado).to.eql('CLASIFICADA'));",
-                  "pm.test('Tipo actualizado', () => pm.expect(pm.response.json().tipo).to.be.a('string'));"
+                  "pm.test('Tipo actualizado', () => pm.expect(pm.response.json().tipo).to.be.a('string'));",
+                  "pm.test('Prioridad calculada automáticamente', () => pm.expect(pm.response.json().prioridad).to.be.oneOf(['CRITICA', 'ALTA', 'MEDIA', 'BAJA']));",
+                  "pm.test('Justificación de prioridad presente', () => pm.expect(pm.response.json().justificacionPrioridad).to.be.a('string').and.not.empty);"
                 ],
                 "type": "text/javascript"
               }
@@ -2358,7 +2360,11 @@
               "script": {
                 "exec": [
                   "pm.test('Clasificada', () => pm.response.to.have.status(200));",
-                  "pm.test('Estado CLASIFICADA', () => pm.expect(pm.response.json().estado).to.eql('CLASIFICADA'));"
+                  "pm.test('Estado CLASIFICADA', () => pm.expect(pm.response.json().estado).to.eql('CLASIFICADA'));",
+                  "pm.test('Prioridad calculada automáticamente', () => pm.expect(pm.response.json().prioridad).to.be.oneOf(['CRITICA', 'ALTA', 'MEDIA', 'BAJA']));",
+                  "pm.test('Justificación de prioridad presente', () => pm.expect(pm.response.json().justificacionPrioridad).to.be.a('string').and.not.empty);",
+                  "console.log('Prioridad asignada al clasificar:', pm.response.json().prioridad);",
+                  "console.log('Justificación:', pm.response.json().justificacionPrioridad);"
                 ],
                 "type": "text/javascript"
               }
@@ -2618,7 +2624,7 @@
                 "exec": [
                   "pm.test('Historial obtenido', () => pm.response.to.have.status(200));",
                   "const historial = pm.response.json();",
-                  "pm.test('Al menos 4 entradas en historial', () => pm.expect(historial.length).to.be.above(3));",
+                  "pm.test('Al menos 6 entradas en historial', () => pm.expect(historial.length).to.be.above(5));",
                   "pm.test('Primera entrada es REGISTRADA', () => pm.expect(historial[0].estadoNuevo).to.eql('REGISTRADA'));",
                   "pm.test('Última entrada es CERRADA', () => pm.expect(historial[historial.length - 1].estadoNuevo).to.eql('CERRADA'));",
                   "console.log('Total entradas historial:', historial.length);"
