@@ -3,6 +3,7 @@ import co.edu.uniquindio.gestion_solicitudes.domain.entity.HistorialSolicitud;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.Usuario;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
+import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
 import co.edu.uniquindio.gestion_solicitudes.exception.ResourceNotFoundException;
@@ -178,7 +179,7 @@ public class SolicitudServiceClasificarTest {
         when(solicitudRepository.save(any())).thenReturn(clasificada);
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
         when(motorReglasPrioridad.calcular(any())).thenReturn(
-            motorReglasPrioridad.calcular(solicitud));
+            new ResultadoPrioridad(Prioridad.ALTA, "Justificación de prioridad de prueba"));
 
         // observacion = null → debe usar texto por defecto
         SolicitudResponse response = solicitudService.clasificar(

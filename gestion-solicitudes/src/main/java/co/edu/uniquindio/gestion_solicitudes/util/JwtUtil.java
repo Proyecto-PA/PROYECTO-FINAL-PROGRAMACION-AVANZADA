@@ -1,24 +1,22 @@
 package co.edu.uniquindio.gestion_solicitudes.util;
 
+import co.edu.uniquindio.gestion_solicitudes.config.JwtProperties;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
 
 @Component
+@RequiredArgsConstructor
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
-    private String secret;
-
-    @Value("${jwt.expiration-ms}")
-    private long expirationMs;
+    private final JwtProperties jwtProperties;
 
     private Key getKey(){
-        return Keys.hmacShaKeyFor(secret.getBytes());
+        return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes());
     }
 
     public String generarToken(String email, String rol, Long userId){
@@ -27,7 +25,7 @@ public class JwtUtil {
                 .claim("rol", rol)
                 .claim("userId", userId)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .expiration(new Date(System.currentTimeMillis() + jwtProperties.getExpirationMs()))
                 .signWith(getKey())
                 .compact();
     }
@@ -54,7 +52,7 @@ public class JwtUtil {
     }
 
     private Claims parsearClaims(String token){
-        return Jwts.parser().verifyWith(Keys.hmacShaKeyFor(secret.getBytes()))
+        return Jwts.parser().verifyWith(Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes()))
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

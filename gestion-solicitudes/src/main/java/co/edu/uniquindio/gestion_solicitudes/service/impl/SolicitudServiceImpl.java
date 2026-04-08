@@ -31,7 +31,6 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final UsuarioRepository usuarioRepository;
     private final HistorialRepository historialRepository;
     private final MotorReglasPrioridad motorReglasPrioridad;
-    private final ValidadorTransicionEstado validadorTransicionEstado;
 
     private static final Set<RolUsuario> ROLES_RESPONSABLE_VALIDOS =
             Set.of(RolUsuario.DOCENTE, RolUsuario.ADMINISTRATIVO);

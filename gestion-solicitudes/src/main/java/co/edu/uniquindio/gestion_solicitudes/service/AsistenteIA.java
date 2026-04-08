@@ -1,6 +1,6 @@
 package co.edu.uniquindio.gestion_solicitudes.service;
 
-import co.edu.uniquindio.gestion_solicitudes.domain.entity.HistorialSolicitud;
+import co.edu.uniquindio.gestion_solicitudes.config.IaProperties;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SugerenciaIAResponse;
 import co.edu.uniquindio.gestion_solicitudes.exception.ServicioIANoDisponibleException;
@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -22,19 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AsistenteIA {
 
-
-    @Value("${ia.api.url:https://api.anthropic.com/v1/messages}")
-    private String iaApiUrl;
-
-    @Value("${ia.api.key:}")
-    private String iaApiKey;
-
-    @Value("${ia.api.model:claude-haiku-4-5-20251001}")
-    private String iaModel;
-
-    @Value("${ia.habilitada:true}")
-    private boolean iaHabilitada;
-
+    private final IaProperties iaProperties;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
@@ -43,10 +30,10 @@ public class AsistenteIA {
      * Si la IA no está disponible, lanza ServicioIANoDisponibleException (HTTP 503).
      */
     public SugerenciaIAResponse generarSugerencia(SolicitudAcademica solicitudAcademica){
-        if (!iaHabilitada){
+        if (!iaProperties.getHabilitada()){
             throw new ServicioIANoDisponibleException("El asistente de IA está deshabilitada en la configuración.");
         }
-        if (iaApiKey == null || iaApiKey.isBlank()){
+        if (iaProperties.getApi().getKey() == null || iaProperties.getApi().getKey().isBlank()){
             throw new ServicioIANoDisponibleException("No se ha configurado la clave de API para el asistente de IA.");
         }
 
@@ -104,18 +91,25 @@ public class AsistenteIA {
     private String llamarAPI(String prompt){
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(iaApiKey);
+        headers.set("x-api-key", iaProperties.getApi().getKey()); // Para APIs que usan este header
+        headers.set("anthropic-version", "2023-06-01"); // Específico para Anthropic
 
-        Map<String, Object> body = Map.of("model", iaModel, "messages", List.of(Map.of("role", "user", "content", prompt)), "temperature", 0.3);
+        Map<String, Object> body = Map.of(
+    "model", iaProperties.getApi().getModel(),
+    "messages", List.of(Map.of("role", "user", "content", prompt)),
+    "temperature", 0.3,
+    "max_tokens", 512
+        );
+
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
         try{
-            ResponseEntity<String> response = restTemplate.exchange(iaApiUrl, HttpMethod.POST, entity, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(iaProperties.getApi().getUrl(), HttpMethod.POST, entity, String.class);
             log.info("Respuesta Groq status: {}", response.getStatusCode());
             return response.getBody();
         } catch (org.springframework.web.client.HttpClientErrorException e){
             log.error("Error HTTP Groq - Status: {} - Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw e;
+            throw new ServicioIANoDisponibleException("El asistente de IA no pudo procesar la solicitud. Intente nuevamente más tarde.");
         }
     }
 

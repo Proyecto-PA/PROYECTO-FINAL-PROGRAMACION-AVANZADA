@@ -1,7 +1,5 @@
 package co.edu.uniquindio.gestion_solicitudes.dto.request;
-import java.io.Serial;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
