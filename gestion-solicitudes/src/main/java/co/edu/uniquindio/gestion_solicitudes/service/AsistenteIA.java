@@ -91,8 +91,7 @@ public class AsistenteIA {
     private String llamarAPI(String prompt){
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("x-api-key", iaProperties.getApi().getKey()); // Para APIs que usan este header
-        headers.set("anthropic-version", "2023-06-01"); // Específico para Anthropic
+        headers.setBearerAuth(iaProperties.getApi().getKey());
 
         Map<String, Object> body = Map.of(
     "model", iaProperties.getApi().getModel(),
