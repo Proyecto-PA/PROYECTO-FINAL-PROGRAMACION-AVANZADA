@@ -2,6 +2,9 @@ package co.edu.uniquindio.gestion_solicitudes.service;
 
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.*;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
+import co.edu.uniquindio.gestion_solicitudes.domain.factory.SolicitudFactory;
+import co.edu.uniquindio.gestion_solicitudes.domain.observer.HistorialObserver;
+import co.edu.uniquindio.gestion_solicitudes.domain.observer.SolicitudObserver;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.*;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
@@ -9,12 +12,15 @@ import co.edu.uniquindio.gestion_solicitudes.exception.ResourceNotFoundException
 import co.edu.uniquindio.gestion_solicitudes.repository.*;
 import co.edu.uniquindio.gestion_solicitudes.service.impl.SolicitudServiceImpl;
 import co.edu.uniquindio.gestion_solicitudes.util.TestDataFactory;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -28,8 +34,18 @@ public class FlujoCicloVidaSolicitudTest {
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private HistorialRepository historialRepository;
     @Mock private MotorReglasPrioridad motorReglasPrioridad;
+    @Spy  private List<SolicitudObserver> observadores = new ArrayList<>();
+    @Mock private SolicitudFactory solicitudFactory;
 
     @InjectMocks private SolicitudServiceImpl solicitudService;
+
+    @BeforeEach
+    void setUp() {
+        observadores.clear();
+        observadores.add(new HistorialObserver(historialRepository));
+        lenient().when(solicitudFactory.toResponse(any(SolicitudAcademica.class)))
+            .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+    }
 
     private Usuario docente() {
         return TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
@@ -69,10 +85,11 @@ public class FlujoCicloVidaSolicitudTest {
     @DisplayName("Flujo completo: REGISTRADA→CLASIFICADA→EN_ATENCION→ATENDIDA→CERRADA")
     void flujoCompleto_cicloDeVidaCompleto() {
 
-        // Paso 1: Clasificar (REGISTRADA → CLASIFICADA)
         SolicitudAcademica enRegistrada = solicitudEn(EstadoSolicitud.REGISTRADA);
         SolicitudAcademica enClasificada = solicitudGuardadaEn(EstadoSolicitud.CLASIFICADA);
         enClasificada.setTipo(TipoSolicitud.HOMOLOGACION);
+        enClasificada.setPrioridad(Prioridad.MEDIA);
+        enClasificada.setJustificacionPrioridad("Prioridad asignada automáticamente durante flujo de prueba");
 
         when(solicitudRepository.findById(1L))
             .thenReturn(Optional.of(enRegistrada))
@@ -90,7 +107,7 @@ public class FlujoCicloVidaSolicitudTest {
             .thenReturn(solicitudGuardadaEn(EstadoSolicitud.CERRADA));
 
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
-        
+
         when(motorReglasPrioridad.calcular(any()))
             .thenReturn(new ResultadoPrioridad(
                 Prioridad.MEDIA, "Prioridad asignada automáticamente durante flujo de prueba"));
@@ -112,8 +129,7 @@ public class FlujoCicloVidaSolicitudTest {
             1L, obsCierre("Solicitud cerrada formalmente."), 2L);
         assertThat(r4.getEstado()).isEqualTo(EstadoSolicitud.CERRADA);
 
-        // El historial se guardó 5 veces: 2 en clasificar (cambio de estado + prioridad)
-        // + 1 en iniciarAtencion + 1 en marcarAtendida + 1 en cerrar
+        // Observer guarda: 2 en clasificar (estado + prioridad) + 1 iniciar + 1 atender + 1 cerrar = 5
         verify(historialRepository, times(5)).save(any(HistorialSolicitud.class));
         verify(solicitudRepository, times(4)).save(any(SolicitudAcademica.class));
     }
@@ -220,7 +236,6 @@ public class FlujoCicloVidaSolicitudTest {
         SolicitudAcademica cerrada = solicitudEn(EstadoSolicitud.CERRADA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(cerrada));
-        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
 
         assertThatThrownBy(() ->
             solicitudService.iniciarAtencion(1L, obs("Reactivando"), 2L))
@@ -236,7 +251,6 @@ public class FlujoCicloVidaSolicitudTest {
         SolicitudAcademica cancelada = solicitudEn(EstadoSolicitud.CANCELADA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(cancelada));
-        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
 
         ClasificarRequest req = new ClasificarRequest();
         req.setTipo(TipoSolicitud.OTRO);
@@ -252,7 +266,6 @@ public class FlujoCicloVidaSolicitudTest {
     @Test
     @DisplayName("Cada transición registra exactamente una entrada en historial")
     void flujo_cadaTransicionRegistraHistorial() {
-        // Iniciar atención
         SolicitudAcademica enClasificada = solicitudEn(EstadoSolicitud.CLASIFICADA);
         SolicitudAcademica enAtencion = solicitudGuardadaEn(EstadoSolicitud.EN_ATENCION);
 
@@ -263,7 +276,6 @@ public class FlujoCicloVidaSolicitudTest {
 
         solicitudService.iniciarAtencion(1L, obs("Una sola entrada"), 2L);
 
-        // Solo 1 entrada en historial, no más
         verify(historialRepository, times(1)).save(any(HistorialSolicitud.class));
     }
 

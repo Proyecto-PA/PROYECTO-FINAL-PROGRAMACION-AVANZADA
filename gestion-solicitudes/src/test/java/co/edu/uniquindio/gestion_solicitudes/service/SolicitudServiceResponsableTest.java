@@ -3,6 +3,9 @@ package co.edu.uniquindio.gestion_solicitudes.service;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.Usuario;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.RolUsuario;
+import co.edu.uniquindio.gestion_solicitudes.domain.factory.SolicitudFactory;
+import co.edu.uniquindio.gestion_solicitudes.domain.observer.HistorialObserver;
+import co.edu.uniquindio.gestion_solicitudes.domain.observer.SolicitudObserver;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.AsignarResponsableRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
 import co.edu.uniquindio.gestion_solicitudes.exception.ResourceNotFoundException;
@@ -16,8 +19,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +38,8 @@ class SolicitudServiceResponsableTest {
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private HistorialRepository historialRepository;
     @Mock private MotorReglasPrioridad motorReglasPrioridad;
+    @Spy  private List<SolicitudObserver> observadores = new ArrayList<>();
+    @Mock private SolicitudFactory solicitudFactory;
 
     @InjectMocks
     private SolicitudServiceImpl solicitudService;
@@ -42,6 +50,11 @@ class SolicitudServiceResponsableTest {
 
     @BeforeEach
     void setUp() {
+        observadores.clear();
+        observadores.add(new HistorialObserver(historialRepository));
+        lenient().when(solicitudFactory.toResponse(any(SolicitudAcademica.class)))
+            .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+
         admin   = TestDataFactory.crearUsuario(1L, RolUsuario.ADMINISTRATIVO);
         docente = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
         solicitud = TestDataFactory.crearSolicitud(10L, TestDataFactory.crearUsuario(3L, RolUsuario.ESTUDIANTE));

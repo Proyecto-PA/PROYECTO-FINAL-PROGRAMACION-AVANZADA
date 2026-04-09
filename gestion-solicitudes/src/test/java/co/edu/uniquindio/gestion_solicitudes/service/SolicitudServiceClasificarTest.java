@@ -3,6 +3,9 @@ import co.edu.uniquindio.gestion_solicitudes.domain.entity.HistorialSolicitud;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.Usuario;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
+import co.edu.uniquindio.gestion_solicitudes.domain.factory.SolicitudFactory;
+import co.edu.uniquindio.gestion_solicitudes.domain.observer.HistorialObserver;
+import co.edu.uniquindio.gestion_solicitudes.domain.observer.SolicitudObserver;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
@@ -12,12 +15,15 @@ import co.edu.uniquindio.gestion_solicitudes.repository.SolicitudRepository;
 import co.edu.uniquindio.gestion_solicitudes.repository.UsuarioRepository;
 import co.edu.uniquindio.gestion_solicitudes.service.impl.SolicitudServiceImpl;
 import co.edu.uniquindio.gestion_solicitudes.util.TestDataFactory;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -33,8 +39,18 @@ public class SolicitudServiceClasificarTest {
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private HistorialRepository historialRepository;
     @Mock private MotorReglasPrioridad motorReglasPrioridad;
+    @Spy  private List<SolicitudObserver> observadores = new ArrayList<>();
+    @Mock private SolicitudFactory solicitudFactory;
 
     @InjectMocks private SolicitudServiceImpl solicitudService;
+
+    @BeforeEach
+    void setUp() {
+        observadores.clear();
+        observadores.add(new HistorialObserver(historialRepository));
+        lenient().when(solicitudFactory.toResponse(any(SolicitudAcademica.class)))
+            .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+    }
 
     private ClasificarRequest crearRequest(TipoSolicitud tipo, Integer impacto, String obs) {
         ClasificarRequest r = new ClasificarRequest();
@@ -50,7 +66,6 @@ public class SolicitudServiceClasificarTest {
         Usuario docente = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
         Usuario solicitante = TestDataFactory.crearUsuario(1L, RolUsuario.ESTUDIANTE);
         SolicitudAcademica solicitud = TestDataFactory.crearSolicitud(1L, solicitante);
-        // estado inicial = REGISTRADA (viene del factory)
 
         SolicitudAcademica clasificada = TestDataFactory.crearSolicitud(1L, solicitante);
         clasificada.setEstado(EstadoSolicitud.CLASIFICADA);
@@ -64,14 +79,14 @@ public class SolicitudServiceClasificarTest {
         when(solicitudRepository.save(any())).thenReturn(clasificada);
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
         when(motorReglasPrioridad.calcular(any())).thenReturn(
-            motorReglasPrioridad.calcular(solicitud));
+            new ResultadoPrioridad(Prioridad.MEDIA, "Test justificación"));
 
         SolicitudResponse response = solicitudService.clasificar(
             1L, crearRequest(TipoSolicitud.HOMOLOGACION, 3, "Clasificada manualmente"), 2L);
 
         assertThat(response.getEstado()).isEqualTo(EstadoSolicitud.CLASIFICADA);
         assertThat(response.getTipo()).isEqualTo(TipoSolicitud.HOMOLOGACION);
-        // Se guardan dos registros en historial: uno para cambio de estado, otro para prioridad
+        // Observer guarda 2 registros: cambio de estado + prioridad
         verify(historialRepository, times(2)).save(any(HistorialSolicitud.class));
         verify(solicitudRepository).save(any(SolicitudAcademica.class));
     }
@@ -96,7 +111,7 @@ public class SolicitudServiceClasificarTest {
         Usuario docente = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
         Usuario solicitante = TestDataFactory.crearUsuario(1L, RolUsuario.ESTUDIANTE);
         SolicitudAcademica solicitud = TestDataFactory.crearSolicitud(1L, solicitante);
-        solicitud.setEstado(EstadoSolicitud.CLASIFICADA); // ya fue clasificada
+        solicitud.setEstado(EstadoSolicitud.CLASIFICADA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente));
@@ -137,7 +152,6 @@ public class SolicitudServiceClasificarTest {
         solicitud.setEstado(EstadoSolicitud.CANCELADA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
-        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente));
 
         assertThatThrownBy(() ->
             solicitudService.clasificar(1L, crearRequest(TipoSolicitud.OTRO, 4, null), 2L))
@@ -181,16 +195,13 @@ public class SolicitudServiceClasificarTest {
         when(motorReglasPrioridad.calcular(any())).thenReturn(
             new ResultadoPrioridad(Prioridad.ALTA, "Justificación de prioridad de prueba"));
 
-        // observacion = null → debe usar texto por defecto
         SolicitudResponse response = solicitudService.clasificar(
             1L, crearRequest(TipoSolicitud.CANCELACION_ASIGNATURAS, 4, null), 2L);
 
         assertThat(response.getEstado()).isEqualTo(EstadoSolicitud.CLASIFICADA);
-        // Verificamos que historial SÍ se guarda dos veces (cambio de estado y prioridad)
         ArgumentCaptor<HistorialSolicitud> captor =
             ArgumentCaptor.forClass(HistorialSolicitud.class);
         verify(historialRepository, times(2)).save(captor.capture());
-        // El primer registro debe contener la información de clasificación
         assertThat(captor.getAllValues().get(0).getObservaciones())
             .contains("CANCELACION_ASIGNATURAS");
     }
@@ -213,7 +224,7 @@ public class SolicitudServiceClasificarTest {
         when(solicitudRepository.save(any())).thenReturn(clasificada);
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
         when(motorReglasPrioridad.calcular(any())).thenReturn(
-            motorReglasPrioridad.calcular(solicitud));
+            new ResultadoPrioridad(Prioridad.BAJA, "Justificación test"));
 
         solicitudService.clasificar(1L, crearRequest(TipoSolicitud.SOLICITUD_CUPOS, 2, "obs"), 2L);
 
@@ -221,11 +232,10 @@ public class SolicitudServiceClasificarTest {
             ArgumentCaptor.forClass(HistorialSolicitud.class);
         verify(historialRepository, times(2)).save(captor.capture());
 
-        // El primer registro corresponde al cambio de estado
         HistorialSolicitud registrado = captor.getAllValues().get(0);
         assertThat(registrado.getEstadoAnterior()).isEqualTo(EstadoSolicitud.REGISTRADA);
         assertThat(registrado.getEstadoNuevo()).isEqualTo(EstadoSolicitud.CLASIFICADA);
         assertThat(registrado.getUsuarioResponsable().getId()).isEqualTo(2L);
     }
-    
+
 }

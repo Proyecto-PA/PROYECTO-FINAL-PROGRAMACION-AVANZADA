@@ -2,6 +2,9 @@ package co.edu.uniquindio.gestion_solicitudes.service;
 
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.*;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
+import co.edu.uniquindio.gestion_solicitudes.domain.factory.SolicitudFactory;
+import co.edu.uniquindio.gestion_solicitudes.domain.observer.HistorialObserver;
+import co.edu.uniquindio.gestion_solicitudes.domain.observer.SolicitudObserver;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.CambiarEstadoRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.CerrarSolicitudRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
@@ -9,12 +12,15 @@ import co.edu.uniquindio.gestion_solicitudes.exception.ResourceNotFoundException
 import co.edu.uniquindio.gestion_solicitudes.repository.*;
 import co.edu.uniquindio.gestion_solicitudes.service.impl.SolicitudServiceImpl;
 import co.edu.uniquindio.gestion_solicitudes.util.TestDataFactory;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -27,8 +33,19 @@ public class SolicitudServiceTransicionesTest {
     @Mock private SolicitudRepository solicitudRepository;
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private HistorialRepository historialRepository;
+    @Mock private MotorReglasPrioridad motorReglasPrioridad;
+    @Spy  private List<SolicitudObserver> observadores = new ArrayList<>();
+    @Mock private SolicitudFactory solicitudFactory;
 
     @InjectMocks private SolicitudServiceImpl solicitudService;
+
+    @BeforeEach
+    void setUp() {
+        observadores.clear();
+        observadores.add(new HistorialObserver(historialRepository));
+        lenient().when(solicitudFactory.toResponse(any(SolicitudAcademica.class)))
+            .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+    }
 
     private Usuario docente() { return TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE); }
     private Usuario estudiante() { return TestDataFactory.crearUsuario(1L, RolUsuario.ESTUDIANTE); }
@@ -245,7 +262,6 @@ public class SolicitudServiceTransicionesTest {
         SolicitudAcademica solicitud = solicitudEn(EstadoSolicitud.CERRADA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
-        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
 
         assertThatThrownBy(() ->
             solicitudService.cerrar(1L, requestCierre("Cierre duplicado"), 2L))
@@ -314,7 +330,6 @@ public class SolicitudServiceTransicionesTest {
         SolicitudAcademica solicitud = solicitudEn(EstadoSolicitud.CANCELADA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(estudiante()));
 
         assertThatThrownBy(() ->
             solicitudService.cancelar(1L, requestConObs("doble cancelación"), 1L))
@@ -352,7 +367,6 @@ public class SolicitudServiceTransicionesTest {
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
 
-        // Intentar clasificar estando en EN_ATENCION
         co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest clasificarReq =
             new co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest();
         clasificarReq.setTipo(TipoSolicitud.OTRO);
@@ -370,7 +384,6 @@ public class SolicitudServiceTransicionesTest {
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
 
-        // Intentar marcar como atendida desde REGISTRADA
         assertThatThrownBy(() ->
             solicitudService.marcarAtendida(1L, requestConObs("obs"), 2L))
             .isInstanceOf(IllegalStateException.class);

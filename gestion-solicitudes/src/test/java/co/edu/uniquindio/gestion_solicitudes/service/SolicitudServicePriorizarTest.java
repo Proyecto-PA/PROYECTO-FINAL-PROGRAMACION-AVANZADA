@@ -3,6 +3,10 @@ package co.edu.uniquindio.gestion_solicitudes.service;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.Usuario;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
+import co.edu.uniquindio.gestion_solicitudes.domain.factory.SolicitudFactory;
+import co.edu.uniquindio.gestion_solicitudes.domain.observer.HistorialObserver;
+import co.edu.uniquindio.gestion_solicitudes.domain.observer.SolicitudObserver;
+import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
 import co.edu.uniquindio.gestion_solicitudes.exception.ResourceNotFoundException;
 import co.edu.uniquindio.gestion_solicitudes.repository.HistorialRepository;
@@ -15,9 +19,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +39,8 @@ class SolicitudServicePriorizarTest {
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private HistorialRepository historialRepository;
     @Mock private MotorReglasPrioridad motorReglasPrioridad;
+    @Spy  private List<SolicitudObserver> observadores = new ArrayList<>();
+    @Mock private SolicitudFactory solicitudFactory;
 
     @InjectMocks
     private SolicitudServiceImpl solicitudService;
@@ -41,6 +50,11 @@ class SolicitudServicePriorizarTest {
 
     @BeforeEach
     void setUp() {
+        observadores.clear();
+        observadores.add(new HistorialObserver(historialRepository));
+        lenient().when(solicitudFactory.toResponse(any(SolicitudAcademica.class)))
+            .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+
         admin    = TestDataFactory.crearUsuario(1L, RolUsuario.ADMINISTRATIVO);
         solicitud = TestDataFactory.crearSolicitud(10L, admin);
         solicitud.setEstado(EstadoSolicitud.CLASIFICADA);
@@ -53,7 +67,7 @@ class SolicitudServicePriorizarTest {
         when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(admin));
         when(motorReglasPrioridad.calcular(solicitud))
-            .thenReturn(motorReglasPrioridad.calcular(solicitud));
+            .thenReturn(new ResultadoPrioridad(Prioridad.CRITICA, "Justificación de prueba."));
         when(solicitudRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         SolicitudResponse response = solicitudService.priorizar(10L, 1L);
@@ -85,7 +99,7 @@ class SolicitudServicePriorizarTest {
         when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(admin));
         when(motorReglasPrioridad.calcular(solicitud))
-            .thenReturn(motorReglasPrioridad.calcular(solicitud));
+            .thenReturn(new ResultadoPrioridad(Prioridad.CRITICA, "Justificación de prueba."));
         when(solicitudRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         solicitudService.priorizar(10L, 1L);
@@ -98,7 +112,7 @@ class SolicitudServicePriorizarTest {
         when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(admin));
         when(motorReglasPrioridad.calcular(solicitud))
-            .thenReturn(motorReglasPrioridad.calcular(solicitud));
+            .thenReturn(new ResultadoPrioridad(Prioridad.BAJA, "Prioridad baja."));
         when(solicitudRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         SolicitudResponse response = solicitudService.priorizar(10L, 1L);
@@ -106,7 +120,6 @@ class SolicitudServicePriorizarTest {
         assertThat(response.getPrioridad()).isEqualTo(Prioridad.BAJA);
     }
 
-    //Debe lanzar IllegalStateException
     @Test
     void priorizar_solicitudNoClasificada(){
         solicitud.setEstado(EstadoSolicitud.REGISTRADA);

@@ -8,9 +8,43 @@ import co.edu.uniquindio.gestion_solicitudes.domain.enums.EstadoSolicitud;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.RolUsuario;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.TipoSolicitud;
 
+import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
+import co.edu.uniquindio.gestion_solicitudes.dto.response.UsuarioResumenResponse;
+
 import java.time.LocalDateTime;
 
 public class TestDataFactory {
+
+    /**
+     * Convierte una entidad SolicitudAcademica a SolicitudResponse.
+     * Usado en tests para mockear SolicitudFactory.toResponse().
+     */
+    public static SolicitudResponse crearResponseDesdeEntidad(SolicitudAcademica s) {
+        return SolicitudResponse.builder()
+                .id(s.getId())
+                .tipo(s.getTipo())
+                .estado(s.getEstado())
+                .prioridad(s.getPrioridad())
+                .justificacionPrioridad(s.getJustificacionPrioridad())
+                .impactoAcademico(s.getImpactoAcademico())
+                .descripcion(s.getDescripcion())
+                .canalOrigen(s.getCanalOrigen())
+                .fechaRegistro(s.getFechaRegistro())
+                .fechaLimite(s.getFechaLimite())
+                .solicitante(s.getSolicitante() != null ? UsuarioResumenResponse.builder()
+                        .id(s.getSolicitante().getId())
+                        .nombre(s.getSolicitante().getNombre())
+                        .email(s.getSolicitante().getEmail())
+                        .rol(s.getSolicitante().getRol())
+                        .build() : null)
+                .responsable(s.getResponsable() != null ? UsuarioResumenResponse.builder()
+                        .id(s.getResponsable().getId())
+                        .nombre(s.getResponsable().getNombre())
+                        .email(s.getResponsable().getEmail())
+                        .rol(s.getResponsable().getRol())
+                        .build() : null)
+                .build();
+    }
 
     public static Usuario crearUsuario(Long id, RolUsuario rol){
         return Usuario.builder()

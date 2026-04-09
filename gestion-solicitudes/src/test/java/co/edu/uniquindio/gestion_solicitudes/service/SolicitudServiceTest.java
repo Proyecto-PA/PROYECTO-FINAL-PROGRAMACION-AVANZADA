@@ -3,6 +3,9 @@ import co.edu.uniquindio.gestion_solicitudes.domain.entity.HistorialSolicitud;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.Usuario;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
+import co.edu.uniquindio.gestion_solicitudes.domain.factory.SolicitudFactory;
+import co.edu.uniquindio.gestion_solicitudes.domain.observer.HistorialObserver;
+import co.edu.uniquindio.gestion_solicitudes.domain.observer.SolicitudObserver;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.SolicitudRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudPageResponse;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
@@ -30,8 +33,32 @@ public class SolicitudServiceTest {
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private HistorialRepository historialRepository;
     @Mock private MotorReglasPrioridad motorReglasPrioridad;
+    @Spy  private List<SolicitudObserver> observadores = new ArrayList<>();
+    @Mock private SolicitudFactory solicitudFactory;
 
     @InjectMocks private SolicitudServiceImpl solicitudService;
+
+    @BeforeEach
+    void setUp() {
+        observadores.clear();
+        observadores.add(new HistorialObserver(historialRepository));
+        lenient().when(solicitudFactory.toResponse(any(SolicitudAcademica.class)))
+            .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+        lenient().when(solicitudFactory.crearDesdeRequest(any(SolicitudRequest.class), any(Usuario.class)))
+            .thenAnswer(inv -> {
+                SolicitudRequest req = inv.getArgument(0);
+                Usuario sol = inv.getArgument(1);
+                return SolicitudAcademica.builder()
+                        .tipo(req.getTipo())
+                        .descripcion(req.getDescripcion())
+                        .canalOrigen(req.getCanalOrigen())
+                        .fechaRegistro(java.time.LocalDateTime.now())
+                        .fechaLimite(req.getFechaLimite())
+                        .estado(EstadoSolicitud.REGISTRADA)
+                        .solicitante(sol)
+                        .build();
+            });
+    }
 
     // ── REGISTRAR ─────────────────────────────────────────────
 
