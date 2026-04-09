@@ -31,13 +31,13 @@ public class SecurityConfig {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json");
                             response.getWriter().write("""
-                        {
-                          "status": 401,
-                          "error": "Unauthorized",
-                          "mensaje": "Token JWT ausente o inválido.",
-                          "path": "%s"
-                        }
-                        """.formatted(request.getRequestURI()));
+                                    {
+                                      "status": 401,
+                                      "error": "Unauthorized",
+                                      "mensaje": "Token JWT ausente o inválido.",
+                                      "path": "%s"
+                                    }
+                                    """.formatted(request.getRequestURI()));
                         })
                         .accessDeniedHandler(((request, response, accessDeniedException) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -50,19 +50,17 @@ public class SecurityConfig {
                                         "path": "%s"
                                     }
                                     """.formatted(request.getRequestURI()));
-                        }))
-                )
+                        })))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }

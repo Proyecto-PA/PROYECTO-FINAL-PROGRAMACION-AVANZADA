@@ -20,21 +20,18 @@ public class MotorReglasPrioridad {
             new ReglaPorFechaLimite(),
             new ReglaPorImpactoAcademico(),
             new ReglaPorTipoSolicitud(),
-            new ReglaPorCanalOrigen()
-    );
+            new ReglaPorCanalOrigen());
 
     // Puntaje numérico por nivel de prioridad
     private static final Map<Prioridad, Integer> PUNTAJE = Map.of(
             Prioridad.CRITICA, 4,
-            Prioridad.ALTA,    3,
-            Prioridad.MEDIA,   2,
-            Prioridad.BAJA,    1
-    );
-
+            Prioridad.ALTA, 3,
+            Prioridad.MEDIA, 2,
+            Prioridad.BAJA, 1);
 
     public ResultadoPrioridad calcular(SolicitudAcademica solicitud) {
         int puntajeTotal = 0;
-        int pesoTotal    = 0;
+        int pesoTotal = 0;
         StringBuilder justificacion = new StringBuilder();
 
         for (ReglaPrioridad regla : REGLAS) {
@@ -42,9 +39,9 @@ public class MotorReglasPrioridad {
             if (resultado != null) {
                 int contribucion = PUNTAJE.get(resultado) * regla.getPeso();
                 puntajeTotal += contribucion;
-                pesoTotal    += regla.getPeso();
+                pesoTotal += regla.getPeso();
                 justificacion.append("- ").append(regla.getDescripcion(solicitud))
-                             .append(" → ").append(resultado.name()).append(". ");
+                        .append(" → ").append(resultado.name()).append(". ");
             }
         }
 
@@ -57,9 +54,12 @@ public class MotorReglasPrioridad {
     }
 
     private Prioridad resolverPorPuntaje(double promedio) {
-        if (promedio >= 3.5) return Prioridad.CRITICA;
-        if (promedio >= 2.5) return Prioridad.ALTA;
-        if (promedio >= 1.5) return Prioridad.MEDIA;
+        if (promedio >= 3.5)
+            return Prioridad.CRITICA;
+        if (promedio >= 2.5)
+            return Prioridad.ALTA;
+        if (promedio >= 1.5)
+            return Prioridad.MEDIA;
         return Prioridad.BAJA;
     }
 }
