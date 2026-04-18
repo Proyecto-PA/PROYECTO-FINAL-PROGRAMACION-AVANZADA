@@ -1,5 +1,6 @@
 package co.edu.uniquindio.gestion_solicitudes.service;
 
+import co.edu.uniquindio.gestion_solicitudes.domain.chain.CadenaValidacionFactory;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.*;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
 import co.edu.uniquindio.gestion_solicitudes.domain.factory.SolicitudFactory;
@@ -7,6 +8,7 @@ import co.edu.uniquindio.gestion_solicitudes.domain.observer.HistorialObserver;
 import co.edu.uniquindio.gestion_solicitudes.domain.observer.SolicitudObserver;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.MotorReglasPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
+import co.edu.uniquindio.gestion_solicitudes.domain.state.SolicitudStateContext;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.*;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
 import co.edu.uniquindio.gestion_solicitudes.exception.ResourceNotFoundException;
@@ -37,6 +39,8 @@ public class FlujoCicloVidaSolicitudTest {
     @Mock private MotorReglasPrioridad motorReglasPrioridad;
     @Spy  private List<SolicitudObserver> observadores = new ArrayList<>();
     @Mock private SolicitudFactory solicitudFactory;
+    @Mock private SolicitudStateContext stateContext;
+    @Mock private CadenaValidacionFactory cadenaValidacionFactory;
 
     @InjectMocks private SolicitudServiceImpl solicitudService;
 

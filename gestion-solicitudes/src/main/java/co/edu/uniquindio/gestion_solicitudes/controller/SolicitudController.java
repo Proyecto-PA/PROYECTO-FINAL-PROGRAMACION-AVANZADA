@@ -66,7 +66,7 @@ public class SolicitudController {
                 Long userId = extraerUserId(authHeader);
                 String rol = extraerRol(authHeader);
 
-        return ResponseEntity.ok(solicitudService.consultar(estado, tipo, prioridad, responsableId, solicitanteId, PageRequest.of(page,size)));
+        return ResponseEntity.ok(solicitudService.consultar(estado, tipo, prioridad, responsableId, solicitanteId, userId, rol,PageRequest.of(page,size)));
     }
 
     // PUT /solicitudes/{id}/clasificar

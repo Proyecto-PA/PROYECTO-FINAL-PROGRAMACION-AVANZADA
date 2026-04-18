@@ -106,7 +106,7 @@ public class SolicitudControllerTest {
                 // Docente: el rol no fuerza filtro, se pasa el solicitanteId del query param
                 when(jwtUtil.extraerRol(TOKEN_DOCENTE)).thenReturn("DOCENTE");
                 when(solicitudService.consultar(
-                                EstadoSolicitud.REGISTRADA, null, null, null, null,
+                                EstadoSolicitud.REGISTRADA, null, null, null, null, null, null,
                                 PageRequest.of(0, 10)))
                                 .thenReturn(pageResponse);
 
@@ -132,7 +132,7 @@ public class SolicitudControllerTest {
 
                 when(jwtUtil.extraerRol(TOKEN_DOCENTE)).thenReturn("DOCENTE");
                 when(solicitudService.consultar(
-                                null, null, null, null, null, PageRequest.of(0, 20)))
+                                null, null, null, null, null, null, null, PageRequest.of(0, 20)))
                                 .thenReturn(pageResponse);
 
                 ResponseEntity<SolicitudPageResponse> response = solicitudController.consultar(

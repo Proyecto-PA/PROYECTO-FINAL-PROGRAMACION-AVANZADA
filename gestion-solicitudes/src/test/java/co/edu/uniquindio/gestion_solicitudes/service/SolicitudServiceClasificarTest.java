@@ -1,4 +1,5 @@
 package co.edu.uniquindio.gestion_solicitudes.service;
+import co.edu.uniquindio.gestion_solicitudes.domain.chain.CadenaValidacionFactory;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.HistorialSolicitud;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.Usuario;
@@ -8,6 +9,7 @@ import co.edu.uniquindio.gestion_solicitudes.domain.observer.HistorialObserver;
 import co.edu.uniquindio.gestion_solicitudes.domain.observer.SolicitudObserver;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.MotorReglasPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
+import co.edu.uniquindio.gestion_solicitudes.domain.state.SolicitudStateContext;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
 import co.edu.uniquindio.gestion_solicitudes.exception.ResourceNotFoundException;
@@ -42,6 +44,8 @@ public class SolicitudServiceClasificarTest {
     @Mock private MotorReglasPrioridad motorReglasPrioridad;
     @Spy  private List<SolicitudObserver> observadores = new ArrayList<>();
     @Mock private SolicitudFactory solicitudFactory;
+    @Mock private SolicitudStateContext stateContext;
+    @Mock private CadenaValidacionFactory cadenaValidacionFactory;
 
     @InjectMocks private SolicitudServiceImpl solicitudService;
 
@@ -51,6 +55,25 @@ public class SolicitudServiceClasificarTest {
         observadores.add(new HistorialObserver(historialRepository));
         lenient().when(solicitudFactory.toResponse(any(SolicitudAcademica.class)))
             .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+
+        lenient().when(cadenaValidacionFactory.construirCadenaBasica())
+                .thenReturn(mock(co.edu.uniquindio.gestion_solicitudes.domain.chain.ValidacionSolicitudHandler.class));
+
+        lenient().when(cadenaValidacionFactory.construirCadenaIniciarAtencion())
+                .thenReturn(mock(co.edu.uniquindio.gestion_solicitudes.domain.chain.ValidacionSolicitudHandler.class));
+
+        lenient().when(stateContext.resolverEstado(any(SolicitudAcademica.class)))
+                .thenAnswer(inv -> {
+                    SolicitudAcademica s = inv.getArgument(0);
+                    return switch (s.getEstado()) {
+                        case REGISTRADA  -> new co.edu.uniquindio.gestion_solicitudes.domain.state.impl.EstadoRegistrada();
+                        case CLASIFICADA -> new co.edu.uniquindio.gestion_solicitudes.domain.state.impl.EstadoClasificada();
+                        case EN_ATENCION -> new co.edu.uniquindio.gestion_solicitudes.domain.state.impl.EstadoEnAtencion();
+                        case ATENDIDA    -> new co.edu.uniquindio.gestion_solicitudes.domain.state.impl.EstadoAtendida();
+                        default -> throw new IllegalStateException(
+                                "La solicitud está en estado terminal " + s.getEstado());
+                    };
+                });
     }
 
     private ClasificarRequest crearRequest(TipoSolicitud tipo, Integer impacto, String obs) {

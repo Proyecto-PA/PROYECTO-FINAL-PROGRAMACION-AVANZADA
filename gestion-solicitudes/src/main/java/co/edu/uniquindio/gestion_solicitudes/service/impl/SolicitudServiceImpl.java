@@ -78,7 +78,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     }
 
     private Usuario buscarUsuario(Long id){
-        return usuarioRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("o existe un usuario con id " + id));
+        return usuarioRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No existe un usuario con id " + id));
     }
 
     // ====================
@@ -125,7 +125,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Transactional(readOnly = true)
     public SolicitudPageResponse consultar (EstadoSolicitud estado, TipoSolicitud tipo, Prioridad prioridad, Long responsableId, Long solicitanteId, Long userId, String rol, Pageable pageable){
        Long solicitanteIdFinal = "ESTUDIANTE".equals(rol) ? userId : solicitanteId;
-        Page<SolicitudAcademica> page = solicitudRepository.findWithFilters(estado, tipo, prioridad, responsableId, solicitanteId, pageable);
+        Page<SolicitudAcademica> page = solicitudRepository.findWithFilters(estado, tipo, prioridad, responsableId, solicitanteIdFinal, pageable);
 
         return SolicitudPageResponse.builder()
                 .contenido(page.getContent().stream().map(solicitudFactory::toResponse).toList())

@@ -53,7 +53,7 @@ public class MotorReglasPrioridad {
                 ? Prioridad.MEDIA
                 : resolverPorPuntaje((double) puntajeTotal / pesoTotal);
 
-        justificacion.append("Prioridad final: ").append(prioridadFinal.name()).append(".");
+        justificacion.append("Prioridad final calculada: ").append(prioridadFinal.name()).append(".");
         return new ResultadoPrioridad(prioridadFinal, justificacion.toString().trim());
     }
 
