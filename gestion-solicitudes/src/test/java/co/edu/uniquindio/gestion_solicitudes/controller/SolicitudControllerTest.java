@@ -8,6 +8,7 @@ import co.edu.uniquindio.gestion_solicitudes.dto.request.SolicitudRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudPageResponse;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.UsuarioResumenResponse;
+import co.edu.uniquindio.gestion_solicitudes.service.IAService;
 import co.edu.uniquindio.gestion_solicitudes.service.SolicitudService;
 import co.edu.uniquindio.gestion_solicitudes.util.JwtUtil;
 import co.edu.uniquindio.gestion_solicitudes.util.TestDataFactory;
@@ -33,6 +34,8 @@ public class SolicitudControllerTest {
         private SolicitudService solicitudService;
         @Mock
         private JwtUtil jwtUtil;
+        @Mock
+        private IAService iaService;
 
         @InjectMocks
         private SolicitudController solicitudController;

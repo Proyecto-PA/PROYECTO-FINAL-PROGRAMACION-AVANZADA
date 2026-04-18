@@ -1,26 +1,26 @@
-package co.edu.uniquindio.gestion_solicitudes.service;
+package co.edu.uniquindio.gestion_solicitudes.domain.rules;
 
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.Prioridad;
-import co.edu.uniquindio.gestion_solicitudes.domain.rules.ReglaPrioridad;
-import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.impl.ReglaPorCanalOrigen;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.impl.ReglaPorFechaLimite;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.impl.ReglaPorImpactoAcademico;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.impl.ReglaPorTipoSolicitud;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Patrón Strategy - Motor de Reglas de Prioridad
+ */
 @Component
+@RequiredArgsConstructor
 public class MotorReglasPrioridad {
 
-    private static final List<ReglaPrioridad> REGLAS = List.of(
-            new ReglaPorFechaLimite(),
-            new ReglaPorImpactoAcademico(),
-            new ReglaPorTipoSolicitud(),
-            new ReglaPorCanalOrigen());
+    private  final List<ReglaPrioridad> reglas;
 
     // Puntaje numérico por nivel de prioridad
     private static final Map<Prioridad, Integer> PUNTAJE = Map.of(
@@ -30,18 +30,22 @@ public class MotorReglasPrioridad {
             Prioridad.BAJA, 1);
 
     public ResultadoPrioridad calcular(SolicitudAcademica solicitud) {
+        List<ReglaPrioridad> reglasOrdenadas = reglas.stream()
+                .sorted(Comparator.comparingInt(ReglaPrioridad::getPeso).reversed()
+                ).toList();
+
         int puntajeTotal = 0;
         int pesoTotal = 0;
         StringBuilder justificacion = new StringBuilder();
 
-        for (ReglaPrioridad regla : REGLAS) {
+        for (ReglaPrioridad regla : reglasOrdenadas) {
             Prioridad resultado = regla.evaluar(solicitud);
             if (resultado != null) {
                 int contribucion = PUNTAJE.get(resultado) * regla.getPeso();
                 puntajeTotal += contribucion;
                 pesoTotal += regla.getPeso();
                 justificacion.append("- ").append(regla.getDescripcion(solicitud))
-                        .append(" → ").append(resultado.name()).append(". ");
+                        .append(" -> ").append(resultado.name()).append(". ");
             }
         }
 
@@ -49,7 +53,7 @@ public class MotorReglasPrioridad {
                 ? Prioridad.MEDIA
                 : resolverPorPuntaje((double) puntajeTotal / pesoTotal);
 
-        justificacion.append("Prioridad final calculada: ").append(prioridadFinal.name()).append(".");
+        justificacion.append("Prioridad final: ").append(prioridadFinal.name()).append(".");
         return new ResultadoPrioridad(prioridadFinal, justificacion.toString().trim());
     }
 

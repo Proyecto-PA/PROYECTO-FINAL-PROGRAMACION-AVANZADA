@@ -4,7 +4,9 @@ import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.Prioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.TipoSolicitud;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.ReglaPrioridad;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ReglaPorTipoSolicitud implements ReglaPrioridad {
 
     @Override

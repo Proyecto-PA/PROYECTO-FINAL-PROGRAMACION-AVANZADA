@@ -5,6 +5,7 @@ import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
 import co.edu.uniquindio.gestion_solicitudes.domain.factory.SolicitudFactory;
 import co.edu.uniquindio.gestion_solicitudes.domain.observer.HistorialObserver;
 import co.edu.uniquindio.gestion_solicitudes.domain.observer.SolicitudObserver;
+import co.edu.uniquindio.gestion_solicitudes.domain.rules.MotorReglasPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.*;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
@@ -82,7 +83,7 @@ public class FlujoCicloVidaSolicitudTest {
     // ── FLUJO COMPLETO ───────────────────────────────────────
 
     @Test
-    @DisplayName("Flujo completo: REGISTRADA→CLASIFICADA→EN_ATENCION→ATENDIDA→CERRADA")
+    @DisplayName("Flujo completo")
     void flujoCompleto_cicloDeVidaCompleto() {
 
         SolicitudAcademica enRegistrada = solicitudEn(EstadoSolicitud.REGISTRADA);

@@ -16,19 +16,12 @@ public interface SolicitudService {
     SolicitudResponse registrar(SolicitudRequest request, Long solicitanteId);
     SolicitudResponse obtenerPorId(Long id);
     SolicitudPageResponse consultar (EstadoSolicitud estado, TipoSolicitud tipo, Prioridad prioridad,
-                                     Long responsableId, Long solicitanteId, Pageable pageable);
-    //Se agrega el método para clasificar la solicitud, que es el paso siguiente a registrarla solicitud
+                                     Long responsableId, Long solicitanteId, Long userId, String rol, Pageable pageable);
     SolicitudResponse clasificar(Long id, ClasificarRequest request, Long usuarioId);
-
-    //Fase 4: transiciones con el validador
     SolicitudResponse iniciarAtencion(Long id, CambiarEstadoRequest request, Long usuarioId);
     SolicitudResponse marcarAtendida(Long id, CambiarEstadoRequest request, Long usuarioId);
     SolicitudResponse cerrar(Long id, CerrarSolicitudRequest request, Long usuarioId);
     SolicitudResponse cancelar(Long id, CambiarEstadoRequest request, Long usuarioId);
-
-    // Fase 6: Priorización automática
     SolicitudResponse priorizar(Long id, Long usuarioId);
-
-    // Fase 7: Asignación de responsable
     SolicitudResponse asignarResponsable(Long id, AsignarResponsableRequest request, Long usuarioId);
 }

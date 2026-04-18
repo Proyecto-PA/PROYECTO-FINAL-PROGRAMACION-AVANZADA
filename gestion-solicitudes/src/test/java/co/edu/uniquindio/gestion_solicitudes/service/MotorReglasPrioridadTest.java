@@ -2,6 +2,7 @@ package co.edu.uniquindio.gestion_solicitudes.service;
 
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
+import co.edu.uniquindio.gestion_solicitudes.domain.rules.MotorReglasPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.util.TestDataFactory;
 import org.junit.jupiter.api.BeforeEach;

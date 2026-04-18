@@ -6,6 +6,7 @@ import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
 import co.edu.uniquindio.gestion_solicitudes.domain.factory.SolicitudFactory;
 import co.edu.uniquindio.gestion_solicitudes.domain.observer.HistorialObserver;
 import co.edu.uniquindio.gestion_solicitudes.domain.observer.SolicitudObserver;
+import co.edu.uniquindio.gestion_solicitudes.domain.rules.MotorReglasPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
 import co.edu.uniquindio.gestion_solicitudes.exception.ResourceNotFoundException;

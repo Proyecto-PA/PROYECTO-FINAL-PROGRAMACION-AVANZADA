@@ -1,4 +1,4 @@
-package co.edu.uniquindio.gestion_solicitudes.service;
+package co.edu.uniquindio.gestion_solicitudes.service.ia;
 
 import co.edu.uniquindio.gestion_solicitudes.config.IaProperties;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;

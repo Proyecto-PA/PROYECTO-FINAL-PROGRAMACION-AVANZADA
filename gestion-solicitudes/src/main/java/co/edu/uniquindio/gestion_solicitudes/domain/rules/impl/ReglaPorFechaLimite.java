@@ -3,10 +3,12 @@ package co.edu.uniquindio.gestion_solicitudes.domain.rules.impl;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.Prioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.ReglaPrioridad;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
+@Component
 public class ReglaPorFechaLimite implements ReglaPrioridad {
 
     @Override

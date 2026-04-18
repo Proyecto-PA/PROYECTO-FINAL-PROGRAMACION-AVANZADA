@@ -23,29 +23,34 @@ public class SolicitudController {
     private final JwtUtil jwtUtil;
     private final IAService iaService;
 
-    // POST /api/solicitudes
+    // Helpers
+    private Long extraerUserId(String authHeader){
+        return  jwtUtil.extraerUserId(authHeader.substring(7));
+    }
+
+    private String extraerRol(String authHeader){
+        return jwtUtil.extraerRol(authHeader.substring(7));
+    }
+
+    // POST /solicitudes
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<SolicitudResponse> registrar(
             @Valid @RequestBody SolicitudRequest request,
             @RequestHeader("Authorization") String authHeader) {
 
-        // Extraer el userId desde el token JWT
-        String token = authHeader.substring(7);
-        Long solicitanteId = jwtUtil.extraerUserId(token);
-
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(solicitudService.registrar(request, solicitanteId));
+                .body(solicitudService.registrar(request, extraerUserId(authHeader)));
     }
 
-    // GET /api/solicitudes/{id}
+    // GET /solicitudes/{id}
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<SolicitudResponse> obtener (@PathVariable Long id){
         return ResponseEntity.ok(solicitudService.obtenerPorId(id));
     }
 
-    // GET /api/solicitudes?estado=&tipo=&prioridad=&page=0&size=20
+    // GET /solicitudes?estado=&tipo=&prioridad=&page=0&size=20
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public  ResponseEntity<SolicitudPageResponse> consultar (
@@ -58,16 +63,13 @@ public class SolicitudController {
             @RequestParam(defaultValue = "20") int size,
             @RequestHeader("Authorization") String authHeader)
             {
-                String token = authHeader.substring(7);
-                String rol = jwtUtil.extraerRol(token);
+                Long userId = extraerUserId(authHeader);
+                String rol = extraerRol(authHeader);
 
-                if("ESTUDIANTE".equals(rol)){
-                    solicitanteId = jwtUtil.extraerUserId(token);
-                }
         return ResponseEntity.ok(solicitudService.consultar(estado, tipo, prioridad, responsableId, solicitanteId, PageRequest.of(page,size)));
     }
 
-    // PUT /api/solicitudes/{id}/clasificar
+    // PUT /solicitudes/{id}/clasificar
     @PutMapping("/{id}/clasificar")
     @PreAuthorize("hasAnyRole( 'ADMINISTRATIVO')")
     public ResponseEntity<SolicitudResponse> clasificar(
@@ -75,14 +77,10 @@ public class SolicitudController {
             @Valid @RequestBody ClasificarRequest request,
             @RequestHeader("Authorization") String authHeader) {
 
-        // Extraer el userId desde el token JWT
-        String token = authHeader.substring(7);
-        Long usuarioId = jwtUtil.extraerUserId(token);
-
-        return ResponseEntity.ok(solicitudService.clasificar(id, request, usuarioId));
+        return ResponseEntity.ok(solicitudService.clasificar(id, request, extraerUserId(authHeader)));
     }
 
-    // PUT /api/solicitudes/{id}/iniciar-atencion
+    // PUT /solicitudes/{id}/iniciar-atencion
     @PutMapping("/{id}/iniciar-atencion")
     @PreAuthorize("hasAnyRole('DOCENTE', 'ADMINISTRATIVO')")
     public ResponseEntity<SolicitudResponse> iniciarAtencion(
@@ -90,12 +88,10 @@ public class SolicitudController {
             @RequestBody(required = false) CambiarEstadoRequest request,
             @RequestHeader("Authorization") String authHeader) {
 
-        String token = authHeader.substring(7);
-        Long usuarioId = jwtUtil.extraerUserId(token);
-        return ResponseEntity.ok(solicitudService.iniciarAtencion(id, request, usuarioId));
+        return ResponseEntity.ok(solicitudService.iniciarAtencion(id, request, extraerUserId(authHeader)));
     }
 
-    // PUT /api/solicitudes/{id}/marcar-atendida
+    // PUT /solicitudes/{id}/marcar-atendida
     @PutMapping("/{id}/marcar-atendida")
     @PreAuthorize("hasAnyRole('DOCENTE', 'ADMINISTRATIVO')")
     public ResponseEntity<SolicitudResponse> marcarAtendida(
@@ -103,12 +99,10 @@ public class SolicitudController {
             @RequestBody(required = false) CambiarEstadoRequest request,
             @RequestHeader("Authorization") String authHeader) {
 
-        String token = authHeader.substring(7);
-        Long usuarioId = jwtUtil.extraerUserId(token);
-        return ResponseEntity.ok(solicitudService.marcarAtendida(id, request, usuarioId));
+        return ResponseEntity.ok(solicitudService.marcarAtendida(id, request, extraerUserId(authHeader)));
     }
 
-    // PUT /api/solicitudes/{id}/cerrar
+    // PUT /solicitudes/{id}/cerrar
     @PutMapping("/{id}/cerrar")
     @PreAuthorize("hasAnyRole('DOCENTE', 'ADMINISTRATIVO')")
     public ResponseEntity<SolicitudResponse> cerrar(
@@ -116,12 +110,10 @@ public class SolicitudController {
             @Valid @RequestBody CerrarSolicitudRequest request,
             @RequestHeader("Authorization") String authHeader) {
 
-        String token = authHeader.substring(7);
-        Long usuarioId = jwtUtil.extraerUserId(token);
-        return ResponseEntity.ok(solicitudService.cerrar(id, request, usuarioId));
+        return ResponseEntity.ok(solicitudService.cerrar(id, request, extraerUserId(authHeader)));
     }
 
-    // PUT /api/solicitudes/{id}/cancelar
+    // PUT /solicitudes/{id}/cancelar
     @PutMapping("/{id}/cancelar")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<SolicitudResponse> cancelar(
@@ -129,24 +121,20 @@ public class SolicitudController {
             @RequestBody(required = false) CambiarEstadoRequest request,
             @RequestHeader("Authorization") String authHeader) {
 
-        String token = authHeader.substring(7);
-        Long usuarioId = jwtUtil.extraerUserId(token);
-        return ResponseEntity.ok(solicitudService.cancelar(id, request, usuarioId));
+        return ResponseEntity.ok(solicitudService.cancelar(id, request, extraerUserId(authHeader)));
     }
 
-    // PUT /api/solicitudes/{id}/priorizar — Fase 6
+    // PUT /solicitudes/{id}/priorizar
     @PutMapping("/{id}/priorizar")
     @PreAuthorize("hasAnyRole( 'ADMINISTRATIVO')")
     public ResponseEntity<SolicitudResponse> priorizar(
             @PathVariable Long id,
             @RequestHeader("Authorization") String authHeader) {
 
-        String token = authHeader.substring(7);
-        Long usuarioId = jwtUtil.extraerUserId(token);
-        return ResponseEntity.ok(solicitudService.priorizar(id, usuarioId));
+        return ResponseEntity.ok(solicitudService.priorizar(id, extraerUserId(authHeader)));
     }
 
-    // PUT /api/solicitudes/{id}/responsable — Fase 7
+    // PUT /solicitudes/{id}/responsable
     @PutMapping("/{id}/responsable")
     @PreAuthorize("hasRole('ADMINISTRATIVO')")
     public ResponseEntity<SolicitudResponse> asignarResponsable(
@@ -154,35 +142,25 @@ public class SolicitudController {
             @Valid @RequestBody AsignarResponsableRequest request,
             @RequestHeader("Authorization") String authHeader) {
 
-        String token = authHeader.substring(7);
-        Long usuarioId = jwtUtil.extraerUserId(token);
-        return ResponseEntity.ok(solicitudService.asignarResponsable(id, request, usuarioId));
+        return ResponseEntity.ok(solicitudService.asignarResponsable(id, request, extraerUserId(authHeader)));
     }
 
-    /**
-     * GET /api/solicitudes/{id}/sugerencia-ia
-     * Consulta IA para obtener sugerencia de tipo, prioridad y resumen (RF-09, RF-10).
-     */
+    // GET /solicitudes/{id}/sugerencia-ia
     @GetMapping("/{id}/sugerencia-ia")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<SugerenciaIAResponse> obtenerSugerencia(@PathVariable Long id){
         return ResponseEntity.ok(iaService.generarSugerencia(id));
     }
 
-    /**
-     * PUT /api/solicitudes/{id}/sugerencia-ia/confirmar
-     * El usuario decide si aplica o descarta la sugerencia IA (RF-10).
-     */
+    // PUT /solicitudes/{id}/sugerencia-ia/confirmar
     @PutMapping("/{id}/sugerencia-ia/confirmar")
     @PreAuthorize("hasAnyRole('DOCENTE', 'ADMINISTRATIVO')")
     public ResponseEntity<SolicitudResponse> confirmarSugerencia(
             @PathVariable Long id,
             @Valid @RequestBody ConfirmarSugerenciaRequest request,
             @RequestHeader ("Authorization") String authHeader){
-        String token = authHeader.substring(7);
-        Long usuarioId = jwtUtil.extraerUserId(token);
 
-        return ResponseEntity.ok(iaService.confirmarSugerencia(id, request, usuarioId));
+        return ResponseEntity.ok(iaService.confirmarSugerencia(id, request, extraerUserId(authHeader)));
     }
 
 }
