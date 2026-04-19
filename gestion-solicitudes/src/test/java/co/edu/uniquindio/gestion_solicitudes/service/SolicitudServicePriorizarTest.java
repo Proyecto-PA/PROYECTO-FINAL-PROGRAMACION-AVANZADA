@@ -1,6 +1,7 @@
 package co.edu.uniquindio.gestion_solicitudes.service;
 
 import co.edu.uniquindio.gestion_solicitudes.domain.chain.CadenaValidacionFactory;
+import co.edu.uniquindio.gestion_solicitudes.domain.chain.ValidacionSolicitudHandler;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.Usuario;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
@@ -18,6 +19,7 @@ import co.edu.uniquindio.gestion_solicitudes.repository.UsuarioRepository;
 import co.edu.uniquindio.gestion_solicitudes.service.impl.SolicitudServiceImpl;
 import co.edu.uniquindio.gestion_solicitudes.util.TestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -36,6 +38,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("Tests unitarios - SolicitudService.priorizar")
 class SolicitudServicePriorizarTest {
 
     @Mock private SolicitudRepository solicitudRepository;
@@ -47,8 +50,7 @@ class SolicitudServicePriorizarTest {
     @Mock private SolicitudStateContext stateContext;
     @Mock private CadenaValidacionFactory cadenaValidacionFactory;
 
-    @InjectMocks
-    private SolicitudServiceImpl solicitudService;
+    @InjectMocks private SolicitudServiceImpl solicitudService;
 
     private Usuario admin;
     private SolicitudAcademica solicitud;
@@ -57,8 +59,13 @@ class SolicitudServicePriorizarTest {
     void setUp() {
         observadores.clear();
         observadores.add(new HistorialObserver(historialRepository));
+
         lenient().when(solicitudFactory.toResponse(any(SolicitudAcademica.class)))
-            .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+                .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+
+        ValidacionSolicitudHandler handlerNoOp = mock(ValidacionSolicitudHandler.class);
+        lenient().when(cadenaValidacionFactory.construirCadenaBasica()).thenReturn(handlerNoOp);
+        lenient().when(cadenaValidacionFactory.construirCadenaIniciarAtencion()).thenReturn(handlerNoOp);
 
         admin    = TestDataFactory.crearUsuario(1L, RolUsuario.ADMINISTRATIVO);
         solicitud = TestDataFactory.crearSolicitud(10L, admin);
@@ -68,11 +75,12 @@ class SolicitudServicePriorizarTest {
     }
 
     @Test
+    @DisplayName("priorizar exitoso retorna solicitud con prioridad asignada")
     void priorizar_exitoso_debeRetornarSolicitudConPrioridad() {
         when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(admin));
         when(motorReglasPrioridad.calcular(solicitud))
-            .thenReturn(new ResultadoPrioridad(Prioridad.CRITICA, "Justificación de prueba."));
+                .thenReturn(new ResultadoPrioridad(Prioridad.CRITICA, "Justificación de prueba."));
         when(solicitudRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         SolicitudResponse response = solicitudService.priorizar(10L, 1L);
@@ -83,28 +91,31 @@ class SolicitudServicePriorizarTest {
     }
 
     @Test
+    @DisplayName("priorizar con solicitud inexistente lanza ResourceNotFoundException")
     void priorizar_solicitudNoExiste_debeLanzarResourceNotFoundException() {
         when(solicitudRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> solicitudService.priorizar(99L, 1L))
-            .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
+    @DisplayName("priorizar con usuario inexistente lanza ResourceNotFoundException")
     void priorizar_usuarioNoExiste_debeLanzarResourceNotFoundException() {
         when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> solicitudService.priorizar(10L, 99L))
-            .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
+    @DisplayName("priorizar guarda entrada en el historial")
     void priorizar_debeGuardarEntradaEnHistorial() {
         when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(admin));
         when(motorReglasPrioridad.calcular(solicitud))
-            .thenReturn(new ResultadoPrioridad(Prioridad.CRITICA, "Justificación de prueba."));
+                .thenReturn(new ResultadoPrioridad(Prioridad.CRITICA, "Justificación de prueba."));
         when(solicitudRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         solicitudService.priorizar(10L, 1L);
@@ -113,11 +124,12 @@ class SolicitudServicePriorizarTest {
     }
 
     @Test
+    @DisplayName("priorizar con motor que retorna BAJA asigna BAJA")
     void priorizar_motorRetornaBaja_debeAsignarBaja() {
         when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(admin));
         when(motorReglasPrioridad.calcular(solicitud))
-            .thenReturn(new ResultadoPrioridad(Prioridad.BAJA, "Prioridad baja."));
+                .thenReturn(new ResultadoPrioridad(Prioridad.BAJA, "Prioridad baja."));
         when(solicitudRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         SolicitudResponse response = solicitudService.priorizar(10L, 1L);
@@ -126,12 +138,14 @@ class SolicitudServicePriorizarTest {
     }
 
     @Test
-    void priorizar_solicitudNoClasificada(){
+    @DisplayName("priorizar desde REGISTRADA lanza IllegalStateException")
+    void priorizar_solicitudNoClasificada_lanzaExcepcion() {
         solicitud.setEstado(EstadoSolicitud.REGISTRADA);
         when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(admin));
 
-        assertThatThrownBy(() -> solicitudService.priorizar(10L, 1L)).isInstanceOf(IllegalStateException.class)
+        assertThatThrownBy(() -> solicitudService.priorizar(10L, 1L))
+                .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("CLASIFICADA");
 
         verify(motorReglasPrioridad, never()).calcular(any());

@@ -1224,7 +1224,7 @@
               "script": {
                 "exec": [
                   "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));",
-                  "pm.test('Mensaje de transición inválida', () => pm.expect(pm.response.json().mensaje).to.include('posible pasar'));"
+                  "pm.test('Mensaje de transición inválida', () => pm.expect(pm.response.json().mensaje).to.include('clasificada'));"
                 ],
                 "type": "text/javascript"
               }

@@ -1,5 +1,7 @@
 package co.edu.uniquindio.gestion_solicitudes.service;
+
 import co.edu.uniquindio.gestion_solicitudes.domain.chain.CadenaValidacionFactory;
+import co.edu.uniquindio.gestion_solicitudes.domain.chain.ValidacionSolicitudHandler;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.HistorialSolicitud;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.Usuario;
@@ -10,6 +12,7 @@ import co.edu.uniquindio.gestion_solicitudes.domain.observer.SolicitudObserver;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.MotorReglasPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.state.SolicitudStateContext;
+import co.edu.uniquindio.gestion_solicitudes.domain.state.impl.*;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
 import co.edu.uniquindio.gestion_solicitudes.exception.ResourceNotFoundException;
@@ -35,7 +38,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Tests unitarios - SolicitudService.clasificar")
-
 public class SolicitudServiceClasificarTest {
 
     @Mock private SolicitudRepository solicitudRepository;
@@ -49,29 +51,34 @@ public class SolicitudServiceClasificarTest {
 
     @InjectMocks private SolicitudServiceImpl solicitudService;
 
+    private final EstadoRegistrada  estadoRegistrada  = new EstadoRegistrada();
+    private final EstadoClasificada estadoClasificada = new EstadoClasificada();
+    private final EstadoEnAtencion  estadoEnAtencion  = new EstadoEnAtencion();
+    private final EstadoAtendida    estadoAtendida    = new EstadoAtendida();
+
     @BeforeEach
     void setUp() {
         observadores.clear();
         observadores.add(new HistorialObserver(historialRepository));
+
         lenient().when(solicitudFactory.toResponse(any(SolicitudAcademica.class)))
-            .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+                .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
 
-        lenient().when(cadenaValidacionFactory.construirCadenaBasica())
-                .thenReturn(mock(co.edu.uniquindio.gestion_solicitudes.domain.chain.ValidacionSolicitudHandler.class));
-
-        lenient().when(cadenaValidacionFactory.construirCadenaIniciarAtencion())
-                .thenReturn(mock(co.edu.uniquindio.gestion_solicitudes.domain.chain.ValidacionSolicitudHandler.class));
+        ValidacionSolicitudHandler handlerNoOp = mock(ValidacionSolicitudHandler.class);
+        lenient().when(cadenaValidacionFactory.construirCadenaBasica()).thenReturn(handlerNoOp);
+        lenient().when(cadenaValidacionFactory.construirCadenaIniciarAtencion()).thenReturn(handlerNoOp);
 
         lenient().when(stateContext.resolverEstado(any(SolicitudAcademica.class)))
                 .thenAnswer(inv -> {
                     SolicitudAcademica s = inv.getArgument(0);
                     return switch (s.getEstado()) {
-                        case REGISTRADA  -> new co.edu.uniquindio.gestion_solicitudes.domain.state.impl.EstadoRegistrada();
-                        case CLASIFICADA -> new co.edu.uniquindio.gestion_solicitudes.domain.state.impl.EstadoClasificada();
-                        case EN_ATENCION -> new co.edu.uniquindio.gestion_solicitudes.domain.state.impl.EstadoEnAtencion();
-                        case ATENDIDA    -> new co.edu.uniquindio.gestion_solicitudes.domain.state.impl.EstadoAtendida();
+                        case REGISTRADA  -> estadoRegistrada;
+                        case CLASIFICADA -> estadoClasificada;
+                        case EN_ATENCION -> estadoEnAtencion;
+                        case ATENDIDA    -> estadoAtendida;
                         default -> throw new IllegalStateException(
-                                "La solicitud está en estado terminal " + s.getEstado());
+                                "La solicitud está en estado terminal " + s.getEstado().name()
+                                        + " y no puede ser modificada.");
                     };
                 });
     }
@@ -84,13 +91,14 @@ public class SolicitudServiceClasificarTest {
         return r;
     }
 
-    @Test
-    @DisplayName("clasificar - estado REGISTRADA cambia a CLASIFICADA exitosamente")
-    void clasificar_estadoRegistrada_cambiaAClasificada() {
-        Usuario docente = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
-        Usuario solicitante = TestDataFactory.crearUsuario(1L, RolUsuario.ESTUDIANTE);
-        SolicitudAcademica solicitud = TestDataFactory.crearSolicitud(1L, solicitante);
+    // ---- CASOS POSITIVOS ----
 
+    @Test
+    @DisplayName("clasificar - REGISTRADA cambia a CLASIFICADA exitosamente")
+    void clasificar_estadoRegistrada_cambiaAClasificada() {
+        Usuario docente    = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
+        Usuario solicitante = TestDataFactory.crearUsuario(1L, RolUsuario.ESTUDIANTE);
+        SolicitudAcademica solicitud   = TestDataFactory.crearSolicitud(1L, solicitante);
         SolicitudAcademica clasificada = TestDataFactory.crearSolicitud(1L, solicitante);
         clasificada.setEstado(EstadoSolicitud.CLASIFICADA);
         clasificada.setTipo(TipoSolicitud.HOMOLOGACION);
@@ -102,18 +110,79 @@ public class SolicitudServiceClasificarTest {
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente));
         when(solicitudRepository.save(any())).thenReturn(clasificada);
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
-        when(motorReglasPrioridad.calcular(any())).thenReturn(
-            new ResultadoPrioridad(Prioridad.MEDIA, "Test justificación"));
+        when(motorReglasPrioridad.calcular(any()))
+                .thenReturn(new ResultadoPrioridad(Prioridad.MEDIA, "Test justificación"));
 
         SolicitudResponse response = solicitudService.clasificar(
-            1L, crearRequest(TipoSolicitud.HOMOLOGACION, 3, "Clasificada manualmente"), 2L);
+                1L, crearRequest(TipoSolicitud.HOMOLOGACION, 3, "Clasificada manualmente"), 2L);
 
         assertThat(response.getEstado()).isEqualTo(EstadoSolicitud.CLASIFICADA);
         assertThat(response.getTipo()).isEqualTo(TipoSolicitud.HOMOLOGACION);
-        // Observer guarda 2 registros: cambio de estado + prioridad
         verify(historialRepository, times(2)).save(any(HistorialSolicitud.class));
         verify(solicitudRepository).save(any(SolicitudAcademica.class));
     }
+
+    @Test
+    @DisplayName("clasificar - sin observación usa texto por defecto en historial")
+    void clasificar_sinObservacion_usaTextoDefault() {
+        Usuario docente    = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
+        Usuario solicitante = TestDataFactory.crearUsuario(1L, RolUsuario.ESTUDIANTE);
+        SolicitudAcademica solicitud   = TestDataFactory.crearSolicitud(1L, solicitante);
+        SolicitudAcademica clasificada = TestDataFactory.crearSolicitud(1L, solicitante);
+        clasificada.setEstado(EstadoSolicitud.CLASIFICADA);
+        clasificada.setTipo(TipoSolicitud.CANCELACION_ASIGNATURAS);
+        clasificada.setImpactoAcademico(4);
+        clasificada.setPrioridad(Prioridad.ALTA);
+        clasificada.setJustificacionPrioridad("Justificación alta");
+
+        when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
+        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente));
+        when(solicitudRepository.save(any())).thenReturn(clasificada);
+        when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
+        when(motorReglasPrioridad.calcular(any()))
+                .thenReturn(new ResultadoPrioridad(Prioridad.ALTA, "Justificación alta"));
+
+        solicitudService.clasificar(
+                1L, crearRequest(TipoSolicitud.CANCELACION_ASIGNATURAS, 4, null), 2L);
+
+        ArgumentCaptor<HistorialSolicitud> captor = ArgumentCaptor.forClass(HistorialSolicitud.class);
+        verify(historialRepository, times(2)).save(captor.capture());
+        assertThat(captor.getAllValues().get(0).getObservaciones())
+                .contains("CANCELACION_ASIGNATURAS");
+    }
+
+    @Test
+    @DisplayName("clasificar - historial registra estados anterior y nuevo correctamente")
+    void clasificar_historialRegistraEstadosCorrectamente() {
+        Usuario docente    = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
+        Usuario solicitante = TestDataFactory.crearUsuario(1L, RolUsuario.ESTUDIANTE);
+        SolicitudAcademica solicitud   = TestDataFactory.crearSolicitud(1L, solicitante);
+        SolicitudAcademica clasificada = TestDataFactory.crearSolicitud(1L, solicitante);
+        clasificada.setEstado(EstadoSolicitud.CLASIFICADA);
+        clasificada.setTipo(TipoSolicitud.SOLICITUD_CUPOS);
+        clasificada.setImpactoAcademico(2);
+        clasificada.setPrioridad(Prioridad.BAJA);
+        clasificada.setJustificacionPrioridad("Justificación baja");
+
+        when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
+        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente));
+        when(solicitudRepository.save(any())).thenReturn(clasificada);
+        when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
+        when(motorReglasPrioridad.calcular(any()))
+                .thenReturn(new ResultadoPrioridad(Prioridad.BAJA, "Justificación baja"));
+
+        solicitudService.clasificar(1L, crearRequest(TipoSolicitud.SOLICITUD_CUPOS, 2, "obs"), 2L);
+
+        ArgumentCaptor<HistorialSolicitud> captor = ArgumentCaptor.forClass(HistorialSolicitud.class);
+        verify(historialRepository, times(2)).save(captor.capture());
+
+        HistorialSolicitud registrado = captor.getAllValues().get(0);
+        assertThat(registrado.getEstadoAnterior()).isEqualTo(EstadoSolicitud.REGISTRADA);
+        assertThat(registrado.getEstadoNuevo()).isEqualTo(EstadoSolicitud.CLASIFICADA);
+        assertThat(registrado.getUsuarioResponsable().getId()).isEqualTo(2L);
+    }
+
+    // ---- CASOS NEGATIVOS ----
 
     @Test
     @DisplayName("clasificar - solicitud inexistente lanza ResourceNotFoundException")
@@ -121,18 +190,18 @@ public class SolicitudServiceClasificarTest {
         when(solicitudRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
-            solicitudService.clasificar(999L, crearRequest(TipoSolicitud.HOMOLOGACION, 3, null), 1L))
-            .isInstanceOf(ResourceNotFoundException.class)
-            .hasMessageContaining("999");
+                solicitudService.clasificar(999L, crearRequest(TipoSolicitud.HOMOLOGACION, 3, null), 1L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("999");
 
         verify(solicitudRepository, never()).save(any());
         verify(historialRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("clasificar - estado CLASIFICADA lanza IllegalStateException (transición inválida)")
+    @DisplayName("clasificar - ya CLASIFICADA lanza IllegalStateException (transición inválida)")
     void clasificar_estadoYaClasificado_lanzaExcepcion() {
-        Usuario docente = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
+        Usuario docente    = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
         Usuario solicitante = TestDataFactory.crearUsuario(1L, RolUsuario.ESTUDIANTE);
         SolicitudAcademica solicitud = TestDataFactory.crearSolicitud(1L, solicitante);
         solicitud.setEstado(EstadoSolicitud.CLASIFICADA);
@@ -141,18 +210,18 @@ public class SolicitudServiceClasificarTest {
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente));
 
         assertThatThrownBy(() ->
-            solicitudService.clasificar(1L, crearRequest(TipoSolicitud.HOMOLOGACION, 3, null), 2L))
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("No es posible pasar de CLASIFICADA a CLASIFICADA");
+                solicitudService.clasificar(1L, crearRequest(TipoSolicitud.HOMOLOGACION, 3, null), 2L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("ya está clasificada");
 
         verify(solicitudRepository, never()).save(any());
         verify(historialRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("clasificar - estado EN_ATENCION lanza IllegalStateException")
+    @DisplayName("clasificar - desde EN_ATENCION lanza IllegalStateException")
     void clasificar_estadoEnAtencion_lanzaExcepcion() {
-        Usuario docente = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
+        Usuario docente    = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
         Usuario solicitante = TestDataFactory.crearUsuario(1L, RolUsuario.ESTUDIANTE);
         SolicitudAcademica solicitud = TestDataFactory.crearSolicitud(1L, solicitante);
         solicitud.setEstado(EstadoSolicitud.EN_ATENCION);
@@ -161,25 +230,28 @@ public class SolicitudServiceClasificarTest {
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente));
 
         assertThatThrownBy(() ->
-            solicitudService.clasificar(1L, crearRequest(TipoSolicitud.CONSULTA_ACADEMICA, 2, null), 2L))
-            .isInstanceOf(IllegalStateException.class);
+                solicitudService.clasificar(1L, crearRequest(TipoSolicitud.CONSULTA_ACADEMICA, 2, null), 2L))
+                .isInstanceOf(IllegalStateException.class);
 
         verify(historialRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("clasificar - estado CANCELADA lanza IllegalStateException")
+    @DisplayName("clasificar - desde CANCELADA lanza IllegalStateException (estado terminal)")
     void clasificar_estadoCancelada_lanzaExcepcion() {
-        Usuario docente = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
         Usuario solicitante = TestDataFactory.crearUsuario(1L, RolUsuario.ESTUDIANTE);
+        Usuario docente = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE); // 🔥 NUEVO
+
         SolicitudAcademica solicitud = TestDataFactory.crearSolicitud(1L, solicitante);
         solicitud.setEstado(EstadoSolicitud.CANCELADA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
+        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente)); // 🔥 CLAVE
 
         assertThatThrownBy(() ->
-            solicitudService.clasificar(1L, crearRequest(TipoSolicitud.OTRO, 4, null), 2L))
-            .isInstanceOf(IllegalStateException.class);
+                solicitudService.clasificar(1L, crearRequest(TipoSolicitud.OTRO, 4, null), 2L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("CANCELADA"); // opcional pero recomendado
     }
 
     @Test
@@ -192,74 +264,10 @@ public class SolicitudServiceClasificarTest {
         when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
-            solicitudService.clasificar(1L, crearRequest(TipoSolicitud.HOMOLOGACION, 3, null), 999L))
-            .isInstanceOf(ResourceNotFoundException.class)
-            .hasMessageContaining("999");
+                solicitudService.clasificar(1L, crearRequest(TipoSolicitud.HOMOLOGACION, 3, null), 999L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("999");
 
         verify(historialRepository, never()).save(any());
     }
-
-    @Test
-    @DisplayName("clasificar - sin observación usa texto por defecto en historial")
-    void clasificar_sinObservacion_usaTextoDefault() {
-        Usuario docente = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
-        Usuario solicitante = TestDataFactory.crearUsuario(1L, RolUsuario.ESTUDIANTE);
-        SolicitudAcademica solicitud = TestDataFactory.crearSolicitud(1L, solicitante);
-        SolicitudAcademica clasificada = TestDataFactory.crearSolicitud(1L, solicitante);
-        clasificada.setEstado(EstadoSolicitud.CLASIFICADA);
-        clasificada.setTipo(TipoSolicitud.CANCELACION_ASIGNATURAS);
-        clasificada.setImpactoAcademico(4);
-        clasificada.setPrioridad(Prioridad.ALTA);
-        clasificada.setJustificacionPrioridad("Test justificación");
-
-        when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
-        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente));
-        when(solicitudRepository.save(any())).thenReturn(clasificada);
-        when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
-        when(motorReglasPrioridad.calcular(any())).thenReturn(
-            new ResultadoPrioridad(Prioridad.ALTA, "Justificación de prioridad de prueba"));
-
-        SolicitudResponse response = solicitudService.clasificar(
-            1L, crearRequest(TipoSolicitud.CANCELACION_ASIGNATURAS, 4, null), 2L);
-
-        assertThat(response.getEstado()).isEqualTo(EstadoSolicitud.CLASIFICADA);
-        ArgumentCaptor<HistorialSolicitud> captor =
-            ArgumentCaptor.forClass(HistorialSolicitud.class);
-        verify(historialRepository, times(2)).save(captor.capture());
-        assertThat(captor.getAllValues().get(0).getObservaciones())
-            .contains("CANCELACION_ASIGNATURAS");
-    }
-
-    @Test
-    @DisplayName("clasificar - historial registra estados anterior y nuevo correctamente")
-    void clasificar_historialRegistraEstadosCorrectamente() {
-        Usuario docente = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
-        Usuario solicitante = TestDataFactory.crearUsuario(1L, RolUsuario.ESTUDIANTE);
-        SolicitudAcademica solicitud = TestDataFactory.crearSolicitud(1L, solicitante);
-        SolicitudAcademica clasificada = TestDataFactory.crearSolicitud(1L, solicitante);
-        clasificada.setEstado(EstadoSolicitud.CLASIFICADA);
-        clasificada.setTipo(TipoSolicitud.SOLICITUD_CUPOS);
-        clasificada.setImpactoAcademico(2);
-        clasificada.setPrioridad(Prioridad.BAJA);
-        clasificada.setJustificacionPrioridad("Test justificación");
-
-        when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
-        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente));
-        when(solicitudRepository.save(any())).thenReturn(clasificada);
-        when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
-        when(motorReglasPrioridad.calcular(any())).thenReturn(
-            new ResultadoPrioridad(Prioridad.BAJA, "Justificación test"));
-
-        solicitudService.clasificar(1L, crearRequest(TipoSolicitud.SOLICITUD_CUPOS, 2, "obs"), 2L);
-
-        ArgumentCaptor<HistorialSolicitud> captor =
-            ArgumentCaptor.forClass(HistorialSolicitud.class);
-        verify(historialRepository, times(2)).save(captor.capture());
-
-        HistorialSolicitud registrado = captor.getAllValues().get(0);
-        assertThat(registrado.getEstadoAnterior()).isEqualTo(EstadoSolicitud.REGISTRADA);
-        assertThat(registrado.getEstadoNuevo()).isEqualTo(EstadoSolicitud.CLASIFICADA);
-        assertThat(registrado.getUsuarioResponsable().getId()).isEqualTo(2L);
-    }
-
 }

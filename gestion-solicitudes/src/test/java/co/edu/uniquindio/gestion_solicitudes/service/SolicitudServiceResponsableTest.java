@@ -1,6 +1,7 @@
 package co.edu.uniquindio.gestion_solicitudes.service;
 
 import co.edu.uniquindio.gestion_solicitudes.domain.chain.CadenaValidacionFactory;
+import co.edu.uniquindio.gestion_solicitudes.domain.chain.ValidacionSolicitudHandler;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.Usuario;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.RolUsuario;
@@ -18,6 +19,7 @@ import co.edu.uniquindio.gestion_solicitudes.repository.UsuarioRepository;
 import co.edu.uniquindio.gestion_solicitudes.service.impl.SolicitudServiceImpl;
 import co.edu.uniquindio.gestion_solicitudes.util.TestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,6 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("Tests unitarios - SolicitudService.asignarResponsable")
 class SolicitudServiceResponsableTest {
 
     @Mock private SolicitudRepository solicitudRepository;
@@ -46,8 +49,7 @@ class SolicitudServiceResponsableTest {
     @Mock private SolicitudStateContext stateContext;
     @Mock private CadenaValidacionFactory cadenaValidacionFactory;
 
-    @InjectMocks
-    private SolicitudServiceImpl solicitudService;
+    @InjectMocks private SolicitudServiceImpl solicitudService;
 
     private Usuario admin;
     private Usuario docente;
@@ -57,15 +59,22 @@ class SolicitudServiceResponsableTest {
     void setUp() {
         observadores.clear();
         observadores.add(new HistorialObserver(historialRepository));
-        lenient().when(solicitudFactory.toResponse(any(SolicitudAcademica.class)))
-            .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
 
-        admin   = TestDataFactory.crearUsuario(1L, RolUsuario.ADMINISTRATIVO);
-        docente = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
-        solicitud = TestDataFactory.crearSolicitud(10L, TestDataFactory.crearUsuario(3L, RolUsuario.ESTUDIANTE));
+        lenient().when(solicitudFactory.toResponse(any(SolicitudAcademica.class)))
+                .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+
+        ValidacionSolicitudHandler handlerNoOp = mock(ValidacionSolicitudHandler.class);
+        lenient().when(cadenaValidacionFactory.construirCadenaBasica()).thenReturn(handlerNoOp);
+        lenient().when(cadenaValidacionFactory.construirCadenaIniciarAtencion()).thenReturn(handlerNoOp);
+
+        admin    = TestDataFactory.crearUsuario(1L, RolUsuario.ADMINISTRATIVO);
+        docente  = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
+        solicitud = TestDataFactory.crearSolicitud(
+                10L, TestDataFactory.crearUsuario(3L, RolUsuario.ESTUDIANTE));
     }
 
     @Test
+    @DisplayName("asignarResponsable exitoso retorna solicitud con responsable")
     void asignarResponsable_exitoso_debeRetornarSolicitudConResponsable() {
         AsignarResponsableRequest request = new AsignarResponsableRequest();
         request.setResponsableId(2L);
@@ -83,16 +92,18 @@ class SolicitudServiceResponsableTest {
     }
 
     @Test
+    @DisplayName("asignarResponsable con solicitud inexistente lanza ResourceNotFoundException")
     void asignarResponsable_solicitudNoExiste_debeLanzarResourceNotFoundException() {
         AsignarResponsableRequest request = new AsignarResponsableRequest();
         request.setResponsableId(2L);
         when(solicitudRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> solicitudService.asignarResponsable(99L, request, 1L))
-            .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
+    @DisplayName("asignarResponsable con responsable inexistente lanza ResourceNotFoundException")
     void asignarResponsable_responsableNoExiste_debeLanzarResourceNotFoundException() {
         AsignarResponsableRequest request = new AsignarResponsableRequest();
         request.setResponsableId(99L);
@@ -102,10 +113,11 @@ class SolicitudServiceResponsableTest {
         when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> solicitudService.asignarResponsable(10L, request, 1L))
-            .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
+    @DisplayName("asignarResponsable con responsable inactivo lanza IllegalStateException")
     void asignarResponsable_responsableInactivo_debeLanzarIllegalStateException() {
         docente.setActivo(false);
         AsignarResponsableRequest request = new AsignarResponsableRequest();
@@ -116,11 +128,12 @@ class SolicitudServiceResponsableTest {
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente));
 
         assertThatThrownBy(() -> solicitudService.asignarResponsable(10L, request, 1L))
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("no está activo");
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no está activo");
     }
 
     @Test
+    @DisplayName("asignarResponsable con observación la usa en el historial")
     void asignarResponsable_conObservacion_debeUsarlaEnHistorial() {
         AsignarResponsableRequest request = new AsignarResponsableRequest();
         request.setResponsableId(2L);
@@ -133,6 +146,23 @@ class SolicitudServiceResponsableTest {
 
         solicitudService.asignarResponsable(10L, request, 1L);
 
-        verify(historialRepository).save(argThat(h -> h.getObservaciones().equals("Asignado por prioridad académica")));
+        verify(historialRepository).save(argThat(
+                h -> "Asignado por prioridad académica".equals(h.getObservaciones())));
+    }
+
+    @Test
+    @DisplayName("asignarResponsable con rol ESTUDIANTE lanza IllegalStateException")
+    void asignarResponsable_responsableConRolEstudiante_lanzaExcepcion() {
+        Usuario estudianteComoResponsable = TestDataFactory.crearUsuario(5L, RolUsuario.ESTUDIANTE);
+        AsignarResponsableRequest request = new AsignarResponsableRequest();
+        request.setResponsableId(5L);
+
+        when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(usuarioRepository.findById(5L)).thenReturn(Optional.of(estudianteComoResponsable));
+
+        assertThatThrownBy(() -> solicitudService.asignarResponsable(10L, request, 1L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("ESTUDIANTE");
     }
 }

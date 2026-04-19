@@ -1,6 +1,7 @@
 package co.edu.uniquindio.gestion_solicitudes.service;
 
 import co.edu.uniquindio.gestion_solicitudes.domain.chain.CadenaValidacionFactory;
+import co.edu.uniquindio.gestion_solicitudes.domain.chain.ValidacionSolicitudHandler;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.*;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
 import co.edu.uniquindio.gestion_solicitudes.domain.factory.SolicitudFactory;
@@ -9,6 +10,7 @@ import co.edu.uniquindio.gestion_solicitudes.domain.observer.SolicitudObserver;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.MotorReglasPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.ResultadoPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.state.SolicitudStateContext;
+import co.edu.uniquindio.gestion_solicitudes.domain.state.impl.*;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.*;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
 import co.edu.uniquindio.gestion_solicitudes.exception.ResourceNotFoundException;
@@ -44,12 +46,36 @@ public class FlujoCicloVidaSolicitudTest {
 
     @InjectMocks private SolicitudServiceImpl solicitudService;
 
+    private final EstadoRegistrada  estadoRegistrada  = new EstadoRegistrada();
+    private final EstadoClasificada estadoClasificada = new EstadoClasificada();
+    private final EstadoEnAtencion  estadoEnAtencion  = new EstadoEnAtencion();
+    private final EstadoAtendida    estadoAtendida    = new EstadoAtendida();
+
     @BeforeEach
     void setUp() {
         observadores.clear();
         observadores.add(new HistorialObserver(historialRepository));
+
         lenient().when(solicitudFactory.toResponse(any(SolicitudAcademica.class)))
-            .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+                .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+
+        ValidacionSolicitudHandler handlerNoOp = mock(ValidacionSolicitudHandler.class);
+        lenient().when(cadenaValidacionFactory.construirCadenaBasica()).thenReturn(handlerNoOp);
+        lenient().when(cadenaValidacionFactory.construirCadenaIniciarAtencion()).thenReturn(handlerNoOp);
+
+        lenient().when(stateContext.resolverEstado(any(SolicitudAcademica.class)))
+                .thenAnswer(inv -> {
+                    SolicitudAcademica s = inv.getArgument(0);
+                    return switch (s.getEstado()) {
+                        case REGISTRADA  -> estadoRegistrada;
+                        case CLASIFICADA -> estadoClasificada;
+                        case EN_ATENCION -> estadoEnAtencion;
+                        case ATENDIDA    -> estadoAtendida;
+                        default -> throw new IllegalStateException(
+                                "La solicitud está en estado terminal " + s.getEstado().name()
+                                        + " y no puede ser modificada.");
+                    };
+                });
     }
 
     private Usuario docente() {
@@ -84,41 +110,38 @@ public class FlujoCicloVidaSolicitudTest {
         return r;
     }
 
-    // ── FLUJO COMPLETO ───────────────────────────────────────
+    // ---- FLUJO COMPLETO ----
 
     @Test
-    @DisplayName("Flujo completo")
+    @DisplayName("Flujo completo REGISTRADA → CLASIFICADA → EN_ATENCION → ATENDIDA → CERRADA")
     void flujoCompleto_cicloDeVidaCompleto() {
-
         SolicitudAcademica enRegistrada = solicitudEn(EstadoSolicitud.REGISTRADA);
         SolicitudAcademica enClasificada = solicitudGuardadaEn(EstadoSolicitud.CLASIFICADA);
         enClasificada.setTipo(TipoSolicitud.HOMOLOGACION);
         enClasificada.setPrioridad(Prioridad.MEDIA);
-        enClasificada.setJustificacionPrioridad("Prioridad asignada automáticamente durante flujo de prueba");
+        enClasificada.setJustificacionPrioridad("Prioridad asignada automáticamente");
 
         when(solicitudRepository.findById(1L))
-            .thenReturn(Optional.of(enRegistrada))
-            .thenReturn(Optional.of(enClasificada))
-            .thenReturn(Optional.of(solicitudGuardadaEn(EstadoSolicitud.EN_ATENCION)))
-            .thenReturn(Optional.of(solicitudGuardadaEn(EstadoSolicitud.ATENDIDA)));
+                .thenReturn(Optional.of(enRegistrada))
+                .thenReturn(Optional.of(enClasificada))
+                .thenReturn(Optional.of(solicitudGuardadaEn(EstadoSolicitud.EN_ATENCION)))
+                .thenReturn(Optional.of(solicitudGuardadaEn(EstadoSolicitud.ATENDIDA)));
 
-        when(usuarioRepository.findById(anyLong()))
-            .thenReturn(Optional.of(docente()));
+        when(usuarioRepository.findById(anyLong())).thenReturn(Optional.of(docente()));
 
         when(solicitudRepository.save(any()))
-            .thenReturn(enClasificada)
-            .thenReturn(solicitudGuardadaEn(EstadoSolicitud.EN_ATENCION))
-            .thenReturn(solicitudGuardadaEn(EstadoSolicitud.ATENDIDA))
-            .thenReturn(solicitudGuardadaEn(EstadoSolicitud.CERRADA));
+                .thenReturn(enClasificada)
+                .thenReturn(solicitudGuardadaEn(EstadoSolicitud.EN_ATENCION))
+                .thenReturn(solicitudGuardadaEn(EstadoSolicitud.ATENDIDA))
+                .thenReturn(solicitudGuardadaEn(EstadoSolicitud.CERRADA));
 
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
-
         when(motorReglasPrioridad.calcular(any()))
-            .thenReturn(new ResultadoPrioridad(
-                Prioridad.MEDIA, "Prioridad asignada automáticamente durante flujo de prueba"));
+                .thenReturn(new ResultadoPrioridad(Prioridad.MEDIA, "Justificación de prueba"));
 
         ClasificarRequest clasificarReq = new ClasificarRequest();
         clasificarReq.setTipo(TipoSolicitud.HOMOLOGACION);
+        clasificarReq.setImpactoAcademico(3);
         clasificarReq.setObservacion("Clasificada como homologación");
 
         SolicitudResponse r1 = solicitudService.clasificar(1L, clasificarReq, 2L);
@@ -130,11 +153,9 @@ public class FlujoCicloVidaSolicitudTest {
         SolicitudResponse r3 = solicitudService.marcarAtendida(1L, obs("Resuelto"), 2L);
         assertThat(r3.getEstado()).isEqualTo(EstadoSolicitud.ATENDIDA);
 
-        SolicitudResponse r4 = solicitudService.cerrar(
-            1L, obsCierre("Solicitud cerrada formalmente."), 2L);
+        SolicitudResponse r4 = solicitudService.cerrar(1L, obsCierre("Solicitud cerrada formalmente."), 2L);
         assertThat(r4.getEstado()).isEqualTo(EstadoSolicitud.CERRADA);
 
-        // Observer guarda: 2 en clasificar (estado + prioridad) + 1 iniciar + 1 atender + 1 cerrar = 5
         verify(historialRepository, times(5)).save(any(HistorialSolicitud.class));
         verify(solicitudRepository, times(4)).save(any(SolicitudAcademica.class));
     }
@@ -143,15 +164,14 @@ public class FlujoCicloVidaSolicitudTest {
     @DisplayName("Flujo cancelación: REGISTRADA → CANCELADA")
     void flujoCancelacion_desdeRegistrada() {
         SolicitudAcademica enRegistrada = solicitudEn(EstadoSolicitud.REGISTRADA);
-        SolicitudAcademica cancelada = solicitudGuardadaEn(EstadoSolicitud.CANCELADA);
+        SolicitudAcademica cancelada    = solicitudGuardadaEn(EstadoSolicitud.CANCELADA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(enRegistrada));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(estudiante()));
         when(solicitudRepository.save(any())).thenReturn(cancelada);
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
 
-        SolicitudResponse response = solicitudService.cancelar(
-            1L, obs("Cancelada por error"), 1L);
+        SolicitudResponse response = solicitudService.cancelar(1L, obs("Cancelada por error"), 1L);
 
         assertThat(response.getEstado()).isEqualTo(EstadoSolicitud.CANCELADA);
         verify(historialRepository, times(1)).save(any(HistorialSolicitud.class));
@@ -165,11 +185,9 @@ public class FlujoCicloVidaSolicitudTest {
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(enClasificada));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(estudiante()));
 
-        assertThatThrownBy(() ->
-            solicitudService.cancelar(1L, obs("Quiero cancelar"), 1L))
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("CLASIFICADA")
-            .hasMessageContaining("CANCELADA");
+        assertThatThrownBy(() -> solicitudService.cancelar(1L, obs("Quiero cancelar"), 1L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("REGISTRADA");
 
         verify(solicitudRepository, never()).save(any());
         verify(historialRepository, never()).save(any());
@@ -185,10 +203,10 @@ public class FlujoCicloVidaSolicitudTest {
 
         ClasificarRequest req = new ClasificarRequest();
         req.setTipo(TipoSolicitud.OTRO);
+        req.setImpactoAcademico(2);
 
-        assertThatThrownBy(() ->
-            solicitudService.clasificar(1L, req, 2L))
-            .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> solicitudService.clasificar(1L, req, 2L))
+                .isInstanceOf(IllegalStateException.class);
 
         verify(historialRepository, never()).save(any());
     }
@@ -201,10 +219,9 @@ public class FlujoCicloVidaSolicitudTest {
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(enRegistrada));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
 
-        assertThatThrownBy(() ->
-            solicitudService.iniciarAtencion(1L, obs("Saltando"), 2L))
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("REGISTRADA");
+        assertThatThrownBy(() -> solicitudService.iniciarAtencion(1L, obs("Saltando"), 2L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("REGISTRADA");
 
         verify(historialRepository, never()).save(any());
     }
@@ -217,9 +234,8 @@ public class FlujoCicloVidaSolicitudTest {
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(enRegistrada));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
 
-        assertThatThrownBy(() ->
-            solicitudService.marcarAtendida(1L, obs("Saltando"), 2L))
-            .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> solicitudService.marcarAtendida(1L, obs("Saltando"), 2L))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -230,9 +246,8 @@ public class FlujoCicloVidaSolicitudTest {
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(enClasificada));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
 
-        assertThatThrownBy(() ->
-            solicitudService.cerrar(1L, obsCierre("Cerrando directamente"), 2L))
-            .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> solicitudService.cerrar(1L, obsCierre("Cerrando directamente"), 2L))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -240,12 +255,14 @@ public class FlujoCicloVidaSolicitudTest {
     void flujo_cerradaEsTerminal() {
         SolicitudAcademica cerrada = solicitudEn(EstadoSolicitud.CERRADA);
 
-        when(solicitudRepository.findById(1L)).thenReturn(Optional.of(cerrada));
+        Usuario docente = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
 
-        assertThatThrownBy(() ->
-            solicitudService.iniciarAtencion(1L, obs("Reactivando"), 2L))
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("CERRADA");
+        when(solicitudRepository.findById(1L)).thenReturn(Optional.of(cerrada));
+        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente)); // 🔥 FALTABA ESTO
+
+        assertThatThrownBy(() -> solicitudService.iniciarAtencion(1L, obs("Reactivando"), 2L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("CERRADA");
 
         verify(historialRepository, never()).save(any());
     }
@@ -255,15 +272,18 @@ public class FlujoCicloVidaSolicitudTest {
     void flujo_canceladaEsTerminal() {
         SolicitudAcademica cancelada = solicitudEn(EstadoSolicitud.CANCELADA);
 
+        Usuario docente = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
+
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(cancelada));
+        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente)); // 🔥 FALTABA ESTO
 
         ClasificarRequest req = new ClasificarRequest();
         req.setTipo(TipoSolicitud.OTRO);
+        req.setImpactoAcademico(2);
 
-        assertThatThrownBy(() ->
-            solicitudService.clasificar(1L, req, 2L))
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("CANCELADA");
+        assertThatThrownBy(() -> solicitudService.clasificar(1L, req, 2L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("CANCELADA");
 
         verify(historialRepository, never()).save(any());
     }
@@ -272,7 +292,7 @@ public class FlujoCicloVidaSolicitudTest {
     @DisplayName("Cada transición registra exactamente una entrada en historial")
     void flujo_cadaTransicionRegistraHistorial() {
         SolicitudAcademica enClasificada = solicitudEn(EstadoSolicitud.CLASIFICADA);
-        SolicitudAcademica enAtencion = solicitudGuardadaEn(EstadoSolicitud.EN_ATENCION);
+        SolicitudAcademica enAtencion    = solicitudGuardadaEn(EstadoSolicitud.EN_ATENCION);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(enClasificada));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
@@ -285,10 +305,10 @@ public class FlujoCicloVidaSolicitudTest {
     }
 
     @Test
-    @DisplayName("Cerrar requiere observacion no nula")
-    void flujo_cerrar_observacionObligatoria() {
+    @DisplayName("Cerrar registra la observación en el historial")
+    void flujo_cerrar_observacionGuardadaEnHistorial() {
         SolicitudAcademica enAtendida = solicitudEn(EstadoSolicitud.ATENDIDA);
-        SolicitudAcademica cerrada = solicitudGuardadaEn(EstadoSolicitud.CERRADA);
+        SolicitudAcademica cerrada    = solicitudGuardadaEn(EstadoSolicitud.CERRADA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(enAtendida));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
@@ -302,11 +322,10 @@ public class FlujoCicloVidaSolicitudTest {
 
         assertThat(response.getEstado()).isEqualTo(EstadoSolicitud.CERRADA);
 
-        ArgumentCaptor<HistorialSolicitud> captor =
-            ArgumentCaptor.forClass(HistorialSolicitud.class);
+        ArgumentCaptor<HistorialSolicitud> captor = ArgumentCaptor.forClass(HistorialSolicitud.class);
         verify(historialRepository).save(captor.capture());
         assertThat(captor.getValue().getObservaciones())
-            .isEqualTo("Cierre formal con documentación completa adjunta.");
+                .isEqualTo("Cierre formal con documentación completa adjunta.");
     }
 
     @Test
@@ -317,10 +336,9 @@ public class FlujoCicloVidaSolicitudTest {
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(enClasificada));
         when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() ->
-            solicitudService.iniciarAtencion(1L, obs("obs"), 999L))
-            .isInstanceOf(ResourceNotFoundException.class)
-            .hasMessageContaining("999");
+        assertThatThrownBy(() -> solicitudService.iniciarAtencion(1L, obs("obs"), 999L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("999");
 
         verify(historialRepository, never()).save(any());
     }

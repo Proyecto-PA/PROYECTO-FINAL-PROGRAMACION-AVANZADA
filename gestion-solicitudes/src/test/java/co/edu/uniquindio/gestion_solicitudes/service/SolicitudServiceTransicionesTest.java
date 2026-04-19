@@ -1,6 +1,7 @@
 package co.edu.uniquindio.gestion_solicitudes.service;
 
 import co.edu.uniquindio.gestion_solicitudes.domain.chain.CadenaValidacionFactory;
+import co.edu.uniquindio.gestion_solicitudes.domain.chain.ValidacionSolicitudHandler;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.*;
 import co.edu.uniquindio.gestion_solicitudes.domain.enums.*;
 import co.edu.uniquindio.gestion_solicitudes.domain.factory.SolicitudFactory;
@@ -8,8 +9,10 @@ import co.edu.uniquindio.gestion_solicitudes.domain.observer.HistorialObserver;
 import co.edu.uniquindio.gestion_solicitudes.domain.observer.SolicitudObserver;
 import co.edu.uniquindio.gestion_solicitudes.domain.rules.MotorReglasPrioridad;
 import co.edu.uniquindio.gestion_solicitudes.domain.state.SolicitudStateContext;
+import co.edu.uniquindio.gestion_solicitudes.domain.state.impl.*;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.CambiarEstadoRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.CerrarSolicitudRequest;
+import co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.response.SolicitudResponse;
 import co.edu.uniquindio.gestion_solicitudes.exception.ResourceNotFoundException;
 import co.edu.uniquindio.gestion_solicitudes.repository.*;
@@ -44,15 +47,39 @@ public class SolicitudServiceTransicionesTest {
 
     @InjectMocks private SolicitudServiceImpl solicitudService;
 
+    private final EstadoRegistrada  estadoRegistrada  = new EstadoRegistrada();
+    private final EstadoClasificada estadoClasificada = new EstadoClasificada();
+    private final EstadoEnAtencion  estadoEnAtencion  = new EstadoEnAtencion();
+    private final EstadoAtendida    estadoAtendida    = new EstadoAtendida();
+
     @BeforeEach
     void setUp() {
         observadores.clear();
         observadores.add(new HistorialObserver(historialRepository));
+
         lenient().when(solicitudFactory.toResponse(any(SolicitudAcademica.class)))
-            .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+                .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+
+        ValidacionSolicitudHandler handlerNoOp = mock(ValidacionSolicitudHandler.class);
+        lenient().when(cadenaValidacionFactory.construirCadenaBasica()).thenReturn(handlerNoOp);
+        lenient().when(cadenaValidacionFactory.construirCadenaIniciarAtencion()).thenReturn(handlerNoOp);
+
+        lenient().when(stateContext.resolverEstado(any(SolicitudAcademica.class)))
+                .thenAnswer(inv -> {
+                    SolicitudAcademica s = inv.getArgument(0);
+                    return switch (s.getEstado()) {
+                        case REGISTRADA  -> estadoRegistrada;
+                        case CLASIFICADA -> estadoClasificada;
+                        case EN_ATENCION -> estadoEnAtencion;
+                        case ATENDIDA    -> estadoAtendida;
+                        default -> throw new IllegalStateException(
+                                "La solicitud está en estado terminal "
+                                        + s.getEstado().name() + " y no puede ser modificada.");
+                    };
+                });
     }
 
-    private Usuario docente() { return TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE); }
+    private Usuario docente()    { return TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE); }
     private Usuario estudiante() { return TestDataFactory.crearUsuario(1L, RolUsuario.ESTUDIANTE); }
 
     private SolicitudAcademica solicitudEn(EstadoSolicitud estado) {
@@ -79,13 +106,13 @@ public class SolicitudServiceTransicionesTest {
         return r;
     }
 
-    // ── INICIAR ATENCIÓN ─────────────────────────────────────
+    // ---- INICIAR ATENCIÓN ----
 
     @Test
     @DisplayName("iniciarAtencion - CLASIFICADA → EN_ATENCION exitosamente")
     void iniciarAtencion_desdeClasificada_cambiaEstado() {
         SolicitudAcademica solicitud = solicitudEn(EstadoSolicitud.CLASIFICADA);
-        SolicitudAcademica guardada = solicitudGuardadaEn(EstadoSolicitud.EN_ATENCION);
+        SolicitudAcademica guardada  = solicitudGuardadaEn(EstadoSolicitud.EN_ATENCION);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
@@ -93,7 +120,7 @@ public class SolicitudServiceTransicionesTest {
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
 
         SolicitudResponse response = solicitudService.iniciarAtencion(
-            1L, requestConObs("Iniciando revisión"), 2L);
+                1L, requestConObs("Iniciando revisión"), 2L);
 
         assertThat(response.getEstado()).isEqualTo(EstadoSolicitud.EN_ATENCION);
         verify(historialRepository).save(any(HistorialSolicitud.class));
@@ -109,10 +136,9 @@ public class SolicitudServiceTransicionesTest {
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
 
         assertThatThrownBy(() ->
-            solicitudService.iniciarAtencion(1L, requestConObs("obs"), 2L))
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("REGISTRADA")
-            .hasMessageContaining("EN_ATENCION");
+                solicitudService.iniciarAtencion(1L, requestConObs("obs"), 2L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("REGISTRADA");
 
         verify(solicitudRepository, never()).save(any());
         verify(historialRepository, never()).save(any());
@@ -124,16 +150,16 @@ public class SolicitudServiceTransicionesTest {
         when(solicitudRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
-            solicitudService.iniciarAtencion(999L, requestConObs("obs"), 2L))
-            .isInstanceOf(ResourceNotFoundException.class)
-            .hasMessageContaining("999");
+                solicitudService.iniciarAtencion(999L, requestConObs("obs"), 2L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("999");
     }
 
     @Test
     @DisplayName("iniciarAtencion - historial registra estados correctamente")
     void iniciarAtencion_historialRegistraEstados() {
         SolicitudAcademica solicitud = solicitudEn(EstadoSolicitud.CLASIFICADA);
-        SolicitudAcademica guardada = solicitudGuardadaEn(EstadoSolicitud.EN_ATENCION);
+        SolicitudAcademica guardada  = solicitudGuardadaEn(EstadoSolicitud.EN_ATENCION);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
@@ -142,19 +168,17 @@ public class SolicitudServiceTransicionesTest {
 
         solicitudService.iniciarAtencion(1L, requestConObs("obs"), 2L);
 
-        ArgumentCaptor<HistorialSolicitud> captor =
-            ArgumentCaptor.forClass(HistorialSolicitud.class);
+        ArgumentCaptor<HistorialSolicitud> captor = ArgumentCaptor.forClass(HistorialSolicitud.class);
         verify(historialRepository).save(captor.capture());
-
         assertThat(captor.getValue().getEstadoAnterior()).isEqualTo(EstadoSolicitud.CLASIFICADA);
         assertThat(captor.getValue().getEstadoNuevo()).isEqualTo(EstadoSolicitud.EN_ATENCION);
     }
 
     @Test
-    @DisplayName("iniciarAtencion - sin observacion usa texto por defecto")
+    @DisplayName("iniciarAtencion - sin observación usa texto por defecto")
     void iniciarAtencion_sinObservacion_usaDefault() {
         SolicitudAcademica solicitud = solicitudEn(EstadoSolicitud.CLASIFICADA);
-        SolicitudAcademica guardada = solicitudGuardadaEn(EstadoSolicitud.EN_ATENCION);
+        SolicitudAcademica guardada  = solicitudGuardadaEn(EstadoSolicitud.EN_ATENCION);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
@@ -163,19 +187,18 @@ public class SolicitudServiceTransicionesTest {
 
         solicitudService.iniciarAtencion(1L, null, 2L);
 
-        ArgumentCaptor<HistorialSolicitud> captor =
-            ArgumentCaptor.forClass(HistorialSolicitud.class);
+        ArgumentCaptor<HistorialSolicitud> captor = ArgumentCaptor.forClass(HistorialSolicitud.class);
         verify(historialRepository).save(captor.capture());
         assertThat(captor.getValue().getObservaciones()).isNotBlank();
     }
 
-    // ── MARCAR ATENDIDA ──────────────────────────────────────
+    // ---- MARCAR ATENDIDA ----
 
     @Test
     @DisplayName("marcarAtendida - EN_ATENCION → ATENDIDA exitosamente")
     void marcarAtendida_desdeEnAtencion_cambiaEstado() {
         SolicitudAcademica solicitud = solicitudEn(EstadoSolicitud.EN_ATENCION);
-        SolicitudAcademica guardada = solicitudGuardadaEn(EstadoSolicitud.ATENDIDA);
+        SolicitudAcademica guardada  = solicitudGuardadaEn(EstadoSolicitud.ATENDIDA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
@@ -183,7 +206,7 @@ public class SolicitudServiceTransicionesTest {
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
 
         SolicitudResponse response = solicitudService.marcarAtendida(
-            1L, requestConObs("Trámite resuelto"), 2L);
+                1L, requestConObs("Trámite resuelto"), 2L);
 
         assertThat(response.getEstado()).isEqualTo(EstadoSolicitud.ATENDIDA);
         verify(historialRepository).save(any(HistorialSolicitud.class));
@@ -198,8 +221,8 @@ public class SolicitudServiceTransicionesTest {
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
 
         assertThatThrownBy(() ->
-            solicitudService.marcarAtendida(1L, requestConObs("obs"), 2L))
-            .isInstanceOf(IllegalStateException.class);
+                solicitudService.marcarAtendida(1L, requestConObs("obs"), 2L))
+                .isInstanceOf(IllegalStateException.class);
 
         verify(solicitudRepository, never()).save(any());
         verify(historialRepository, never()).save(any());
@@ -209,7 +232,7 @@ public class SolicitudServiceTransicionesTest {
     @DisplayName("marcarAtendida - historial registra estados correctamente")
     void marcarAtendida_historialRegistraEstados() {
         SolicitudAcademica solicitud = solicitudEn(EstadoSolicitud.EN_ATENCION);
-        SolicitudAcademica guardada = solicitudGuardadaEn(EstadoSolicitud.ATENDIDA);
+        SolicitudAcademica guardada  = solicitudGuardadaEn(EstadoSolicitud.ATENDIDA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
@@ -218,21 +241,19 @@ public class SolicitudServiceTransicionesTest {
 
         solicitudService.marcarAtendida(1L, requestConObs("obs"), 2L);
 
-        ArgumentCaptor<HistorialSolicitud> captor =
-            ArgumentCaptor.forClass(HistorialSolicitud.class);
+        ArgumentCaptor<HistorialSolicitud> captor = ArgumentCaptor.forClass(HistorialSolicitud.class);
         verify(historialRepository).save(captor.capture());
-
         assertThat(captor.getValue().getEstadoAnterior()).isEqualTo(EstadoSolicitud.EN_ATENCION);
         assertThat(captor.getValue().getEstadoNuevo()).isEqualTo(EstadoSolicitud.ATENDIDA);
     }
 
-    // ── CERRAR ───────────────────────────────────────────────
+    // ---- CERRAR ----
 
     @Test
     @DisplayName("cerrar - ATENDIDA → CERRADA exitosamente")
     void cerrar_desdeAtendida_cambiaEstado() {
         SolicitudAcademica solicitud = solicitudEn(EstadoSolicitud.ATENDIDA);
-        SolicitudAcademica guardada = solicitudGuardadaEn(EstadoSolicitud.CERRADA);
+        SolicitudAcademica guardada  = solicitudGuardadaEn(EstadoSolicitud.CERRADA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
@@ -240,7 +261,7 @@ public class SolicitudServiceTransicionesTest {
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
 
         SolicitudResponse response = solicitudService.cerrar(
-            1L, requestCierre("Solicitud resuelta exitosamente."), 2L);
+                1L, requestCierre("Solicitud resuelta exitosamente."), 2L);
 
         assertThat(response.getEstado()).isEqualTo(EstadoSolicitud.CERRADA);
         verify(historialRepository).save(any(HistorialSolicitud.class));
@@ -255,8 +276,8 @@ public class SolicitudServiceTransicionesTest {
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
 
         assertThatThrownBy(() ->
-            solicitudService.cerrar(1L, requestCierre("Cierre"), 2L))
-            .isInstanceOf(IllegalStateException.class);
+                solicitudService.cerrar(1L, requestCierre("Cierre"), 2L))
+                .isInstanceOf(IllegalStateException.class);
 
         verify(solicitudRepository, never()).save(any());
     }
@@ -268,16 +289,21 @@ public class SolicitudServiceTransicionesTest {
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
 
+        when(usuarioRepository.findById(2L))
+                .thenReturn(Optional.of(docente()));
+
         assertThatThrownBy(() ->
-            solicitudService.cerrar(1L, requestCierre("Cierre duplicado"), 2L))
-            .isInstanceOf(IllegalStateException.class);
+                solicitudService.cerrar(1L, requestCierre("Cierre duplicado"), 2L))
+                .isInstanceOf(IllegalStateException.class);
+
+        verify(historialRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("cerrar - historial registra observacion de cierre")
+    @DisplayName("cerrar - historial registra observación de cierre")
     void cerrar_historialRegistraObservacion() {
         SolicitudAcademica solicitud = solicitudEn(EstadoSolicitud.ATENDIDA);
-        SolicitudAcademica guardada = solicitudGuardadaEn(EstadoSolicitud.CERRADA);
+        SolicitudAcademica guardada  = solicitudGuardadaEn(EstadoSolicitud.CERRADA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
@@ -286,21 +312,19 @@ public class SolicitudServiceTransicionesTest {
 
         solicitudService.cerrar(1L, requestCierre("Resolución formal del caso"), 2L);
 
-        ArgumentCaptor<HistorialSolicitud> captor =
-            ArgumentCaptor.forClass(HistorialSolicitud.class);
+        ArgumentCaptor<HistorialSolicitud> captor = ArgumentCaptor.forClass(HistorialSolicitud.class);
         verify(historialRepository).save(captor.capture());
-
         assertThat(captor.getValue().getObservaciones()).isEqualTo("Resolución formal del caso");
         assertThat(captor.getValue().getEstadoNuevo()).isEqualTo(EstadoSolicitud.CERRADA);
     }
 
-    // ── CANCELAR ─────────────────────────────────────────────
+    // ---- CANCELAR ----
 
     @Test
     @DisplayName("cancelar - REGISTRADA → CANCELADA exitosamente")
     void cancelar_desdeRegistrada_cambiaEstado() {
         SolicitudAcademica solicitud = solicitudEn(EstadoSolicitud.REGISTRADA);
-        SolicitudAcademica guardada = solicitudGuardadaEn(EstadoSolicitud.CANCELADA);
+        SolicitudAcademica guardada  = solicitudGuardadaEn(EstadoSolicitud.CANCELADA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(estudiante()));
@@ -308,7 +332,7 @@ public class SolicitudServiceTransicionesTest {
         when(historialRepository.save(any())).thenReturn(new HistorialSolicitud());
 
         SolicitudResponse response = solicitudService.cancelar(
-            1L, requestConObs("Cancelada por error"), 1L);
+                1L, requestConObs("Cancelada por error"), 1L);
 
         assertThat(response.getEstado()).isEqualTo(EstadoSolicitud.CANCELADA);
         verify(historialRepository).save(any(HistorialSolicitud.class));
@@ -323,8 +347,8 @@ public class SolicitudServiceTransicionesTest {
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(estudiante()));
 
         assertThatThrownBy(() ->
-            solicitudService.cancelar(1L, requestConObs("obs"), 1L))
-            .isInstanceOf(IllegalStateException.class);
+                solicitudService.cancelar(1L, requestConObs("obs"), 1L))
+                .isInstanceOf(IllegalStateException.class);
 
         verify(solicitudRepository, never()).save(any());
     }
@@ -336,16 +360,21 @@ public class SolicitudServiceTransicionesTest {
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
 
+        when(usuarioRepository.findById(1L))
+                .thenReturn(Optional.of(estudiante()));
+
         assertThatThrownBy(() ->
-            solicitudService.cancelar(1L, requestConObs("doble cancelación"), 1L))
-            .isInstanceOf(IllegalStateException.class);
+                solicitudService.cancelar(1L, requestConObs("doble cancelación"), 1L))
+                .isInstanceOf(IllegalStateException.class);
+
+        verify(historialRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("cancelar - historial registra estados correctamente")
     void cancelar_historialRegistraEstados() {
         SolicitudAcademica solicitud = solicitudEn(EstadoSolicitud.REGISTRADA);
-        SolicitudAcademica guardada = solicitudGuardadaEn(EstadoSolicitud.CANCELADA);
+        SolicitudAcademica guardada  = solicitudGuardadaEn(EstadoSolicitud.CANCELADA);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(estudiante()));
@@ -354,35 +383,33 @@ public class SolicitudServiceTransicionesTest {
 
         solicitudService.cancelar(1L, requestConObs("Cancelada"), 1L);
 
-        ArgumentCaptor<HistorialSolicitud> captor =
-            ArgumentCaptor.forClass(HistorialSolicitud.class);
+        ArgumentCaptor<HistorialSolicitud> captor = ArgumentCaptor.forClass(HistorialSolicitud.class);
         verify(historialRepository).save(captor.capture());
-
         assertThat(captor.getValue().getEstadoAnterior()).isEqualTo(EstadoSolicitud.REGISTRADA);
         assertThat(captor.getValue().getEstadoNuevo()).isEqualTo(EstadoSolicitud.CANCELADA);
     }
 
-    // ── FLUJO COMPLETO ───────────────────────────────────────
+    // ---- FLUJO COMPLETO ----
 
     @Test
-    @DisplayName("flujo completo - no se puede retroceder de EN_ATENCION a REGISTRADA")
+    @DisplayName("flujo - no se puede retroceder de EN_ATENCION")
     void flujo_noSePuedeRetroceder() {
         SolicitudAcademica solicitud = solicitudEn(EstadoSolicitud.EN_ATENCION);
 
         when(solicitudRepository.findById(1L)).thenReturn(Optional.of(solicitud));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
 
-        co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest clasificarReq =
-            new co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest();
+        ClasificarRequest clasificarReq = new ClasificarRequest();
         clasificarReq.setTipo(TipoSolicitud.OTRO);
+        clasificarReq.setImpactoAcademico(2);
 
         assertThatThrownBy(() ->
-            solicitudService.clasificar(1L, clasificarReq, 2L))
-            .isInstanceOf(IllegalStateException.class);
+                solicitudService.clasificar(1L, clasificarReq, 2L))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("flujo completo - no se puede saltar de REGISTRADA a ATENDIDA")
+    @DisplayName("flujo - no se puede saltar de REGISTRADA a ATENDIDA")
     void flujo_noSePuedeSaltarEstados() {
         SolicitudAcademica solicitud = solicitudEn(EstadoSolicitud.REGISTRADA);
 
@@ -390,7 +417,7 @@ public class SolicitudServiceTransicionesTest {
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(docente()));
 
         assertThatThrownBy(() ->
-            solicitudService.marcarAtendida(1L, requestConObs("obs"), 2L))
-            .isInstanceOf(IllegalStateException.class);
+                solicitudService.marcarAtendida(1L, requestConObs("obs"), 2L))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

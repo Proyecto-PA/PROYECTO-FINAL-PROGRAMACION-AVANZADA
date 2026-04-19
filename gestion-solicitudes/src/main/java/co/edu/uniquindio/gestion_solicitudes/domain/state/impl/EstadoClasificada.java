@@ -38,4 +38,5 @@ public class EstadoClasificada implements EstadoSolicitudState {
     public String getNombre(){
         return "CLASIFICADA";
     }
+
 }

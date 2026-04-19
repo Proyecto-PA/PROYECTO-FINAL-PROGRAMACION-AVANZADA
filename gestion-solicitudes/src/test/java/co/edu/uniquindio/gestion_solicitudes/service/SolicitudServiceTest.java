@@ -1,4 +1,5 @@
 package co.edu.uniquindio.gestion_solicitudes.service;
+
 import co.edu.uniquindio.gestion_solicitudes.domain.chain.CadenaValidacionFactory;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.HistorialSolicitud;
 import co.edu.uniquindio.gestion_solicitudes.domain.entity.SolicitudAcademica;
@@ -18,7 +19,9 @@ import co.edu.uniquindio.gestion_solicitudes.repository.SolicitudRepository;
 import co.edu.uniquindio.gestion_solicitudes.repository.UsuarioRepository;
 import co.edu.uniquindio.gestion_solicitudes.service.impl.SolicitudServiceImpl;
 import co.edu.uniquindio.gestion_solicitudes.util.TestDataFactory;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,6 +35,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Tests unitarios - SolicitudService")
 public class SolicitudServiceTest {
+
     @Mock private SolicitudRepository solicitudRepository;
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private HistorialRepository historialRepository;
@@ -47,25 +51,27 @@ public class SolicitudServiceTest {
     void setUp() {
         observadores.clear();
         observadores.add(new HistorialObserver(historialRepository));
+
         lenient().when(solicitudFactory.toResponse(any(SolicitudAcademica.class)))
-            .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+                .thenAnswer(inv -> TestDataFactory.crearResponseDesdeEntidad(inv.getArgument(0)));
+
         lenient().when(solicitudFactory.crearDesdeRequest(any(SolicitudRequest.class), any(Usuario.class)))
-            .thenAnswer(inv -> {
-                SolicitudRequest req = inv.getArgument(0);
-                Usuario sol = inv.getArgument(1);
-                return SolicitudAcademica.builder()
-                        .tipo(req.getTipo())
-                        .descripcion(req.getDescripcion())
-                        .canalOrigen(req.getCanalOrigen())
-                        .fechaRegistro(java.time.LocalDateTime.now())
-                        .fechaLimite(req.getFechaLimite())
-                        .estado(EstadoSolicitud.REGISTRADA)
-                        .solicitante(sol)
-                        .build();
-            });
+                .thenAnswer(inv -> {
+                    SolicitudRequest req = inv.getArgument(0);
+                    Usuario sol = inv.getArgument(1);
+                    return SolicitudAcademica.builder()
+                            .tipo(req.getTipo())
+                            .descripcion(req.getDescripcion())
+                            .canalOrigen(req.getCanalOrigen())
+                            .fechaRegistro(java.time.LocalDateTime.now())
+                            .fechaLimite(req.getFechaLimite())
+                            .estado(EstadoSolicitud.REGISTRADA)
+                            .solicitante(sol)
+                            .build();
+                });
     }
 
-    // ── REGISTRAR ─────────────────────────────────────────────
+    // ---- REGISTRAR ----
 
     @Test
     @DisplayName("Registrar solicitud válida devuelve respuesta con estado REGISTRADA")
@@ -86,7 +92,7 @@ public class SolicitudServiceTest {
     }
 
     @Test
-    @DisplayName("Registrar con usuario inexistente lanza RecursoNoEncontradoException")
+    @DisplayName("Registrar con usuario inexistente lanza ResourceNotFoundException")
     void registrar_usuarioInexistente_lanzaExcepcion() {
         SolicitudRequest request = TestDataFactory.crearSolicitudRequest();
 
@@ -99,7 +105,7 @@ public class SolicitudServiceTest {
         verify(solicitudRepository, never()).save(any());
     }
 
-    // ── OBTENER POR ID ────────────────────────────────────────
+    // ---- OBTENER POR ID ----
 
     @Test
     @DisplayName("Obtener solicitud existente devuelve los datos correctos")
@@ -116,7 +122,7 @@ public class SolicitudServiceTest {
     }
 
     @Test
-    @DisplayName("Obtener solicitud inexistente lanza RecursoNoEncontradoException")
+    @DisplayName("Obtener solicitud inexistente lanza ResourceNotFoundException")
     void obtenerPorId_noExiste_lanzaExcepcion() {
         when(solicitudRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -125,8 +131,6 @@ public class SolicitudServiceTest {
                 .hasMessageContaining("999");
     }
 
-    // ── CONSULTAR CON FILTROS ─────────────────────────────────
-
     @Test
     @DisplayName("Consultar solicitudes devuelve página con contenido correcto")
     void consultar_devuelvePaginaConSolicitudes() {
@@ -134,11 +138,13 @@ public class SolicitudServiceTest {
         SolicitudAcademica solicitud = TestDataFactory.crearSolicitud(1L, solicitante);
         Page<SolicitudAcademica> page = new PageImpl<>(List.of(solicitud));
 
-        when(solicitudRepository.findWithFilters(any(), any(), any(), any(), any(), any()))
+        when(solicitudRepository.findWithFilters(
+                any(), any(), any(), any(), any(), any()))
                 .thenReturn(page);
 
         SolicitudPageResponse response = solicitudService.consultar(
-                null, null, null, null, null,null, null, PageRequest.of(0, 10));
+                null, null, null, null, null,
+                1L, "DOCENTE", PageRequest.of(0, 10));
 
         assertThat(response.getTotalElementos()).isEqualTo(1);
         assertThat(response.getContenido()).hasSize(1);
@@ -149,13 +155,52 @@ public class SolicitudServiceTest {
     void consultar_sinResultados_devuelvePaginaVacia() {
         Page<SolicitudAcademica> page = new PageImpl<>(List.of());
 
-        when(solicitudRepository.findWithFilters(any(), any(), any(), any(), any(), any()))
+        when(solicitudRepository.findWithFilters(
+                any(), any(), any(), any(), any(), any()))
                 .thenReturn(page);
 
         SolicitudPageResponse response = solicitudService.consultar(
-                null, null, null, null, null, null, null, PageRequest.of(0, 10));
+                null, null, null, null, null,
+                1L, "DOCENTE", PageRequest.of(0, 10));
 
         assertThat(response.getTotalElementos()).isZero();
         assertThat(response.getContenido()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Consultar con rol ESTUDIANTE fuerza solicitanteId al userId")
+    void consultar_rolEstudiante_fuerzaSolicitanteIdAlUserId() {
+        Usuario solicitante = TestDataFactory.crearUsuario(5L, RolUsuario.ESTUDIANTE);
+        SolicitudAcademica solicitud = TestDataFactory.crearSolicitud(1L, solicitante);
+        Page<SolicitudAcademica> page = new PageImpl<>(List.of(solicitud));
+
+        when(solicitudRepository.findWithFilters(
+                null, null, null, null, 5L, PageRequest.of(0, 10)))
+                .thenReturn(page);
+
+        SolicitudPageResponse response = solicitudService.consultar(
+                null, null, null, null, null,
+                5L, "ESTUDIANTE", PageRequest.of(0, 10));
+
+        assertThat(response.getTotalElementos()).isEqualTo(1);
+        verify(solicitudRepository).findWithFilters(
+                null, null, null, null, 5L, PageRequest.of(0, 10));
+    }
+
+    @Test
+    @DisplayName("Consultar con rol DOCENTE respeta el solicitanteId del query param")
+    void consultar_rolDocente_respetaSolicitanteIdDelQueryParam() {
+        Page<SolicitudAcademica> page = new PageImpl<>(List.of());
+
+        when(solicitudRepository.findWithFilters(
+                null, null, null, null, 3L, PageRequest.of(0, 10)))
+                .thenReturn(page);
+
+        solicitudService.consultar(
+                null, null, null, null, 3L,
+                2L, "DOCENTE", PageRequest.of(0, 10));
+
+        verify(solicitudRepository).findWithFilters(
+                null, null, null, null, 3L, PageRequest.of(0, 10));
     }
 }
