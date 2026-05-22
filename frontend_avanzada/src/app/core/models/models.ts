@@ -38,10 +38,17 @@ export interface Solicitud {
   impactoAcademico?: number;
   fechaRegistro: string;
   fechaLimite?: string;
-  solicitante: Usuario;
-  responsable?: Usuario;
+  solicitante: UsuarioResumen;
+  responsable?: UsuarioResumen;
   observaciones?: string;
   justificacionPrioridad?: string;
+}
+
+export interface UsuarioResumen {
+  id: number;
+  nombre: string;
+  email: string;
+  rol: Rol;
 }
 
 export interface HistorialEntry {
@@ -49,17 +56,18 @@ export interface HistorialEntry {
   solicitudId: number;
   estadoAnterior: EstadoSolicitud | null;
   estadoNuevo: EstadoSolicitud;
-  accion: string;
+  accionRealizada: string;
   observaciones?: string;
-  usuario: Usuario;
-  fecha: string;
+  usuarioResumen: UsuarioResumen;
+  fechaAccion: string;
 }
 
 export interface SugerenciaIA {
-  tipoSugerido: TipoSolicitud;
-  prioridadSugerida: Prioridad;
+  tipoSugerido: string;
+  prioridadSugerida: string;
   resumen: string;
-  confianza: number;
+  confirmada: boolean;
+  fechaSugerencia: string;
 }
 
 export interface LoginRequest {
@@ -71,7 +79,7 @@ export interface LoginResponse {
   token: string;
   nombre: string;
   rol: Rol;
-  userId: number;
+  usuarioId: number;
 }
 
 export interface RegistroRequest {
@@ -108,17 +116,16 @@ export interface CerrarRequest {
 }
 
 export interface ConfirmarSugerenciaIARequest {
-  tipoConfirmado: TipoSolicitud;
-  prioridadConfirmada: Prioridad;
   aplicar: boolean;
+  tipoAjustado?: TipoSolicitud;
+  prioridadAjustada?: Prioridad;
 }
 
 export interface PaginatedResponse<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
+  contenido: T[];
+  totalElementos: number;
+  totalPaginas: number;
+  paginaActual: number;
 }
 
 export interface FiltrosSolicitud {

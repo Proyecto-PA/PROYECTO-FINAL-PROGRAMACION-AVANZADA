@@ -229,7 +229,7 @@
                 </div>
                 <div class="sugerencia-item">
                   <label>Confianza</label>
-                  <span>{{ sugerenciaIA.confianza }}%</span>
+                  <span>{{ sugerenciaIA.confirmada }}%</span>
                 </div>
               </div>
               
@@ -295,11 +295,11 @@
                   </div>
                   <div class="historial-content">
                     <div class="historial-header">
-                      <strong>{{ entry.accion }}</strong>
-                      <span class="historial-date">{{ formatDate(entry.fecha) }}</span>
+                      <strong>{{ entry.accionRealizada }}</strong>
+                      <span class="historial-date">{{ formatDate(entry.fechaAccion) }}</span>
                     </div>
                     <div class="historial-meta">
-                      <span>Por: {{ entry.usuario.nombre }}</span>
+                      <span>Por: {{ entry.usuarioResumen.nombre }}</span>
                       @if (entry.estadoAnterior) {
                         <span class="estado-change">
                           <span class="badge badge-sm" [ngClass]="getEstadoBadgeClass(entry.estadoAnterior)">{{ entry.estadoAnterior }}</span>

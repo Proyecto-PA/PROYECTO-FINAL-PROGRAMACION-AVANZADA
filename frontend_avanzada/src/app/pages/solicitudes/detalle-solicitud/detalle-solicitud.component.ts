@@ -62,8 +62,8 @@ export class DetalleSolicitudComponent implements OnInit {
 
   // Sugerencia IA editable
   sugerenciaEditable = {
-    tipo: '' as TipoSolicitud | '',
-    prioridad: '' as Prioridad | ''
+    tipo: '',
+    prioridad: '' 
   };
 
   tipos: { value: TipoSolicitud; label: string }[] = [
@@ -326,8 +326,8 @@ export class DetalleSolicitudComponent implements OnInit {
     
     this.isLoadingIA = true;
     this.solicitudService.confirmarSugerenciaIA(this.solicitud.id, {
-      tipoConfirmado: this.sugerenciaEditable.tipo as TipoSolicitud,
-      prioridadConfirmada: this.sugerenciaEditable.prioridad as Prioridad,
+      tipoAjustado: this.sugerenciaEditable.tipo as TipoSolicitud,
+      prioridadAjustada: this.sugerenciaEditable.prioridad as Prioridad,
       aplicar: true
     }).subscribe({
       next: () => {
@@ -349,8 +349,8 @@ export class DetalleSolicitudComponent implements OnInit {
     
     this.isLoadingIA = true;
     this.solicitudService.confirmarSugerenciaIA(this.solicitud.id, {
-      tipoConfirmado: this.solicitud.tipo,
-      prioridadConfirmada: this.solicitud.prioridad || 'MEDIA',
+      tipoAjustado: this.solicitud.tipo,
+      prioridadAjustada: this.solicitud.prioridad || 'MEDIA',
       aplicar: false
     }).subscribe({
       next: () => {

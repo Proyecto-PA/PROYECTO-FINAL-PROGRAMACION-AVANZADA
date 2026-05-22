@@ -28,6 +28,7 @@ export class AuthService {
       tap(response => {
         localStorage.setItem(this.TOKEN_KEY, response.token);
         localStorage.setItem('nombre', response.nombre);
+        localStorage.setItem('userId', String(response.usuarioId));
         this.isAuthenticatedSubject.next(true);
       })
     );
@@ -40,6 +41,7 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem('nombre');
+    localStorage.removeItem('userId');
     this.isAuthenticatedSubject.next(false);
   }
 
@@ -60,6 +62,9 @@ export class AuthService {
   }
 
   getUserId(): number | null {
+    const stored = localStorage.getItem('userId');
+    if (stored) return Number(stored);
+    
     const token = this.getToken();
     if (!token) return null;
     

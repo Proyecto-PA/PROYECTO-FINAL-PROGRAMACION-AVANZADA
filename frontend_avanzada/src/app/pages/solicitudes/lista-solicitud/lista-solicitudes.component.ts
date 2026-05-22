@@ -61,9 +61,9 @@ export class ListaSolicitudesComponent implements OnInit {
     
     this.solicitudService.consultar(this.filtros, this.currentPage, this.pageSize).subscribe({
       next: (response) => {
-        this.solicitudes = response.content;
-        this.totalElements = response.totalElements;
-        this.totalPages = response.totalPages;
+        this.solicitudes = response.contenido;
+        this.totalElements = response.totalElementos;
+        this.totalPages = response.totalPaginas;
         this.isLoading = false;
       },
       error: (error) => {
