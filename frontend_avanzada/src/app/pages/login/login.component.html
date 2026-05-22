@@ -1,0 +1,78 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="logo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+          <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+        </svg>
+      </div>
+      <h1>Sistema de Solicitudes Academicas</h1>
+      <p>Ingresa tus credenciales para continuar</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      @if (errorMessage) {
+        <div class="alert alert-error">
+          {{ errorMessage }}
+        </div>
+      }
+
+      <div class="form-group">
+        <label for="email">Correo electronico</label>
+        <input 
+          type="email" 
+          id="email" 
+          formControlName="email" 
+          class="form-control"
+          [class.error]="email?.invalid && email?.touched"
+          placeholder="correo@universidad.edu">
+        @if (email?.invalid && email?.touched) {
+          <span class="error-message">
+            @if (email?.errors?.['required']) {
+              El correo es requerido
+            } @else if (email?.errors?.['email']) {
+              Ingresa un correo valido
+            }
+          </span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="password">Contrasena</label>
+        <input 
+          type="password" 
+          id="password" 
+          formControlName="password" 
+          class="form-control"
+          [class.error]="password?.invalid && password?.touched"
+          placeholder="Tu contrasena">
+        @if (password?.invalid && password?.touched) {
+          <span class="error-message">
+            @if (password?.errors?.['required']) {
+              La contrasena es requerida
+            } @else if (password?.errors?.['minlength']) {
+              La contrasena debe tener al menos 6 caracteres
+            }
+          </span>
+        }
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn btn-primary btn-block"
+        [disabled]="isLoading">
+        @if (isLoading) {
+          <span class="spinner"></span>
+          Ingresando...
+        } @else {
+          Iniciar Sesion
+        }
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <p>No tienes una cuenta? <a routerLink="/registro">Registrate aqui</a></p>
+    </div>
+  </div>
+</div>

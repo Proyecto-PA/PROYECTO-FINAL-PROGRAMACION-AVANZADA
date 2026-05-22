@@ -1,0 +1,460 @@
+/* Estilos globales - Sistema de Gestión de Solicitudes Académicas */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Colores principales */
+  --verde-primario: #2E7D32;
+  --verde-claro: #A5D6A7;
+  --verde-oscuro: #1B5E20;
+  --verde-menta: #E8F5E9;
+  --acento: #F9A825;
+  --gris-neutro: #F5F5F5;
+  --texto-principal: #212121;
+  --blanco: #FFFFFF;
+  
+  /* Badges de prioridad */
+  --prioridad-critica: #C62828;
+  --prioridad-alta: #EF6C00;
+  --prioridad-media: #F9A825;
+  --prioridad-baja: #A5D6A7;
+  
+  /* Badges de estado */
+  --estado-registrada: #9E9E9E;
+  --estado-clasificada: #1565C0;
+  --estado-en-atencion: #EF6C00;
+  --estado-atendida: #2E7D32;
+  --estado-cerrada: #424242;
+  --estado-cancelada: #B71C1C;
+  
+  /* Roles */
+  --rol-administrativo: #2E7D32;
+  --rol-docente: #1565C0;
+  --rol-estudiante: #9E9E9E;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--gris-neutro);
+  color: var(--texto-principal);
+  line-height: 1.5;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+/* Utilidades */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--verde-primario);
+  color: var(--blanco);
+}
+
+.btn-primary:hover {
+  background-color: var(--verde-oscuro);
+}
+
+.btn-secondary {
+  background-color: var(--gris-neutro);
+  color: var(--texto-principal);
+  border: 1px solid #ddd;
+}
+
+.btn-secondary:hover {
+  background-color: #e0e0e0;
+}
+
+.btn-danger {
+  background-color: var(--estado-cancelada);
+  color: var(--blanco);
+}
+
+.btn-danger:hover {
+  background-color: #8B0000;
+}
+
+.btn-warning {
+  background-color: var(--prioridad-alta);
+  color: var(--blanco);
+}
+
+.btn-warning:hover {
+  background-color: #E65100;
+}
+
+.btn-info {
+  background-color: var(--estado-clasificada);
+  color: var(--blanco);
+}
+
+.btn-info:hover {
+  background-color: #0D47A1;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Cards */
+.card {
+  background-color: var(--blanco);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Estado badges */
+.badge-registrada {
+  background-color: var(--estado-registrada);
+  color: var(--blanco);
+}
+
+.badge-clasificada {
+  background-color: var(--estado-clasificada);
+  color: var(--blanco);
+}
+
+.badge-en-atencion {
+  background-color: var(--estado-en-atencion);
+  color: var(--blanco);
+}
+
+.badge-atendida {
+  background-color: var(--estado-atendida);
+  color: var(--blanco);
+}
+
+.badge-cerrada {
+  background-color: var(--estado-cerrada);
+  color: var(--blanco);
+}
+
+.badge-cancelada {
+  background-color: var(--estado-cancelada);
+  color: var(--blanco);
+}
+
+/* Prioridad badges */
+.badge-critica {
+  background-color: var(--prioridad-critica);
+  color: var(--blanco);
+}
+
+.badge-alta {
+  background-color: var(--prioridad-alta);
+  color: var(--blanco);
+}
+
+.badge-media {
+  background-color: var(--prioridad-media);
+  color: var(--texto-principal);
+}
+
+.badge-baja {
+  background-color: var(--prioridad-baja);
+  color: var(--texto-principal);
+}
+
+/* Rol badges */
+.badge-administrativo {
+  background-color: var(--rol-administrativo);
+  color: var(--blanco);
+}
+
+.badge-docente {
+  background-color: var(--rol-docente);
+  color: var(--blanco);
+}
+
+.badge-estudiante {
+  background-color: var(--rol-estudiante);
+  color: var(--blanco);
+}
+
+/* Form styles */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--texto-principal);
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--verde-primario);
+}
+
+.form-control.error {
+  border-color: var(--estado-cancelada);
+}
+
+.error-message {
+  color: var(--estado-cancelada);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Alerts */
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.alert-success {
+  background-color: var(--verde-menta);
+  color: var(--verde-oscuro);
+  border: 1px solid var(--verde-claro);
+}
+
+.alert-error {
+  background-color: #FFEBEE;
+  color: var(--estado-cancelada);
+  border: 1px solid #FFCDD2;
+}
+
+.alert-warning {
+  background-color: #FFF8E1;
+  color: #F57F17;
+  border: 1px solid #FFECB3;
+}
+
+.alert-info {
+  background-color: #E3F2FD;
+  color: var(--estado-clasificada);
+  border: 1px solid #BBDEFB;
+}
+
+/* Tables */
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+  background-color: var(--verde-primario);
+  color: var(--blanco);
+  font-weight: 500;
+}
+
+tr:nth-child(even) {
+  background-color: #F1F8E9;
+}
+
+tr:hover {
+  background-color: var(--verde-menta);
+}
+
+/* Row highlights */
+.row-registrada {
+  background-color: #FFEBEE !important;
+}
+
+.row-clasificada-sin-responsable {
+  background-color: #FFF8E1 !important;
+}
+
+.row-clasificada-con-responsable {
+  background-color: #FFE0B2 !important;
+}
+
+/* Spinner */
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--verde-claro);
+  border-radius: 50%;
+  border-top-color: var(--verde-primario);
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.spinner-large {
+  width: 48px;
+  height: 48px;
+  border-width: 4px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Toast notifications */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+}
+
+.toast {
+  padding: 16px 24px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease;
+}
+
+.toast-success {
+  background-color: var(--verde-primario);
+  color: var(--blanco);
+}
+
+.toast-error {
+  background-color: var(--estado-cancelada);
+  color: var(--blanco);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: var(--blanco);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--verde-primario);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: var(--texto-principal);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card {
+    padding: 16px;
+  }
+  
+  th, td {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+}
