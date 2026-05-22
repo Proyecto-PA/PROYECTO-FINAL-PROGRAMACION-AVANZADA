@@ -63,8 +63,8 @@ export interface HistorialEntry {
 }
 
 export interface SugerenciaIA {
-  tipoSugerido: string;
-  prioridadSugerida: string;
+  tipoSugerido: TipoSolicitud;
+  prioridadSugerida: Prioridad;
   resumen: string;
   confirmada: boolean;
   fechaSugerencia: string;
@@ -78,6 +78,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string;
   nombre: string;
+  email: string;
   rol: Rol;
   usuarioId: number;
 }
@@ -111,8 +112,12 @@ export interface AccionRequest {
   observacion?: string;
 }
 
-export interface CerrarRequest {
+export interface CerrarSolicitudRequest {
   observacion: string;
+}
+
+export interface CambiarEstadoRequest {
+  observacion?: string;
 }
 
 export interface ConfirmarSugerenciaIARequest {

@@ -88,19 +88,19 @@ util/           →  Utilidades (JwtUtil)
 
 | RF | Descripción | Estado |
 |---|---|---|
-| RF-01 | Registro de solicitudes académicas | ✅ |
-| RF-02 | Clasificación por tipo | ✅ |
-| RF-03 | Priorización con motor de reglas | ✅ |
-| RF-04 | Gestión del ciclo de vida | ✅ |
-| RF-05 | Asignación de responsables | ✅ |
-| RF-06 | Historial auditable | ✅ |
-| RF-07 | Consulta con filtros y paginación | ✅ |
-| RF-08 | Cierre formal de solicitudes | ✅ |
-| RF-09 | Resúmenes con IA *(opcional)* | ✅ |
-| RF-10 | Sugerencia automática de clasificación *(opcional)* | ✅ |
-| RF-11 | Funcionamiento independiente de IA | ✅ |
-| RF-12 | API REST | ✅ |
-| RF-13 | Autorización por roles | ✅ |
+| RF-01 | Registro de solicitudes académicas
+| RF-02 | Clasificación por tipo 
+| RF-03 | Priorización con motor de reglas 
+| RF-04 | Gestión del ciclo de vida 
+| RF-05 | Asignación de responsables 
+| RF-06 | Historial auditable 
+| RF-07 | Consulta con filtros y paginación
+| RF-08 | Cierre formal de solicitudes 
+| RF-09 | Resúmenes con IA *(opcional)*
+| RF-10 | Sugerencia automática de clasificación *(opcional)* 
+| RF-11 | Funcionamiento independiente de IA 
+| RF-12 | API REST 
+| RF-13 | Autorización por roles 
 
 ---
 

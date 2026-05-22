@@ -6,8 +6,8 @@ import {
   NuevaSolicitudRequest,
   ClasificarRequest,
   AsignarResponsableRequest,
-  AccionRequest,
-  CerrarRequest,
+  CambiarEstadoRequest,
+  CerrarSolicitudRequest,
   ConfirmarSugerenciaIARequest,
   SugerenciaIA,
   PaginatedResponse,
@@ -66,19 +66,19 @@ export class SolicitudService {
     return this.http.put<Solicitud>(`${this.API_URL}/solicitudes/${id}/responsable`, data);
   }
 
-  iniciarAtencion(id: number, data?: AccionRequest): Observable<Solicitud> {
+  iniciarAtencion(id: number, data?: CambiarEstadoRequest): Observable<Solicitud> {
     return this.http.put<Solicitud>(`${this.API_URL}/solicitudes/${id}/iniciar-atencion`, data || {});
   }
 
-  marcarAtendida(id: number, data?: AccionRequest): Observable<Solicitud> {
+  marcarAtendida(id: number, data?: CambiarEstadoRequest): Observable<Solicitud> {
     return this.http.put<Solicitud>(`${this.API_URL}/solicitudes/${id}/marcar-atendida`, data || {});
   }
 
-  cerrar(id: number, data: CerrarRequest): Observable<Solicitud> {
+  cerrar(id: number, data: CerrarSolicitudRequest): Observable<Solicitud> {
     return this.http.put<Solicitud>(`${this.API_URL}/solicitudes/${id}/cerrar`, data);
   }
 
-  cancelar(id: number, data?: AccionRequest): Observable<Solicitud> {
+  cancelar(id: number, data?: CambiarEstadoRequest): Observable<Solicitud> {
     return this.http.put<Solicitud>(`${this.API_URL}/solicitudes/${id}/cancelar`, data || {});
   }
 
