@@ -1,0 +1,14 @@
+target/
+.idea/
+.vscode/
+*.iml
+*.log
+test-output.log
+test-results-final.log
+test-results.txt
+
+.git/
+.gitignore
+
+README.md
+LICENSE
