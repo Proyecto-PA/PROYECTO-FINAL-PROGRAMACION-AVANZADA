@@ -1,78 +1,179 @@
-<div class="login-container">
-  <div class="login-card">
-    <div class="login-header">
-      <div class="logo">
-        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-          <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-        </svg>
-      </div>
-      <h1>Sistema de Solicitudes Academicas</h1>
-      <p>Ingresa tus credenciales para continuar</p>
-    </div>
+<div class="login-modern-page">
+  <div class="aurora aurora-one"></div>
+  <div class="aurora aurora-two"></div>
+  <div class="aurora aurora-three"></div>
 
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-      @if (errorMessage) {
-        <div class="alert alert-error">
-          {{ errorMessage }}
+  <div class="grid-pattern"></div>
+
+  <section class="login-glass-shell">
+    <aside class="login-showcase">
+      <div class="showcase-top">
+        <div class="brand-pill">
+          <span class="brand-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M22 10 12 5 2 10l10 5 10-5Z" />
+              <path d="M6 12v5c3 3 9 3 12 0v-5" />
+            </svg>
+          </span>
+          Universidad del Quindío
         </div>
-      }
-
-      <div class="form-group">
-        <label for="email">Correo electronico</label>
-        <input 
-          type="email" 
-          id="email" 
-          formControlName="email" 
-          class="form-control"
-          [class.error]="email?.invalid && email?.touched"
-          placeholder="correo@universidad.edu">
-        @if (email?.invalid && email?.touched) {
-          <span class="error-message">
-            @if (email?.errors?.['required']) {
-              El correo es requerido
-            } @else if (email?.errors?.['email']) {
-              Ingresa un correo valido
-            }
-          </span>
-        }
       </div>
 
-      <div class="form-group">
-        <label for="password">Contrasena</label>
-        <input 
-          type="password" 
-          id="password" 
-          formControlName="password" 
-          class="form-control"
-          [class.error]="password?.invalid && password?.touched"
-          placeholder="Tu contrasena">
-        @if (password?.invalid && password?.touched) {
-          <span class="error-message">
-            @if (password?.errors?.['required']) {
-              La contrasena es requerida
-            } @else if (password?.errors?.['minlength']) {
-              La contrasena debe tener al menos 6 caracteres
-            }
-          </span>
-        }
+      <div class="showcase-content">
+        <span class="section-label">Gestión académica</span>
+        <h1>Gestión de solicitudes académicas.</h1>
+        <p>
+          Una plataforma pensada para acompañar los procesos académicos,
+          administrativos y estudiantiles de forma simple, ordenada y segura.
+        </p>
       </div>
 
-      <button 
-        type="submit" 
-        class="btn btn-primary btn-block"
-        [disabled]="isLoading">
-        @if (isLoading) {
-          <span class="spinner"></span>
-          Ingresando...
-        } @else {
-          Iniciar Sesion
-        }
-      </button>
-    </form>
+      <div class="minimal-academic-visual" aria-hidden="true">
+        <div class="visual-orbit orbit-one"></div>
+        <div class="visual-orbit orbit-two"></div>
 
-    <div class="login-footer">
-      <p>No tienes una cuenta? <a routerLink="/registro">Registrate aqui</a></p>
-    </div>
-  </div>
+        <div class="glass-emblem">
+          <div class="emblem-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M22 10 12 5 2 10l10 5 10-5Z" />
+              <path d="M6 12v5c3 3 9 3 12 0v-5" />
+              <path d="M22 10v6" />
+            </svg>
+          </div>
+
+          <div class="emblem-text">
+            <strong>UQ</strong>
+            <span>Sistema académico</span>
+          </div>
+        </div>
+
+        <div class="soft-line line-one"></div>
+        <div class="soft-line line-two"></div>
+        <div class="soft-line line-three"></div>
+      </div>
+    </aside>
+
+    <main class="login-card">
+      <div class="login-card-inner">
+        <div class="mobile-brand">
+          <span class="brand-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M22 10 12 5 2 10l10 5 10-5Z" />
+              <path d="M6 12v5c3 3 9 3 12 0v-5" />
+            </svg>
+          </span>
+          Universidad del Quindío
+        </div>
+
+        <div class="login-header">
+          <div class="logo-glass">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M22 10v6" />
+              <path d="M2 10l10-5 10 5-10 5-10-5Z" />
+              <path d="M6 12v5c3 3 9 3 12 0v-5" />
+            </svg>
+          </div>
+
+          <span class="welcome-label">Bienvenido</span>
+          <h2>Iniciar sesión</h2>
+          <p>Ingresa tus credenciales para continuar en la plataforma.</p>
+        </div>
+
+        <form class="login-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+          @if (errorMessage) {
+            <div class="alert alert-error">
+              <span class="alert-symbol">!</span>
+              <span>{{ errorMessage }}</span>
+            </div>
+          }
+
+          <div class="form-group">
+            <label for="email">Correo electrónico</label>
+
+            <div class="input-glass" [class.input-error]="email?.invalid && email?.touched">
+              <span class="input-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M4 4h16v16H4z" />
+                  <path d="m22 6-10 7L2 6" />
+                </svg>
+              </span>
+
+              <input
+                type="email"
+                id="email"
+                formControlName="email"
+                class="form-control"
+                [class.error]="email?.invalid && email?.touched"
+                placeholder="correo@uniquindio.edu.co"
+                autocomplete="email">
+            </div>
+
+            @if (email?.invalid && email?.touched) {
+              <span class="error-message">
+                @if (email?.errors?.['required']) {
+                  El correo es requerido
+                } @else if (email?.errors?.['email']) {
+                  Ingresa un correo válido
+                }
+              </span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="password">Contraseña</label>
+
+            <div class="input-glass" [class.input-error]="password?.invalid && password?.touched">
+              <span class="input-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <rect x="5" y="11" width="14" height="10" rx="2" />
+                  <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                </svg>
+              </span>
+
+              <input
+                type="password"
+                id="password"
+                formControlName="password"
+                class="form-control"
+                [class.error]="password?.invalid && password?.touched"
+                placeholder="Ingresa tu contraseña"
+                autocomplete="current-password">
+            </div>
+
+            @if (password?.invalid && password?.touched) {
+              <span class="error-message">
+                @if (password?.errors?.['required']) {
+                  La contraseña es requerida
+                } @else if (password?.errors?.['minlength']) {
+                  La contraseña debe tener al menos 6 caracteres
+                }
+              </span>
+            }
+          </div>
+
+          <button
+            type="submit"
+            class="btn btn-primary btn-block login-button"
+            [disabled]="isLoading">
+
+            @if (isLoading) {
+              <span class="spinner"></span>
+              Ingresando...
+            } @else {
+              <span>Entrar a la plataforma</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="button-icon" viewBox="0 0 24 24">
+                <path d="M5 12h14" />
+                <path d="m13 6 6 6-6 6" />
+              </svg>
+            }
+          </button>
+        </form>
+
+        <div class="login-footer">
+          <span>No tienes una cuenta?</span>
+          <a routerLink="/registro">Regístrate aquí</a>
+        </div>
+      </div>
+    </main>
+  </section>
 </div>

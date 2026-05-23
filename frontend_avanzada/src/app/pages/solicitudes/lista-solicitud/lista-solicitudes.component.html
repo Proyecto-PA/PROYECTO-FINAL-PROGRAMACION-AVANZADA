@@ -1,186 +1,247 @@
 <app-main-layout>
-  <div class="page-header">
-    <h1>
-      @if (authService.isEstudiante()) {
-        Mis Solicitudes
-      } @else {
-        Todas las Solicitudes
-      }
-    </h1>
-    @if (authService.isEstudiante() || authService.isAdministrativo()) {
-      <a routerLink="/solicitudes/nueva" class="btn btn-primary">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        Nueva Solicitud
-      </a>
-    }
-  </div>
+  <section class="solicitudes-page">
+    <div class="page-header">
+      <div class="page-title-block">
+        <span class="page-eyebrow">Gestión académica</span>
 
-  <!-- Filtros -->
-  <div class="filtros-card card">
-    <div class="filtros-header">
-      <h3>Filtros</h3>
-      <button class="btn btn-secondary btn-sm" (click)="limpiarFiltros()">Limpiar</button>
-    </div>
-    <div class="filtros-body">
-      <div class="filtro-group">
-        <label>Estado</label>
-        <select [(ngModel)]="filtros.estado" class="form-control">
-          <option [ngValue]="undefined">Todos</option>
-          @for (estado of estados; track estado) {
-            <option [value]="estado">{{ estado }}</option>
+        <h1>
+          @if (authService.isEstudiante()) {
+            Mis Solicitudes
+          } @else {
+            Todas las Solicitudes
           }
-        </select>
+        </h1>
+
+        <p>
+          Consulta, filtra y revisa el estado de las solicitudes registradas.
+        </p>
       </div>
 
-      <div class="filtro-group">
-        <label>Tipo</label>
-        <select [(ngModel)]="filtros.tipo" class="form-control">
-          <option [ngValue]="undefined">Todos</option>
-          @for (tipo of tipos; track tipo) {
-            <option [value]="tipo">{{ formatTipo(tipo) }}</option>
-          }
-        </select>
-      </div>
+      <div class="page-actions">
+        <span class="total-pill">
+          {{ totalElements }} registros
+        </span>
 
-      <div class="filtro-group">
-        <label>Prioridad</label>
-        <select [(ngModel)]="filtros.prioridad" class="form-control">
-          <option [ngValue]="undefined">Todas</option>
-          @for (prioridad of prioridades; track prioridad) {
-            <option [value]="prioridad">{{ prioridad }}</option>
-          }
-        </select>
-      </div>
-
-      @if (showAdminFilters) {
-        <div class="filtro-group">
-          <label>Responsable ID</label>
-          <input type="number" [(ngModel)]="filtros.responsableId" class="form-control" placeholder="ID">
-        </div>
-
-        <div class="filtro-group">
-          <label>Solicitante ID</label>
-          <input type="number" [(ngModel)]="filtros.solicitanteId" class="form-control" placeholder="ID">
-        </div>
-      }
-
-      <div class="filtro-actions">
-        <button class="btn btn-primary" (click)="aplicarFiltros()">Aplicar Filtros</button>
+        @if (authService.isEstudiante() || authService.isAdministrativo()) {
+          <a routerLink="/solicitudes/nueva" class="btn btn-primary new-request-button">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Nueva Solicitud
+          </a>
+        }
       </div>
     </div>
-  </div>
 
-  <!-- Tabla de solicitudes -->
-  <div class="table-card card">
-    @if (isLoading) {
-      <div class="loading-container">
-        <span class="spinner spinner-large"></span>
-        <p>Cargando solicitudes...</p>
-      </div>
-    } @else if (solicitudes.length === 0) {
-      <div class="empty-state">
-        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <line x1="12" y1="18" x2="12" y2="12"></line>
-          <line x1="9" y1="15" x2="15" y2="15"></line>
-        </svg>
-        <h3>No hay solicitudes</h3>
-        <p>No se encontraron solicitudes con los filtros seleccionados</p>
-      </div>
-    } @else {
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Tipo</th>
-              <th>Descripcion</th>
-              <th>Estado</th>
-              <th>Prioridad</th>
-              @if (showAllColumns) {
-                <th>Solicitante</th>
-                <th>Responsable</th>
-              }
-              <th>Fecha Registro</th>
-              <th>Fecha Limite</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (solicitud of solicitudes; track solicitud.id) {
-              <tr [ngClass]="getRowClass(solicitud)">
-                <td>{{ solicitud.id }}</td>
-                <td>{{ formatTipo(solicitud.tipo) }}</td>
-                <td class="descripcion-cell">{{ solicitud.descripcion | slice:0:50 }}{{ solicitud.descripcion.length > 50 ? '...' : '' }}</td>
-                <td>
-                  <span class="badge" [ngClass]="getEstadoBadgeClass(solicitud.estado)">
-                    {{ solicitud.estado }}
-                  </span>
-                </td>
-                <td>
-                  @if (solicitud.prioridad) {
-                    <span class="badge" [ngClass]="getPrioridadBadgeClass(solicitud.prioridad)">
-                      {{ solicitud.prioridad }}
-                    </span>
-                  } @else {
-                    <span class="text-muted">-</span>
-                  }
-                </td>
-                @if (showAllColumns) {
-                  <td>{{ solicitud.solicitante.nombre }}</td>
-                  <td>
-                    @if (solicitud.responsable) {
-                      {{ solicitud.responsable.nombre }}
-                    } @else {
-                      <span class="text-danger">Sin asignar</span>
-                    }
-                  </td>
-                }
-                <td>{{ formatDate(solicitud.fechaRegistro) }}</td>
-                <td>{{ formatDate(solicitud.fechaLimite) }}</td>
-                <td class="actions-cell">
-                  <button class="btn btn-sm btn-secondary" (click)="verDetalle(solicitud.id)">
-                    Ver Detalle
-                  </button>
-                  @if (canCancel(solicitud)) {
-                    <button class="btn btn-sm btn-danger" (click)="cancelarSolicitud(solicitud)">
-                      Cancelar
-                    </button>
-                  }
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Paginacion -->
-      <div class="pagination">
-        <div class="pagination-info">
-          Mostrando {{ solicitudes.length }} de {{ totalElements }} solicitudes
-        </div>
-        <div class="pagination-controls">
-          <button 
-            class="btn btn-sm btn-secondary" 
-            [disabled]="currentPage === 0"
-            (click)="cambiarPagina(currentPage - 1)">
-            Anterior
-          </button>
-          <span class="page-indicator">
-            Pagina {{ currentPage + 1 }} de {{ totalPages }}
+    <div class="filtros-card card">
+      <div class="filtros-header">
+        <div class="filtros-title">
+          <span class="section-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M4 6h16"></path>
+              <path d="M7 12h10"></path>
+              <path d="M10 18h4"></path>
+            </svg>
           </span>
-          <button 
-            class="btn btn-sm btn-secondary" 
-            [disabled]="currentPage >= totalPages - 1"
-            (click)="cambiarPagina(currentPage + 1)">
-            Siguiente
+
+          <div>
+            <h3>Filtros</h3>
+            <p>Refina la búsqueda de solicitudes.</p>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary clear-button" (click)="limpiarFiltros()">
+          Limpiar
+        </button>
+      </div>
+
+      <div class="filtros-body">
+        <div class="filtro-group">
+          <label>Estado</label>
+          <select [(ngModel)]="filtros.estado" class="form-control">
+            <option [ngValue]="undefined">Todos</option>
+            @for (estado of estados; track estado) {
+              <option [value]="estado">{{ estado }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filtro-group">
+          <label>Tipo</label>
+          <select [(ngModel)]="filtros.tipo" class="form-control">
+            <option [ngValue]="undefined">Todos</option>
+            @for (tipo of tipos; track tipo) {
+              <option [value]="tipo">{{ formatTipo(tipo) }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filtro-group">
+          <label>Prioridad</label>
+          <select [(ngModel)]="filtros.prioridad" class="form-control">
+            <option [ngValue]="undefined">Todas</option>
+            @for (prioridad of prioridades; track prioridad) {
+              <option [value]="prioridad">{{ prioridad }}</option>
+            }
+          </select>
+        </div>
+
+        @if (showAdminFilters) {
+          <div class="filtro-group">
+            <label>Responsable ID</label>
+            <input
+              type="number"
+              [(ngModel)]="filtros.responsableId"
+              class="form-control"
+              placeholder="ID">
+          </div>
+
+          <div class="filtro-group">
+            <label>Solicitante ID</label>
+            <input
+              type="number"
+              [(ngModel)]="filtros.solicitanteId"
+              class="form-control"
+              placeholder="ID">
+          </div>
+        }
+
+        <div class="filtro-actions">
+          <button class="btn btn-primary apply-button" (click)="aplicarFiltros()">
+            Aplicar filtros
           </button>
         </div>
       </div>
-    }
-  </div>
+    </div>
+
+    <div class="solicitudes-card card">
+      @if (isLoading) {
+        <div class="loading-container">
+          <span class="spinner spinner-large"></span>
+          <p>Cargando solicitudes...</p>
+        </div>
+      } @else if (solicitudes.length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="18" x2="12" y2="12"></line>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+          </div>
+
+          <h3>No hay solicitudes</h3>
+          <p>No se encontraron solicitudes con los filtros seleccionados.</p>
+        </div>
+      } @else {
+        <div class="solicitudes-list">
+          @for (solicitud of solicitudes; track solicitud.id) {
+            <article class="solicitud-item" [ngClass]="getRowClass(solicitud)">
+              <div class="solicitud-main">
+                <div class="solicitud-id">
+                  #{{ solicitud.id }}
+                </div>
+
+                <div class="solicitud-content">
+                  <div class="solicitud-title-row">
+                    <div>
+                      <span class="solicitud-label">Tipo de solicitud</span>
+                      <h3>{{ formatTipo(solicitud.tipo) }}</h3>
+                    </div>
+
+                    <span class="badge" [ngClass]="getEstadoBadgeClass(solicitud.estado)">
+                      {{ solicitud.estado }}
+                    </span>
+                  </div>
+
+                  <p class="solicitud-descripcion" [title]="solicitud.descripcion">
+                    {{ solicitud.descripcion | slice:0:120 }}{{ solicitud.descripcion.length > 120 ? '...' : '' }}
+                  </p>
+
+                  <div class="solicitud-meta">
+                    <div class="meta-item">
+                      <span>Prioridad</span>
+                      @if (solicitud.prioridad) {
+                        <strong class="badge" [ngClass]="getPrioridadBadgeClass(solicitud.prioridad)">
+                          {{ solicitud.prioridad }}
+                        </strong>
+                      } @else {
+                        <strong class="text-muted">Sin asignar</strong>
+                      }
+                    </div>
+
+                    <div class="meta-item">
+                      <span>Fecha registro</span>
+                      <strong>{{ formatDate(solicitud.fechaRegistro) }}</strong>
+                    </div>
+
+                    <div class="meta-item">
+                      <span>Fecha límite</span>
+                      <strong>{{ formatDate(solicitud.fechaLimite) }}</strong>
+                    </div>
+
+                    @if (showAllColumns) {
+                      <div class="meta-item">
+                        <span>Solicitante</span>
+                        <strong>{{ solicitud.solicitante.nombre }}</strong>
+                      </div>
+
+                      <div class="meta-item">
+                        <span>Responsable</span>
+                        @if (solicitud.responsable) {
+                          <strong>{{ solicitud.responsable.nombre }}</strong>
+                        } @else {
+                          <strong class="text-danger">Sin asignar</strong>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <div class="solicitud-actions">
+                <button class="btn detail-button" (click)="verDetalle(solicitud.id)">
+                  Ver detalle
+                </button>
+
+                @if (canCancel(solicitud)) {
+                  <button class="btn cancel-button" (click)="cancelarSolicitud(solicitud)">
+                    Cancelar
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+
+        <div class="pagination">
+          <div class="pagination-info">
+            Mostrando <strong>{{ solicitudes.length }}</strong> de <strong>{{ totalElements }}</strong> solicitudes
+          </div>
+
+          <div class="pagination-controls">
+            <button
+              class="btn pagination-button"
+              [disabled]="currentPage === 0"
+              (click)="cambiarPagina(currentPage - 1)">
+              Anterior
+            </button>
+
+            <span class="page-indicator">
+              Página {{ currentPage + 1 }} de {{ totalPages }}
+            </span>
+
+            <button
+              class="btn pagination-button"
+              [disabled]="currentPage >= totalPages - 1"
+              (click)="cambiarPagina(currentPage + 1)">
+              Siguiente
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
 </app-main-layout>

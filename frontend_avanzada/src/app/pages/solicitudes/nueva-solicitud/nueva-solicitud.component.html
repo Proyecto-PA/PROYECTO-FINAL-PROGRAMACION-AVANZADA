@@ -1,97 +1,163 @@
 <app-main-layout>
-  <div class="page-header">
-    <h1>Nueva Solicitud</h1>
-  </div>
-
-  <div class="form-card card">
-    <form [formGroup]="solicitudForm" (ngSubmit)="onSubmit()">
-      <div class="form-group">
-        <label for="tipo">Tipo de Solicitud <span class="required">*</span></label>
-        <select 
-          id="tipo" 
-          formControlName="tipo" 
-          class="form-control"
-          [class.error]="solicitudForm.get('tipo')?.invalid && solicitudForm.get('tipo')?.touched">
-          <option value="">Selecciona un tipo</option>
-          @for (tipo of tipos; track tipo.value) {
-            <option [value]="tipo.value">{{ tipo.label }}</option>
-          }
-        </select>
-        @if (solicitudForm.get('tipo')?.invalid && solicitudForm.get('tipo')?.touched) {
-          <span class="error-message">El tipo de solicitud es requerido</span>
-        }
+  <section class="nueva-solicitud-page">
+    <div class="page-header">
+      <div class="page-title-block">
+        <span class="page-eyebrow">Gestión académica</span>
+        <h1>Nueva Solicitud</h1>
+        <p>
+          Registra una solicitud académica de manera clara, organizada y segura.
+        </p>
       </div>
 
-      <div class="form-group">
-        <label for="descripcion">Descripcion <span class="required">*</span></label>
-        <textarea 
-          id="descripcion" 
-          formControlName="descripcion" 
-          class="form-control textarea"
-          [class.error]="descripcion?.invalid && descripcion?.touched"
-          rows="5"
-          placeholder="Describe tu solicitud con detalle (minimo 10 caracteres)"></textarea>
-        <div class="textarea-footer">
-          <div>
-            @if (descripcion?.invalid && descripcion?.touched) {
-              <span class="error-message">
-                @if (descripcion?.errors?.['required']) {
-                  La descripcion es requerida
-                } @else if (descripcion?.errors?.['minlength']) {
-                  La descripcion debe tener al menos 10 caracteres
-                } @else if (descripcion?.errors?.['maxlength']) {
-                  La descripcion no puede exceder 1000 caracteres
-                }
-              </span>
+      <button type="button" class="btn btn-secondary header-cancel-button" (click)="cancelar()">
+        Cancelar
+      </button>
+    </div>
+
+    <div class="form-shell">
+      <aside class="form-visual-panel">
+        <div class="visual-content">
+          <div class="visual-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M22 10v6"></path>
+              <path d="M2 10l10-5 10 5-10 5-10-5z"></path>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+            </svg>
+          </div>
+
+          <span>Solicitud institucional</span>
+          <h2>Describe tu caso con precisión.</h2>
+          <p>
+            Selecciona el tipo de solicitud, indica el canal de origen y agrega
+            una descripción suficiente para facilitar su revisión.
+          </p>
+        </div>
+
+        <div class="visual-lines" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </aside>
+
+      <div class="form-card card">
+        <form [formGroup]="solicitudForm" (ngSubmit)="onSubmit()">
+          <div class="form-section-title">
+            <div class="section-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+            </div>
+
+            <div>
+              <h3>Información de la solicitud</h3>
+              <p>Los campos marcados con asterisco son obligatorios.</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="tipo">Tipo de solicitud <span class="required">*</span></label>
+
+            <select
+              id="tipo"
+              formControlName="tipo"
+              class="form-control"
+              [class.error]="solicitudForm.get('tipo')?.invalid && solicitudForm.get('tipo')?.touched">
+              <option value="">Selecciona un tipo</option>
+              @for (tipo of tipos; track tipo.value) {
+                <option [value]="tipo.value">{{ tipo.label }}</option>
+              }
+            </select>
+
+            @if (solicitudForm.get('tipo')?.invalid && solicitudForm.get('tipo')?.touched) {
+              <span class="error-message">El tipo de solicitud es requerido</span>
             }
           </div>
-          <span class="char-counter" [class.error]="descripcionLength > 1000">
-            {{ descripcionLength }}/1000
-          </span>
-        </div>
-      </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label for="canalOrigen">Canal de Origen <span class="required">*</span></label>
-          <select 
-            id="canalOrigen" 
-            formControlName="canalOrigen" 
-            class="form-control"
-            [class.error]="solicitudForm.get('canalOrigen')?.invalid && solicitudForm.get('canalOrigen')?.touched">
-            <option value="">Selecciona un canal</option>
-            @for (canal of canales; track canal.value) {
-              <option [value]="canal.value">{{ canal.label }}</option>
-            }
-          </select>
-          @if (solicitudForm.get('canalOrigen')?.invalid && solicitudForm.get('canalOrigen')?.touched) {
-            <span class="error-message">El canal de origen es requerido</span>
-          }
-        </div>
+          <div class="form-group">
+            <label for="descripcion">Descripción <span class="required">*</span></label>
 
-        <div class="form-group">
-          <label for="fechaLimite">Fecha Limite (Opcional)</label>
-          <input 
-            type="datetime-local" 
-            id="fechaLimite" 
-            formControlName="fechaLimite" 
-            class="form-control">
-        </div>
-      </div>
+            <textarea
+              id="descripcion"
+              formControlName="descripcion"
+              class="form-control textarea"
+              [class.error]="descripcion?.invalid && descripcion?.touched"
+              rows="5"
+              placeholder="Describe tu solicitud con detalle. Mínimo 10 caracteres."></textarea>
 
-      <div class="form-actions">
-        <button type="button" class="btn btn-secondary" (click)="cancelar()">
-          Cancelar
-        </button>
-        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
-          @if (isLoading) {
-            <span class="spinner"></span>
-            Registrando...
-          } @else {
-            Registrar Solicitud
-          }
-        </button>
+            <div class="textarea-footer">
+              <div>
+                @if (descripcion?.invalid && descripcion?.touched) {
+                  <span class="error-message">
+                    @if (descripcion?.errors?.['required']) {
+                      La descripción es requerida
+                    } @else if (descripcion?.errors?.['minlength']) {
+                      La descripción debe tener al menos 10 caracteres
+                    } @else if (descripcion?.errors?.['maxlength']) {
+                      La descripción no puede exceder 1000 caracteres
+                    }
+                  </span>
+                }
+              </div>
+
+              <span class="char-counter" [class.error]="descripcionLength > 1000">
+                {{ descripcionLength }}/1000
+              </span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="canalOrigen">Canal de origen <span class="required">*</span></label>
+
+              <select
+                id="canalOrigen"
+                formControlName="canalOrigen"
+                class="form-control"
+                [class.error]="solicitudForm.get('canalOrigen')?.invalid && solicitudForm.get('canalOrigen')?.touched">
+                <option value="">Selecciona un canal</option>
+                @for (canal of canales; track canal.value) {
+                  <option [value]="canal.value">{{ canal.label }}</option>
+                }
+              </select>
+
+              @if (solicitudForm.get('canalOrigen')?.invalid && solicitudForm.get('canalOrigen')?.touched) {
+                <span class="error-message">El canal de origen es requerido</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="fechaLimite">Fecha límite <span class="optional">(opcional)</span></label>
+
+              <input
+                type="datetime-local"
+                id="fechaLimite"
+                formControlName="fechaLimite"
+                class="form-control">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary cancel-button" (click)="cancelar()">
+              Cancelar
+            </button>
+
+            <button type="submit" class="btn btn-primary submit-button" [disabled]="isLoading">
+              @if (isLoading) {
+                <span class="spinner"></span>
+                Registrando...
+              } @else {
+                <span>Registrar solicitud</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M5 12h14"></path>
+                  <path d="m13 6 6 6-6 6"></path>
+                </svg>
+              }
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
-  </div>
+    </div>
+  </section>
 </app-main-layout>

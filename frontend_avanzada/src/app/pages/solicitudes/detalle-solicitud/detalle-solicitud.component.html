@@ -1,365 +1,471 @@
 <app-main-layout>
-  @if (isLoading) {
-    <div class="loading-container">
-      <span class="spinner spinner-large"></span>
-      <p>Cargando solicitud...</p>
-    </div>
-  } @else if (solicitud) {
-    <div class="page-header">
-      <div class="header-left">
-        <button class="btn-back" (click)="volver()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-          Volver
-        </button>
-        <h1>Solicitud #{{ solicitud.id }}</h1>
-        <span class="badge badge-lg" [ngClass]="getEstadoBadgeClass(solicitud.estado)">
-          {{ solicitud.estado }}
-        </span>
+  <section class="detalle-solicitud-page">
+    @if (isLoading) {
+      <div class="loading-container">
+        <span class="spinner spinner-large"></span>
+        <p>Cargando solicitud...</p>
       </div>
-    </div>
+    } @else if (solicitud) {
+      <div class="detail-hero">
+        <div class="hero-left">
+          <button class="btn-back" (click)="volver()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Volver
+          </button>
 
-    <div class="content-grid">
-      <!-- Informacion principal -->
-      <div class="main-content">
-        <div class="card detail-card">
-          <h2>Informacion de la Solicitud</h2>
-          
-          <div class="detail-grid">
-            <div class="detail-item">
-              <label>Tipo</label>
-              <span>{{ formatTipo(solicitud.tipo) }}</span>
+          <div class="hero-title">
+            <span class="page-eyebrow">Detalle de solicitud</span>
+            <div class="hero-title-row">
+              <h1>Solicitud #{{ solicitud.id }}</h1>
+              <span class="badge badge-lg" [ngClass]="getEstadoBadgeClass(solicitud.estado)">
+                {{ solicitud.estado }}
+              </span>
             </div>
-            
-            <div class="detail-item">
-              <label>Canal de Origen</label>
-              <span>{{ formatCanalOrigen(solicitud.canalOrigen) }}</span>
-            </div>
-            
-            <div class="detail-item">
-              <label>Prioridad</label>
-              @if (solicitud.prioridad) {
-                <span class="badge" [ngClass]="getPrioridadBadgeClass(solicitud.prioridad)">
-                  {{ solicitud.prioridad }}
+            <p>
+              Consulta la información registrada, revisa el historial y gestiona
+              las acciones disponibles según el estado actual.
+            </p>
+          </div>
+        </div>
+
+        <div class="hero-summary">
+          <div class="summary-card">
+            <span>Tipo</span>
+            <strong>{{ formatTipo(solicitud.tipo) }}</strong>
+          </div>
+
+          <div class="summary-card">
+            <span>Canal</span>
+            <strong>{{ formatCanalOrigen(solicitud.canalOrigen) }}</strong>
+          </div>
+
+          <div class="summary-card">
+            <span>Prioridad</span>
+            @if (solicitud.prioridad) {
+              <strong>{{ solicitud.prioridad }}</strong>
+            } @else {
+              <strong>Sin asignar</strong>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <div class="primary-column">
+          <!-- Información principal -->
+          <div class="card detail-card">
+            <div class="card-header">
+              <div class="card-title">
+                <span class="card-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                  </svg>
                 </span>
-              } @else {
-                <span class="text-muted">Sin asignar</span>
-              }
-            </div>
-            
-            <div class="detail-item">
-              <label>Impacto Academico</label>
-              @if (solicitud.impactoAcademico) {
-                <span>{{ solicitud.impactoAcademico }}/5 - {{ getImpactoDescripcion(solicitud.impactoAcademico) }}</span>
-              } @else {
-                <span class="text-muted">No evaluado</span>
-              }
-            </div>
-            
-            <div class="detail-item">
-              <label>Fecha de Registro</label>
-              <span>{{ formatDate(solicitud.fechaRegistro) }}</span>
-            </div>
-            
-            <div class="detail-item">
-              <label>Fecha Limite</label>
-              <span>{{ formatDate(solicitud.fechaLimite) }}</span>
-            </div>
-            
-            <div class="detail-item">
-              <label>Solicitante</label>
-              <span>{{ solicitud.solicitante.nombre }} (ID: {{ solicitud.solicitante.id }})</span>
-            </div>
-            
-            <div class="detail-item">
-              <label>Responsable</label>
-              @if (solicitud.responsable) {
-                <span>{{ solicitud.responsable.nombre }} (ID: {{ solicitud.responsable.id }})</span>
-              } @else {
-                <span class="text-danger">Sin asignar</span>
-              }
-            </div>
-          </div>
-          
-          <div class="detail-item full-width">
-            <label>Descripcion</label>
-            <p class="descripcion-text">{{ solicitud.descripcion }}</p>
-          </div>
-          
-          @if (solicitud.justificacionPrioridad) {
-            <div class="detail-item full-width">
-              <label>Justificacion de Prioridad</label>
-              <p class="justificacion-text">{{ solicitud.justificacionPrioridad }}</p>
-            </div>
-          }
-        </div>
-
-        <!-- Panel de Acciones -->
-        <div class="card actions-card">
-          <h2>Acciones</h2>
-          
-          @if (isEstadoTerminal) {
-            <div class="info-message">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
-              <span>Esta solicitud esta en estado terminal ({{ solicitud.estado }})</span>
-            </div>
-          } @else {
-            <div class="actions-grid">
-              <!-- Estudiante: solo cancelar si REGISTRADA -->
-              @if (authService.isEstudiante()) {
-                @if (canCancel) {
-                  <button class="btn btn-danger" (click)="cancelarSolicitud()" [disabled]="isLoadingAction">
-                    Cancelar Solicitud
-                  </button>
-                } @else {
-                  <div class="info-message">
-                    <span>No hay acciones disponibles para esta solicitud en su estado actual.</span>
-                  </div>
-                }
-              }
-
-              <!-- Docente -->
-              @if (authService.isDocente()) {
-                @if (solicitud.estado === 'REGISTRADA') {
-                  <div class="info-message info">
-                    <span>Esta solicitud aun no ha sido clasificada por un administrativo.</span>
-                  </div>
-                } @else if (solicitud.estado === 'CLASIFICADA') {
-                  @if (solicitud.responsable) {
-                    <button class="btn btn-primary" (click)="abrirIniciarAtencionModal()" [disabled]="isLoadingAction">
-                      Iniciar Atencion
-                    </button>
-                  } @else {
-                    <div class="info-message warning">
-                      <span>Esta solicitud aun no tiene responsable asignado. Un administrativo debe asignar uno antes de iniciar atencion.</span>
-                    </div>
-                  }
-                } @else if (solicitud.estado === 'EN_ATENCION') {
-                  <button class="btn btn-primary" (click)="abrirMarcarAtendidaModal()" [disabled]="isLoadingAction">
-                    Marcar como Atendida
-                  </button>
-                } @else if (solicitud.estado === 'ATENDIDA') {
-                  <button class="btn btn-primary" (click)="abrirCerrarModal()" [disabled]="isLoadingAction">
-                    Cerrar Solicitud
-                  </button>
-                }
-              }
-
-              <!-- Administrativo -->
-              @if (authService.isAdministrativo()) {
-                @if (solicitud.estado === 'REGISTRADA') {
-                  <button class="btn btn-info" (click)="abrirClasificarModal()" [disabled]="isLoadingAction">
-                    Clasificar Solicitud
-                  </button>
-                  <button class="btn btn-danger" (click)="cancelarSolicitud()" [disabled]="isLoadingAction">
-                    Cancelar Solicitud
-                  </button>
-                } @else if (solicitud.estado === 'CLASIFICADA') {
-                  <button class="btn btn-warning" (click)="recalcularPrioridad()" [disabled]="isLoadingAction">
-                    @if (isLoadingAction) {
-                      <span class="spinner"></span>
-                    }
-                    Recalcular Prioridad
-                  </button>
-                  <button class="btn btn-info" (click)="abrirAsignarModal()" [disabled]="isLoadingAction">
-                    Asignar Responsable
-                  </button>
-                  @if (solicitud.responsable) {
-                    <button class="btn btn-primary" (click)="abrirIniciarAtencionModal()" [disabled]="isLoadingAction">
-                      Iniciar Atencion
-                    </button>
-                  } @else {
-                    <div class="info-message warning full-width">
-                      <span>Asigne un responsable antes de iniciar atencion.</span>
-                    </div>
-                  }
-                } @else if (solicitud.estado === 'EN_ATENCION') {
-                  <button class="btn btn-primary" (click)="abrirMarcarAtendidaModal()" [disabled]="isLoadingAction">
-                    Marcar como Atendida
-                  </button>
-                } @else if (solicitud.estado === 'ATENDIDA') {
-                  <button class="btn btn-primary" (click)="abrirCerrarModal()" [disabled]="isLoadingAction">
-                    Cerrar Solicitud
-                  </button>
-                }
-              }
-            </div>
-          }
-        </div>
-
-        <!-- Sugerencia IA -->
-        <div class="card ia-card">
-          <h2>Sugerencia de IA</h2>
-          
-          @if (!sugerenciaIA) {
-            <button class="btn btn-secondary" (click)="consultarSugerenciaIA()" [disabled]="isLoadingIA">
-              @if (isLoadingIA) {
-                <span class="spinner"></span>
-                Consultando...
-              } @else {
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"></path>
-                  <path d="M8.5 8.5v.01"></path>
-                  <path d="M16 15.5v.01"></path>
-                  <path d="M12 12v.01"></path>
-                  <path d="M11 17v.01"></path>
-                  <path d="M7 14v.01"></path>
-                </svg>
-                Consultar IA
-              }
-            </button>
-          } @else {
-            <div class="sugerencia-content">
-              <div class="sugerencia-info">
-                <div class="sugerencia-item">
-                  <label>Tipo Sugerido</label>
-                  <span class="badge badge-info">{{ formatTipo(sugerenciaIA.tipoSugerido) }}</span>
+                <div>
+                  <h2>Información de la solicitud</h2>
+                  <p>Datos generales registrados para el seguimiento académico.</p>
                 </div>
-                <div class="sugerencia-item">
-                  <label>Prioridad Sugerida</label>
-                  <span class="badge" [ngClass]="getPrioridadBadgeClass(sugerenciaIA.prioridadSugerida)">
-                    {{ sugerenciaIA.prioridadSugerida }}
+              </div>
+            </div>
+
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Tipo</label>
+                <span>{{ formatTipo(solicitud.tipo) }}</span>
+              </div>
+
+              <div class="detail-item">
+                <label>Canal de origen</label>
+                <span>{{ formatCanalOrigen(solicitud.canalOrigen) }}</span>
+              </div>
+
+              <div class="detail-item">
+                <label>Prioridad</label>
+                @if (solicitud.prioridad) {
+                  <span class="badge" [ngClass]="getPrioridadBadgeClass(solicitud.prioridad)">
+                    {{ solicitud.prioridad }}
                   </span>
-                </div>
-                <div class="sugerencia-item">
-                  <label>Confianza</label>
-                  <span>{{ sugerenciaIA.confirmada }}%</span>
-                </div>
-              </div>
-              
-              <div class="sugerencia-resumen">
-                <label>Resumen</label>
-                <p>{{ sugerenciaIA.resumen }}</p>
+                } @else {
+                  <span class="text-muted">Sin asignar</span>
+                }
               </div>
 
-              @if (canConfirmarIA) {
-                <div class="sugerencia-editable">
-                  <h4>Ajustar antes de aplicar</h4>
-                  <div class="edit-row">
-                    <div class="form-group">
-                      <label>Tipo</label>
-                      <select [(ngModel)]="sugerenciaEditable.tipo" class="form-control">
-                        @for (tipo of tipos; track tipo.value) {
-                          <option [value]="tipo.value">{{ tipo.label }}</option>
-                        }
-                      </select>
-                    </div>
-                    <div class="form-group">
-                      <label>Prioridad</label>
-                      <select [(ngModel)]="sugerenciaEditable.prioridad" class="form-control">
-                        @for (prioridad of prioridades; track prioridad) {
-                          <option [value]="prioridad">{{ prioridad }}</option>
-                        }
-                      </select>
-                    </div>
-                  </div>
-                </div>
+              <div class="detail-item">
+                <label>Impacto académico</label>
+                @if (solicitud.impactoAcademico) {
+                  <span>{{ solicitud.impactoAcademico }}/5 - {{ getImpactoDescripcion(solicitud.impactoAcademico) }}</span>
+                } @else {
+                  <span class="text-muted">No evaluado</span>
+                }
+              </div>
 
-                <div class="sugerencia-actions">
-                  <button class="btn btn-primary" (click)="aplicarSugerenciaIA()" [disabled]="isLoadingIA">
-                    Aplicar Sugerencia
-                  </button>
-                  <button class="btn btn-secondary" (click)="descartarSugerenciaIA()" [disabled]="isLoadingIA">
-                    Descartar
-                  </button>
-                </div>
-              } @else {
-                <div class="info-message info">
-                  <span>Solo los docentes y administrativos pueden confirmar sugerencias de IA.</span>
-                </div>
-              }
+              <div class="detail-item">
+                <label>Fecha de registro</label>
+                <span>{{ formatDate(solicitud.fechaRegistro) }}</span>
+              </div>
+
+              <div class="detail-item">
+                <label>Fecha límite</label>
+                <span>{{ formatDate(solicitud.fechaLimite) }}</span>
+              </div>
+
+              <div class="detail-item">
+                <label>Solicitante</label>
+                <span>{{ solicitud.solicitante.nombre }} <small>ID: {{ solicitud.solicitante.id }}</small></span>
+              </div>
+
+              <div class="detail-item">
+                <label>Responsable</label>
+                @if (solicitud.responsable) {
+                  <span>{{ solicitud.responsable.nombre }} <small>ID: {{ solicitud.responsable.id }}</small></span>
+                } @else {
+                  <span class="text-danger">Sin asignar</span>
+                }
+              </div>
             </div>
-          }
-        </div>
 
-        <!-- Historial -->
-        <div class="card historial-card">
-          <h2>Historial de Acciones</h2>
-          
-          @if (historial.length === 0) {
-            <p class="text-muted">No hay historial disponible</p>
-          } @else {
-            <div class="historial-list">
-              @for (entry of historial; track entry.id) {
-                <div class="historial-item">
-                  <div class="historial-icon" [ngClass]="getEstadoBadgeClass(entry.estadoNuevo)">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  </div>
-                  <div class="historial-content">
-                    <div class="historial-header">
-                      <strong>{{ entry.accionRealizada }}</strong>
-                      <span class="historial-date">{{ formatDate(entry.fechaAccion) }}</span>
+            <div class="detail-item full-width">
+              <label>Descripción</label>
+              <p class="descripcion-text">{{ solicitud.descripcion }}</p>
+            </div>
+
+            @if (solicitud.justificacionPrioridad) {
+              <div class="detail-item full-width">
+                <label>Justificación de prioridad</label>
+                <p class="justificacion-text">{{ solicitud.justificacionPrioridad }}</p>
+              </div>
+            }
+          </div>
+
+          <!-- Historial -->
+          <div class="card historial-card">
+            <div class="card-header">
+              <div class="card-title">
+                <span class="card-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 8v5l3 3"></path>
+                    <circle cx="12" cy="12" r="10"></circle>
+                  </svg>
+                </span>
+                <div>
+                  <h2>Historial de acciones</h2>
+                  <p>Registro de cambios realizados sobre la solicitud.</p>
+                </div>
+              </div>
+            </div>
+
+            @if (historial.length === 0) {
+              <div class="empty-history">
+                <span>No hay historial disponible</span>
+              </div>
+            } @else {
+              <div class="historial-list">
+                @for (entry of historial; track entry.id) {
+                  <div class="historial-item">
+                    <div class="historial-icon" [ngClass]="getEstadoBadgeClass(entry.estadoNuevo)">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
                     </div>
-                    <div class="historial-meta">
-                      <span>Por: {{ entry.usuarioResumen.nombre }}</span>
-                      @if (entry.estadoAnterior) {
-                        <span class="estado-change">
-                          <span class="badge badge-sm" [ngClass]="getEstadoBadgeClass(entry.estadoAnterior)">{{ entry.estadoAnterior }}</span>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                          </svg>
-                          <span class="badge badge-sm" [ngClass]="getEstadoBadgeClass(entry.estadoNuevo)">{{ entry.estadoNuevo }}</span>
-                        </span>
-                      } @else {
-                        <span class="badge badge-sm" [ngClass]="getEstadoBadgeClass(entry.estadoNuevo)">{{ entry.estadoNuevo }}</span>
+
+                    <div class="historial-content">
+                      <div class="historial-header">
+                        <strong>{{ entry.accionRealizada }}</strong>
+                        <span class="historial-date">{{ formatDate(entry.fechaAccion) }}</span>
+                      </div>
+
+                      <div class="historial-meta">
+                        <span>Por: {{ entry.usuarioResumen.nombre }}</span>
+
+                        @if (entry.estadoAnterior) {
+                          <span class="estado-change">
+                            <span class="badge badge-sm" [ngClass]="getEstadoBadgeClass(entry.estadoAnterior)">
+                              {{ entry.estadoAnterior }}
+                            </span>
+
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                              <line x1="5" y1="12" x2="19" y2="12"></line>
+                              <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+
+                            <span class="badge badge-sm" [ngClass]="getEstadoBadgeClass(entry.estadoNuevo)">
+                              {{ entry.estadoNuevo }}
+                            </span>
+                          </span>
+                        } @else {
+                          <span class="badge badge-sm" [ngClass]="getEstadoBadgeClass(entry.estadoNuevo)">
+                            {{ entry.estadoNuevo }}
+                          </span>
+                        }
+                      </div>
+
+                      @if (entry.observaciones) {
+                        <p class="historial-obs">{{ entry.observaciones }}</p>
                       }
                     </div>
-                    @if (entry.observaciones) {
-                      <p class="historial-obs">{{ entry.observaciones }}</p>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <aside class="secondary-column">
+          <!-- Panel de acciones -->
+          <div class="card actions-card">
+            <div class="card-header compact">
+              <div class="card-title">
+                <span class="card-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                  </svg>
+                </span>
+                <div>
+                  <h2>Acciones</h2>
+                  <p>Opciones disponibles.</p>
+                </div>
+              </div>
+            </div>
+
+            @if (isEstadoTerminal) {
+              <div class="info-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>Esta solicitud está en estado terminal ({{ solicitud.estado }}).</span>
+              </div>
+            } @else {
+              <div class="actions-grid">
+                @if (authService.isEstudiante()) {
+                  @if (canCancel) {
+                    <button class="btn btn-danger action-button" (click)="cancelarSolicitud()" [disabled]="isLoadingAction">
+                      Cancelar solicitud
+                    </button>
+                  } @else {
+                    <div class="info-message">
+                      <span>No hay acciones disponibles para esta solicitud en su estado actual.</span>
+                    </div>
+                  }
+                }
+
+                @if (authService.isDocente()) {
+                  @if (solicitud.estado === 'REGISTRADA') {
+                    <div class="info-message info">
+                      <span>Esta solicitud aún no ha sido clasificada por un administrativo.</span>
+                    </div>
+                  } @else if (solicitud.estado === 'CLASIFICADA') {
+                    @if (solicitud.responsable) {
+                      <button class="btn btn-primary action-button" (click)="abrirIniciarAtencionModal()" [disabled]="isLoadingAction">
+                        Iniciar atención
+                      </button>
+                    } @else {
+                      <div class="info-message warning">
+                        <span>Esta solicitud aún no tiene responsable asignado.</span>
+                      </div>
                     }
+                  } @else if (solicitud.estado === 'EN_ATENCION') {
+                    <button class="btn btn-primary action-button" (click)="abrirMarcarAtendidaModal()" [disabled]="isLoadingAction">
+                      Marcar como atendida
+                    </button>
+                  } @else if (solicitud.estado === 'ATENDIDA') {
+                    <button class="btn btn-primary action-button" (click)="abrirCerrarModal()" [disabled]="isLoadingAction">
+                      Cerrar solicitud
+                    </button>
+                  }
+                }
+
+                @if (authService.isAdministrativo()) {
+                  @if (solicitud.estado === 'REGISTRADA') {
+                    <button class="btn btn-info action-button" (click)="abrirClasificarModal()" [disabled]="isLoadingAction">
+                      Clasificar solicitud
+                    </button>
+
+                    <button class="btn btn-danger action-button" (click)="cancelarSolicitud()" [disabled]="isLoadingAction">
+                      Cancelar solicitud
+                    </button>
+                  } @else if (solicitud.estado === 'CLASIFICADA') {
+                    <button class="btn btn-warning action-button" (click)="recalcularPrioridad()" [disabled]="isLoadingAction">
+                      @if (isLoadingAction) {
+                        <span class="spinner"></span>
+                      }
+                      Recalcular prioridad
+                    </button>
+
+                    <button class="btn btn-info action-button" (click)="abrirAsignarModal()" [disabled]="isLoadingAction">
+                      Asignar responsable
+                    </button>
+
+                    @if (solicitud.responsable) {
+                      <button class="btn btn-primary action-button" (click)="abrirIniciarAtencionModal()" [disabled]="isLoadingAction">
+                        Iniciar atención
+                      </button>
+                    } @else {
+                      <div class="info-message warning full-width">
+                        <span>Asigne un responsable antes de iniciar atención.</span>
+                      </div>
+                    }
+                  } @else if (solicitud.estado === 'EN_ATENCION') {
+                    <button class="btn btn-primary action-button" (click)="abrirMarcarAtendidaModal()" [disabled]="isLoadingAction">
+                      Marcar como atendida
+                    </button>
+                  } @else if (solicitud.estado === 'ATENDIDA') {
+                    <button class="btn btn-primary action-button" (click)="abrirCerrarModal()" [disabled]="isLoadingAction">
+                      Cerrar solicitud
+                    </button>
+                  }
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Sugerencia IA -->
+          <div class="card ia-card">
+            <div class="card-header compact">
+              <div class="card-title">
+                <span class="card-icon ia-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"></path>
+                    <path d="M8.5 8.5v.01"></path>
+                    <path d="M16 15.5v.01"></path>
+                    <path d="M12 12v.01"></path>
+                    <path d="M11 17v.01"></path>
+                    <path d="M7 14v.01"></path>
+                  </svg>
+                </span>
+                <div>
+                  <h2>Sugerencia de IA</h2>
+                  <p>Apoyo para clasificación y prioridad.</p>
+                </div>
+              </div>
+            </div>
+
+            @if (!sugerenciaIA) {
+              <button class="btn btn-secondary ia-button" (click)="consultarSugerenciaIA()" [disabled]="isLoadingIA">
+                @if (isLoadingIA) {
+                  <span class="spinner"></span>
+                  Consultando...
+                } @else {
+                  Consultar IA
+                }
+              </button>
+            } @else {
+              <div class="sugerencia-content">
+                <div class="sugerencia-info">
+                  <div class="sugerencia-item">
+                    <label>Tipo sugerido</label>
+                    <span class="badge badge-info">{{ formatTipo(sugerenciaIA.tipoSugerido) }}</span>
+                  </div>
+
+                  <div class="sugerencia-item">
+                    <label>Prioridad sugerida</label>
+                    <span class="badge" [ngClass]="getPrioridadBadgeClass(sugerenciaIA.prioridadSugerida)">
+                      {{ sugerenciaIA.prioridadSugerida }}
+                    </span>
+                  </div>
+
+                  <div class="sugerencia-item">
+                    <label>Confianza</label>
+                    <span class="confidence-pill">{{ sugerenciaIA.confirmada }}%</span>
                   </div>
                 </div>
-              }
-            </div>
-          }
-        </div>
+
+                <div class="sugerencia-resumen">
+                  <label>Resumen</label>
+                  <p>{{ sugerenciaIA.resumen }}</p>
+                </div>
+
+                @if (canConfirmarIA) {
+                  <div class="sugerencia-editable">
+                    <h4>Ajustar antes de aplicar</h4>
+
+                    <div class="edit-row">
+                      <div class="form-group">
+                        <label>Tipo</label>
+                        <select [(ngModel)]="sugerenciaEditable.tipo" class="form-control">
+                          @for (tipo of tipos; track tipo.value) {
+                            <option [value]="tipo.value">{{ tipo.label }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <div class="form-group">
+                        <label>Prioridad</label>
+                        <select [(ngModel)]="sugerenciaEditable.prioridad" class="form-control">
+                          @for (prioridad of prioridades; track prioridad) {
+                            <option [value]="prioridad">{{ prioridad }}</option>
+                          }
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="sugerencia-actions">
+                    <button class="btn btn-primary" (click)="aplicarSugerenciaIA()" [disabled]="isLoadingIA">
+                      Aplicar sugerencia
+                    </button>
+
+                    <button class="btn btn-secondary" (click)="descartarSugerenciaIA()" [disabled]="isLoadingIA">
+                      Descartar
+                    </button>
+                  </div>
+                } @else {
+                  <div class="info-message info">
+                    <span>Solo docentes y administrativos pueden confirmar sugerencias de IA.</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </aside>
       </div>
-    </div>
-  }
+    }
+  </section>
 
   <!-- Modal Clasificar -->
   @if (showClasificarModal) {
     <div class="modal-overlay" (click)="showClasificarModal = false">
       <div class="modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2>Clasificar Solicitud</h2>
+          <h2>Clasificar solicitud</h2>
           <button class="modal-close" (click)="showClasificarModal = false">&times;</button>
         </div>
+
         <div class="modal-body">
           <div class="form-group">
-            <label>Tipo de Solicitud</label>
+            <label>Tipo de solicitud</label>
             <select [(ngModel)]="clasificarForm.tipo" class="form-control">
               @for (tipo of tipos; track tipo.value) {
                 <option [value]="tipo.value">{{ tipo.label }}</option>
               }
             </select>
           </div>
-          
+
           <div class="form-group">
-            <label>Impacto Academico (1-5)</label>
+            <label>Impacto académico (1-5)</label>
             <input type="range" min="1" max="5" [(ngModel)]="clasificarForm.impactoAcademico" class="slider">
+
             <div class="impacto-display">
               <span class="impacto-nivel">Nivel {{ clasificarForm.impactoAcademico }}</span>
               <span class="impacto-desc">{{ getImpactoDescripcion(clasificarForm.impactoAcademico) }}</span>
             </div>
           </div>
-          
+
           <div class="form-group">
-            <label>Observacion (opcional)</label>
-            <textarea [(ngModel)]="clasificarForm.observacion" class="form-control" rows="3" placeholder="Agrega una observacion..."></textarea>
+            <label>Observación (opcional)</label>
+            <textarea [(ngModel)]="clasificarForm.observacion" class="form-control" rows="3" placeholder="Agrega una observación..."></textarea>
           </div>
         </div>
+
         <div class="modal-footer">
           <button class="btn btn-secondary" (click)="showClasificarModal = false">Cancelar</button>
+
           <button class="btn btn-primary" (click)="confirmarClasificar()" [disabled]="!clasificarForm.tipo || isLoadingAction">
             @if (isLoadingAction) {
               <span class="spinner"></span>
@@ -376,26 +482,29 @@
     <div class="modal-overlay" (click)="showAsignarModal = false">
       <div class="modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2>Asignar Responsable</h2>
+          <h2>Asignar responsable</h2>
           <button class="modal-close" (click)="showAsignarModal = false">&times;</button>
         </div>
+
         <div class="modal-body">
           <div class="info-message info">
             <span>Solo usuarios con rol DOCENTE o ADMINISTRATIVO activos pueden ser asignados como responsables.</span>
           </div>
-          
+
           <div class="form-group">
-            <label>ID del Responsable</label>
+            <label>ID del responsable</label>
             <input type="number" [(ngModel)]="asignarForm.responsableId" class="form-control" placeholder="Ingresa el ID del usuario">
           </div>
-          
+
           <div class="form-group">
-            <label>Observacion (opcional)</label>
-            <textarea [(ngModel)]="asignarForm.observacion" class="form-control" rows="3" placeholder="Agrega una observacion..."></textarea>
+            <label>Observación (opcional)</label>
+            <textarea [(ngModel)]="asignarForm.observacion" class="form-control" rows="3" placeholder="Agrega una observación..."></textarea>
           </div>
         </div>
+
         <div class="modal-footer">
           <button class="btn btn-secondary" (click)="showAsignarModal = false">Cancelar</button>
+
           <button class="btn btn-primary" (click)="confirmarAsignar()" [disabled]="!asignarForm.responsableId || isLoadingAction">
             @if (isLoadingAction) {
               <span class="spinner"></span>
@@ -407,22 +516,25 @@
     </div>
   }
 
-  <!-- Modal Accion (Iniciar/Atender) -->
+  <!-- Modal Acción -->
   @if (showAccionModal) {
     <div class="modal-overlay" (click)="showAccionModal = false">
       <div class="modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2>{{ accionModalTipo === 'iniciar' ? 'Iniciar Atencion' : 'Marcar como Atendida' }}</h2>
+          <h2>{{ accionModalTipo === 'iniciar' ? 'Iniciar atención' : 'Marcar como atendida' }}</h2>
           <button class="modal-close" (click)="showAccionModal = false">&times;</button>
         </div>
+
         <div class="modal-body">
           <div class="form-group">
-            <label>Observacion (opcional)</label>
-            <textarea [(ngModel)]="accionForm.observacion" class="form-control" rows="3" placeholder="Agrega una observacion..."></textarea>
+            <label>Observación (opcional)</label>
+            <textarea [(ngModel)]="accionForm.observacion" class="form-control" rows="3" placeholder="Agrega una observación..."></textarea>
           </div>
         </div>
+
         <div class="modal-footer">
           <button class="btn btn-secondary" (click)="showAccionModal = false">Cancelar</button>
+
           <button class="btn btn-primary" (click)="confirmarAccion()" [disabled]="isLoadingAction">
             @if (isLoadingAction) {
               <span class="spinner"></span>
@@ -439,25 +551,29 @@
     <div class="modal-overlay" (click)="showCerrarModal = false">
       <div class="modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2>Cerrar Solicitud</h2>
+          <h2>Cerrar solicitud</h2>
           <button class="modal-close" (click)="showCerrarModal = false">&times;</button>
         </div>
+
         <div class="modal-body">
           <div class="form-group">
-            <label>Observacion de Cierre <span class="required">*</span></label>
-            <textarea [(ngModel)]="cerrarForm.observacion" class="form-control" rows="4" placeholder="Describe el resultado del cierre (minimo 10 caracteres)"></textarea>
+            <label>Observación de cierre <span class="required">*</span></label>
+            <textarea [(ngModel)]="cerrarForm.observacion" class="form-control" rows="4" placeholder="Describe el resultado del cierre. Mínimo 10 caracteres."></textarea>
+
             <span class="char-counter" [class.error]="cerrarForm.observacion.length < 10 && cerrarForm.observacion.length > 0">
-              {{ cerrarForm.observacion.length }}/10 caracteres minimos
+              {{ cerrarForm.observacion.length }}/10 caracteres mínimos
             </span>
           </div>
         </div>
+
         <div class="modal-footer">
           <button class="btn btn-secondary" (click)="showCerrarModal = false">Cancelar</button>
+
           <button class="btn btn-primary" (click)="confirmarCerrar()" [disabled]="cerrarForm.observacion.length < 10 || isLoadingAction">
             @if (isLoadingAction) {
               <span class="spinner"></span>
             }
-            Cerrar Solicitud
+            Cerrar solicitud
           </button>
         </div>
       </div>
