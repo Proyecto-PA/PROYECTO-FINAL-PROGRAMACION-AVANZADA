@@ -402,9 +402,50 @@
 
 /* Acciones */
 
-.actions-grid {
+.actions-panel-body,
+.sugerencia-content {
+  display: grid;
+  gap: 14px;
+}
+
+.actions-status-panel {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(17, 128, 82, 0.10);
+  background: rgba(239, 255, 245, 0.62);
+}
+
+.status-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.status-line span {
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.status-line strong {
+  color: var(--green-deep);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.actions-grid,
+.actions-secondary-grid {
   display: grid;
   gap: 12px;
+}
+
+.actions-secondary-grid {
+  padding-top: 4px;
 }
 
 .action-button,
@@ -416,7 +457,8 @@
   font-weight: 900;
 }
 
-.action-button {
+.action-button,
+.ia-button {
   width: 100%;
 }
 
@@ -428,11 +470,23 @@
   border: none;
   cursor: pointer;
   font-family: inherit;
+  text-align: center;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease,
     filter 0.2s ease,
     background-color 0.2s ease;
+}
+
+.btn-label {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  visibility: visible !important;
+  opacity: 1 !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  line-height: 1.2;
 }
 
 .btn:hover:not(:disabled) {
@@ -445,15 +499,23 @@
 }
 
 .btn-primary {
-  color: #ffffff;
+  color: #ffffff !important;
   background: linear-gradient(135deg, #39c784 0%, #28b977 45%, #118052 100%);
   box-shadow: 0 14px 28px rgba(40, 185, 119, 0.24);
 }
 
+.btn-primary .btn-label {
+  color: #ffffff !important;
+}
+
 .btn-secondary {
-  color: var(--text-dark);
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(17, 128, 82, 0.14);
+  color: var(--text-dark) !important;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(17, 128, 82, 0.18);
+}
+
+.btn-secondary .btn-label {
+  color: var(--text-dark) !important;
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -461,21 +523,33 @@
 }
 
 .btn-danger {
-  color: #ffffff;
+  color: #ffffff !important;
   background: #b71c1c;
   box-shadow: 0 14px 28px rgba(183, 28, 28, 0.18);
 }
 
+.btn-danger .btn-label {
+  color: #ffffff !important;
+}
+
 .btn-info {
-  color: #ffffff;
+  color: #ffffff !important;
   background: #1565c0;
   box-shadow: 0 14px 28px rgba(21, 101, 192, 0.18);
 }
 
+.btn-info .btn-label {
+  color: #ffffff !important;
+}
+
 .btn-warning {
-  color: #ffffff;
+  color: #ffffff !important;
   background: #ef6c00;
   box-shadow: 0 14px 28px rgba(239, 108, 0, 0.18);
+}
+
+.btn-warning .btn-label {
+  color: #ffffff !important;
 }
 
 /* Info messages */
@@ -484,6 +558,7 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  width: 100%;
   padding: 15px;
   border-radius: 18px;
   color: var(--text-soft);
@@ -520,13 +595,25 @@
 
 /* IA */
 
+.ia-empty-state {
+  display: grid;
+  gap: 14px;
+}
+
+.ia-empty-state p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
 .ia-button {
-  width: 100%;
+  color: var(--text-dark) !important;
+  font-size: 14px !important;
 }
 
 .sugerencia-content {
-  display: grid;
-  gap: 16px;
+  min-height: 48px;
 }
 
 .sugerencia-info {
@@ -917,6 +1004,11 @@ textarea.form-control {
   animation: spin 0.8s linear infinite;
 }
 
+.spinner-dark {
+  border-color: rgba(17, 128, 82, 0.18);
+  border-top-color: var(--green-deep);
+}
+
 .spinner-large {
   width: 52px;
   height: 52px;
@@ -1011,4 +1103,151 @@ textarea.form-control {
   to {
     transform: rotate(360deg);
   }
+}
+.action-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 13px 14px;
+  border-radius: 18px;
+  background: rgba(239, 255, 245, 0.72);
+  border: 1px solid rgba(17, 128, 82, 0.10);
+}
+
+.status-label {
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.secondary-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(17, 128, 82, 0.10);
+}
+
+.action-button,
+.ia-button,
+.sugerencia-actions .btn,
+.modal-footer .btn {
+  min-height: 46px;
+  border-radius: 15px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.action-button,
+.ia-button {
+  width: 100%;
+}
+
+.btn,
+button.btn,
+button.ia-button,
+button.action-button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.25;
+}
+
+.btn-primary {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #39c784 0%, #28b977 45%, #118052 100%) !important;
+  box-shadow: 0 14px 28px rgba(40, 185, 119, 0.24);
+}
+
+.btn-secondary {
+  color: var(--text-dark) !important;
+  background: rgba(255, 255, 255, 0.86) !important;
+  border: 1px solid rgba(17, 128, 82, 0.14) !important;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(239, 255, 245, 0.96) !important;
+}
+
+.btn-danger {
+  color: #ffffff !important;
+  background: #b71c1c !important;
+  box-shadow: 0 14px 28px rgba(183, 28, 28, 0.18);
+}
+
+.btn-info {
+  color: #ffffff !important;
+  background: #1565c0 !important;
+  box-shadow: 0 14px 28px rgba(21, 101, 192, 0.18);
+}
+
+.btn-warning {
+  color: #ffffff !important;
+  background: #ef6c00 !important;
+  box-shadow: 0 14px 28px rgba(239, 108, 0, 0.18);
+}
+
+.action-button-light,
+.ia-button {
+  color: var(--text-dark) !important;
+}
+
+.info-message {
+  width: 100%;
+}
+
+.info-message.danger {
+  background: rgba(255, 235, 238, 0.88);
+  border-color: rgba(183, 28, 28, 0.18);
+  color: #b71c1c;
+}
+
+.ia-description {
+  margin-bottom: 16px;
+  padding: 14px;
+  border-radius: 18px;
+  color: var(--text-soft);
+  background: rgba(227, 242, 253, 0.42);
+  border: 1px solid rgba(21, 101, 192, 0.10);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.ia-description p {
+  margin: 0;
+}
+
+.sugerencia-content {
+  display: grid;
+  gap: 16px;
+  min-height: 48px;
+}
+
+.confidence-pill {
+  width: fit-content;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--green-deep);
+  background: rgba(40, 185, 119, 0.10);
+  border: 1px solid rgba(40, 185, 119, 0.16);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.spinner-dark {
+  border-color: rgba(19, 52, 40, 0.18);
+  border-top-color: var(--green-deep);
 }

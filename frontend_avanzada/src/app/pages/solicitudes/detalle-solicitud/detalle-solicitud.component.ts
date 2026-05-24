@@ -7,14 +7,14 @@ import { SolicitudService } from '../../../core/services/solicitud.service';
 import { HistorialService } from '../../../core/services/historial.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { 
-  Solicitud, 
-  HistorialEntry, 
-  SugerenciaIA, 
-  TipoSolicitud, 
-  Prioridad, 
+import {
+  Solicitud,
+  HistorialEntry,
+  SugerenciaIA,
+  TipoSolicitud,
+  Prioridad,
   EstadoSolicitud,
-  ApiError 
+  ApiError
 } from '../../../core/models/models';
 
 @Component({
@@ -28,61 +28,59 @@ export class DetalleSolicitudComponent implements OnInit {
   solicitud: Solicitud | null = null;
   historial: HistorialEntry[] = [];
   sugerenciaIA: SugerenciaIA | null = null;
-  
+
   isLoading = true;
   isLoadingAction = false;
   isLoadingIA = false;
-  
-  // Modales
+  iaErrorMessage = '';
+
   showClasificarModal = false;
   showAsignarModal = false;
   showCerrarModal = false;
   showAccionModal = false;
   accionModalTipo: 'iniciar' | 'atender' = 'iniciar';
-  
-  // Formularios de modales
+
   clasificarForm = {
     tipo: '' as TipoSolicitud | '',
     impactoAcademico: 3,
     observacion: ''
   };
-  
+
   asignarForm = {
     responsableId: null as number | null,
     observacion: ''
   };
-  
+
   cerrarForm = {
     observacion: ''
   };
-  
+
   accionForm = {
     observacion: ''
   };
 
-  // Sugerencia IA editable
   sugerenciaEditable = {
-    tipo: '',
-    prioridad: '' 
+    tipo: '' as TipoSolicitud | '',
+    prioridad: '' as Prioridad | ''
   };
 
   tipos: { value: TipoSolicitud; label: string }[] = [
     { value: 'REGISTRO_ASIGNATURAS', label: 'Registro de Asignaturas' },
-    { value: 'HOMOLOGACION', label: 'Homologacion' },
-    { value: 'CANCELACION_ASIGNATURAS', label: 'Cancelacion de Asignaturas' },
+    { value: 'HOMOLOGACION', label: 'Homologación' },
+    { value: 'CANCELACION_ASIGNATURAS', label: 'Cancelación de Asignaturas' },
     { value: 'SOLICITUD_CUPOS', label: 'Solicitud de Cupos' },
-    { value: 'CONSULTA_ACADEMICA', label: 'Consulta Academica' },
+    { value: 'CONSULTA_ACADEMICA', label: 'Consulta Académica' },
     { value: 'OTRO', label: 'Otro' }
   ];
 
   prioridades: Prioridad[] = ['CRITICA', 'ALTA', 'MEDIA', 'BAJA'];
 
   impactoDescripciones = [
-    { nivel: 1, descripcion: 'Impacto minimo - No afecta el avance academico' },
+    { nivel: 1, descripcion: 'Impacto mínimo - No afecta el avance académico' },
     { nivel: 2, descripcion: 'Impacto bajo - Afecta levemente el progreso' },
     { nivel: 3, descripcion: 'Impacto medio - Afecta moderadamente el semestre' },
     { nivel: 4, descripcion: 'Impacto alto - Puede retrasar significativamente' },
-    { nivel: 5, descripcion: 'Impacto critico - Riesgo de perdida de semestre' }
+    { nivel: 5, descripcion: 'Impacto crítico - Riesgo de pérdida de semestre' }
   ];
 
   constructor(
@@ -96,14 +94,19 @@ export class DetalleSolicitudComponent implements OnInit {
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
+
     if (id) {
-      this.cargarSolicitud(parseInt(id));
+      this.cargarSolicitud(Number(id));
+    } else {
+      this.toastService.error('No se encontró el identificador de la solicitud');
+      this.router.navigate(['/solicitudes']);
     }
   }
 
   cargarSolicitud(id: number): void {
     this.isLoading = true;
-    
+    this.iaErrorMessage = '';
+
     this.solicitudService.obtenerPorId(id).subscribe({
       next: (solicitud) => {
         this.solicitud = solicitud;
@@ -121,21 +124,42 @@ export class DetalleSolicitudComponent implements OnInit {
   cargarHistorial(solicitudId: number): void {
     this.historialService.consultarPorSolicitud(solicitudId).subscribe({
       next: (historial) => {
-        this.historial = historial;
+        this.historial = historial || [];
         this.isLoading = false;
       },
       error: () => {
+        this.historial = [];
         this.isLoading = false;
       }
     });
   }
 
-  // Acciones
+  actualizarDatos(): void {
+    if (!this.solicitud) return;
+
+    const id = this.solicitud.id;
+    this.sugerenciaIA = null;
+    this.iaErrorMessage = '';
+    this.cargarSolicitud(id);
+  }
+
+  verHistorial(): void {
+    const historialElement = document.getElementById('historial-solicitud');
+
+    if (historialElement) {
+      historialElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }
+
   cancelarSolicitud(): void {
     if (!this.solicitud) return;
-    
-    if (confirm('Estas seguro de que deseas cancelar esta solicitud?')) {
+
+    if (confirm('¿Está seguro de que desea cancelar esta solicitud?')) {
       this.isLoadingAction = true;
+
       this.solicitudService.cancelar(this.solicitud.id).subscribe({
         next: () => {
           this.toastService.success('Solicitud cancelada exitosamente');
@@ -145,26 +169,27 @@ export class DetalleSolicitudComponent implements OnInit {
         error: (error) => {
           this.isLoadingAction = false;
           const apiError = error.error as ApiError;
-          this.toastService.error(apiError?.mensaje || 'Error al cancelar');
+          this.toastService.error(apiError?.mensaje || 'Error al cancelar la solicitud');
         }
       });
     }
   }
 
-  // Clasificar
   abrirClasificarModal(): void {
     this.clasificarForm = {
       tipo: this.solicitud?.tipo || '',
-      impactoAcademico: 3,
+      impactoAcademico: this.solicitud?.impactoAcademico || 3,
       observacion: ''
     };
+
     this.showClasificarModal = true;
   }
 
   confirmarClasificar(): void {
     if (!this.solicitud || !this.clasificarForm.tipo) return;
-    
+
     this.isLoadingAction = true;
+
     this.solicitudService.clasificar(this.solicitud.id, {
       tipo: this.clasificarForm.tipo as TipoSolicitud,
       impactoAcademico: this.clasificarForm.impactoAcademico,
@@ -179,16 +204,16 @@ export class DetalleSolicitudComponent implements OnInit {
       error: (error) => {
         this.isLoadingAction = false;
         const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al clasificar');
+        this.toastService.error(apiError?.mensaje || 'Error al clasificar la solicitud');
       }
     });
   }
 
-  // Priorizar
   recalcularPrioridad(): void {
     if (!this.solicitud) return;
-    
+
     this.isLoadingAction = true;
+
     this.solicitudService.priorizar(this.solicitud.id).subscribe({
       next: (solicitud) => {
         this.solicitud = solicitud;
@@ -199,21 +224,25 @@ export class DetalleSolicitudComponent implements OnInit {
       error: (error) => {
         this.isLoadingAction = false;
         const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al priorizar');
+        this.toastService.error(apiError?.mensaje || 'Error al recalcular la prioridad');
       }
     });
   }
 
-  // Asignar responsable
   abrirAsignarModal(): void {
-    this.asignarForm = { responsableId: null, observacion: '' };
+    this.asignarForm = {
+      responsableId: null,
+      observacion: ''
+    };
+
     this.showAsignarModal = true;
   }
 
   confirmarAsignar(): void {
     if (!this.solicitud || !this.asignarForm.responsableId) return;
-    
+
     this.isLoadingAction = true;
+
     this.solicitudService.asignarResponsable(this.solicitud.id, {
       responsableId: this.asignarForm.responsableId,
       observacion: this.asignarForm.observacion || undefined
@@ -232,14 +261,12 @@ export class DetalleSolicitudComponent implements OnInit {
     });
   }
 
-  // Iniciar atencion
   abrirIniciarAtencionModal(): void {
     this.accionModalTipo = 'iniciar';
     this.accionForm = { observacion: '' };
     this.showAccionModal = true;
   }
 
-  // Marcar atendida
   abrirMarcarAtendidaModal(): void {
     this.accionModalTipo = 'atender';
     this.accionForm = { observacion: '' };
@@ -248,17 +275,23 @@ export class DetalleSolicitudComponent implements OnInit {
 
   confirmarAccion(): void {
     if (!this.solicitud) return;
-    
+
     this.isLoadingAction = true;
+
     const observable = this.accionModalTipo === 'iniciar'
-      ? this.solicitudService.iniciarAtencion(this.solicitud.id, { observacion: this.accionForm.observacion || undefined })
-      : this.solicitudService.marcarAtendida(this.solicitud.id, { observacion: this.accionForm.observacion || undefined });
-    
+      ? this.solicitudService.iniciarAtencion(this.solicitud.id, {
+          observacion: this.accionForm.observacion || undefined
+        })
+      : this.solicitudService.marcarAtendida(this.solicitud.id, {
+          observacion: this.accionForm.observacion || undefined
+        });
+
     observable.subscribe({
       next: () => {
-        const mensaje = this.accionModalTipo === 'iniciar' 
-          ? 'Atencion iniciada exitosamente' 
+        const mensaje = this.accionModalTipo === 'iniciar'
+          ? 'Atención iniciada exitosamente'
           : 'Solicitud marcada como atendida';
+
         this.toastService.success(mensaje);
         this.showAccionModal = false;
         this.cargarSolicitud(this.solicitud!.id);
@@ -267,23 +300,23 @@ export class DetalleSolicitudComponent implements OnInit {
       error: (error) => {
         this.isLoadingAction = false;
         const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al realizar la accion');
+        this.toastService.error(apiError?.mensaje || 'Error al realizar la acción');
       }
     });
   }
 
-  // Cerrar
   abrirCerrarModal(): void {
     this.cerrarForm = { observacion: '' };
     this.showCerrarModal = true;
   }
 
   confirmarCerrar(): void {
-    if (!this.solicitud || this.cerrarForm.observacion.length < 10) return;
-    
+    if (!this.solicitud || this.cerrarForm.observacion.trim().length < 10) return;
+
     this.isLoadingAction = true;
+
     this.solicitudService.cerrar(this.solicitud.id, {
-      observacion: this.cerrarForm.observacion
+      observacion: this.cerrarForm.observacion.trim()
     }).subscribe({
       next: () => {
         this.toastService.success('Solicitud cerrada exitosamente');
@@ -294,117 +327,186 @@ export class DetalleSolicitudComponent implements OnInit {
       error: (error) => {
         this.isLoadingAction = false;
         const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al cerrar');
+        this.toastService.error(apiError?.mensaje || 'Error al cerrar la solicitud');
       }
     });
   }
 
-  // Sugerencia IA
   consultarSugerenciaIA(): void {
-    if (!this.solicitud) return;
-    
+    if (!this.solicitud || this.isEstadoTerminal) return;
+
     this.isLoadingIA = true;
+    this.iaErrorMessage = '';
+    this.sugerenciaIA = null;
+
     this.solicitudService.obtenerSugerenciaIA(this.solicitud.id).subscribe({
       next: (sugerencia) => {
-        this.sugerenciaIA = sugerencia;
+        const sugerenciaNormalizada = this.normalizarSugerenciaIA(sugerencia);
+
+        if (!sugerenciaNormalizada) {
+          this.iaErrorMessage = 'El backend respondió, pero no entregó una sugerencia válida.';
+          this.isLoadingIA = false;
+          return;
+        }
+
+        this.sugerenciaIA = sugerenciaNormalizada;
         this.sugerenciaEditable = {
-          tipo: sugerencia.tipoSugerido,
-          prioridad: sugerencia.prioridadSugerida
+          tipo: sugerenciaNormalizada.tipoSugerido,
+          prioridad: sugerenciaNormalizada.prioridadSugerida
         };
+
+        this.toastService.success('Sugerencia IA consultada exitosamente');
         this.isLoadingIA = false;
       },
       error: (error) => {
         this.isLoadingIA = false;
         const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al consultar sugerencia IA');
+
+        this.iaErrorMessage =
+          apiError?.mensaje ||
+          'No fue posible consultar la sugerencia IA. La solicitud puede seguir gestionándose manualmente.';
+
+        this.toastService.error(this.iaErrorMessage);
       }
     });
   }
 
   aplicarSugerenciaIA(): void {
-    if (!this.solicitud || !this.sugerenciaEditable.tipo || !this.sugerenciaEditable.prioridad) return;
-    
+    if (
+      !this.solicitud ||
+      !this.canConfirmarIA ||
+      !this.sugerenciaEditable.tipo ||
+      !this.sugerenciaEditable.prioridad
+    ) {
+      return;
+    }
+
     this.isLoadingIA = true;
+
     this.solicitudService.confirmarSugerenciaIA(this.solicitud.id, {
+      aplicar: true,
       tipoAjustado: this.sugerenciaEditable.tipo as TipoSolicitud,
-      prioridadAjustada: this.sugerenciaEditable.prioridad as Prioridad,
-      aplicar: true
+      prioridadAjustada: this.sugerenciaEditable.prioridad as Prioridad
     }).subscribe({
       next: () => {
         this.toastService.success('Sugerencia IA aplicada exitosamente');
         this.sugerenciaIA = null;
+        this.iaErrorMessage = '';
         this.cargarSolicitud(this.solicitud!.id);
         this.isLoadingIA = false;
       },
       error: (error) => {
         this.isLoadingIA = false;
         const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al aplicar sugerencia');
+        this.toastService.error(apiError?.mensaje || 'Error al aplicar la sugerencia IA');
       }
     });
   }
 
   descartarSugerenciaIA(): void {
-    if (!this.solicitud) return;
-    
+    if (!this.solicitud || !this.canConfirmarIA) return;
+
     this.isLoadingIA = true;
+
     this.solicitudService.confirmarSugerenciaIA(this.solicitud.id, {
+      aplicar: false,
       tipoAjustado: this.solicitud.tipo,
-      prioridadAjustada: this.solicitud.prioridad || 'MEDIA',
-      aplicar: false
+      prioridadAjustada: this.solicitud.prioridad || 'MEDIA'
     }).subscribe({
       next: () => {
-        this.toastService.success('Sugerencia descartada');
+        this.toastService.success('Sugerencia IA descartada');
         this.sugerenciaIA = null;
+        this.iaErrorMessage = '';
+        this.cargarHistorial(this.solicitud!.id);
         this.isLoadingIA = false;
       },
       error: (error) => {
         this.isLoadingIA = false;
         const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al descartar sugerencia');
+        this.toastService.error(apiError?.mensaje || 'Error al descartar la sugerencia IA');
       }
     });
   }
 
-  // Helpers
+  limpiarSugerenciaIA(): void {
+    this.sugerenciaIA = null;
+    this.iaErrorMessage = '';
+    this.sugerenciaEditable = {
+      tipo: '',
+      prioridad: ''
+    };
+  }
+
+  private normalizarSugerenciaIA(sugerencia: SugerenciaIA | null | undefined): SugerenciaIA | null {
+    if (!sugerencia || !sugerencia.tipoSugerido || !sugerencia.prioridadSugerida) {
+      return null;
+    }
+
+    return {
+      tipoSugerido: sugerencia.tipoSugerido as TipoSolicitud,
+      prioridadSugerida: sugerencia.prioridadSugerida as Prioridad,
+      resumen: sugerencia.resumen || 'El backend no envió resumen para esta sugerencia.',
+      confirmada: Boolean(sugerencia.confirmada),
+      fechaSugerencia: sugerencia.fechaSugerencia
+    };
+  }
+
   getEstadoBadgeClass(estado: EstadoSolicitud): string {
     const classes: Record<EstadoSolicitud, string> = {
-      'REGISTRADA': 'badge-registrada',
-      'CLASIFICADA': 'badge-clasificada',
-      'EN_ATENCION': 'badge-en-atencion',
-      'ATENDIDA': 'badge-atendida',
-      'CERRADA': 'badge-cerrada',
-      'CANCELADA': 'badge-cancelada'
+      REGISTRADA: 'badge-registrada',
+      CLASIFICADA: 'badge-clasificada',
+      EN_ATENCION: 'badge-en-atencion',
+      ATENDIDA: 'badge-atendida',
+      CERRADA: 'badge-cerrada',
+      CANCELADA: 'badge-cancelada'
     };
+
     return classes[estado] || '';
   }
 
   getPrioridadBadgeClass(prioridad: Prioridad | undefined): string {
     if (!prioridad) return '';
+
     const classes: Record<Prioridad, string> = {
-      'CRITICA': 'badge-critica',
-      'ALTA': 'badge-alta',
-      'MEDIA': 'badge-media',
-      'BAJA': 'badge-baja'
+      CRITICA: 'badge-critica',
+      ALTA: 'badge-alta',
+      MEDIA: 'badge-media',
+      BAJA: 'badge-baja'
     };
+
     return classes[prioridad] || '';
   }
 
   formatTipo(tipo: TipoSolicitud): string {
     const labels: Record<TipoSolicitud, string> = {
-      'REGISTRO_ASIGNATURAS': 'Registro de Asignaturas',
-      'HOMOLOGACION': 'Homologacion',
-      'CANCELACION_ASIGNATURAS': 'Cancelacion de Asignaturas',
-      'SOLICITUD_CUPOS': 'Solicitud de Cupos',
-      'CONSULTA_ACADEMICA': 'Consulta Academica',
-      'OTRO': 'Otro'
+      REGISTRO_ASIGNATURAS: 'Registro de Asignaturas',
+      HOMOLOGACION: 'Homologación',
+      CANCELACION_ASIGNATURAS: 'Cancelación de Asignaturas',
+      SOLICITUD_CUPOS: 'Solicitud de Cupos',
+      CONSULTA_ACADEMICA: 'Consulta Académica',
+      OTRO: 'Otro'
     };
+
     return labels[tipo] || tipo;
+  }
+
+  formatEstado(estado: EstadoSolicitud): string {
+    const labels: Record<EstadoSolicitud, string> = {
+      REGISTRADA: 'Registrada',
+      CLASIFICADA: 'Clasificada',
+      EN_ATENCION: 'En atención',
+      ATENDIDA: 'Atendida',
+      CERRADA: 'Cerrada',
+      CANCELADA: 'Cancelada'
+    };
+
+    return labels[estado] || estado;
   }
 
   formatDate(dateString: string | undefined): string {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('es-ES', {
+
+    return new Date(dateString).toLocaleDateString('es-CO', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -415,12 +517,13 @@ export class DetalleSolicitudComponent implements OnInit {
 
   formatCanalOrigen(canal: string): string {
     const labels: Record<string, string> = {
-      'CSU': 'CSU',
-      'CORREO': 'Correo Electronico',
-      'SAC': 'SAC',
-      'TELEFONO': 'Telefono',
-      'PRESENCIAL': 'Presencial'
+      CSU: 'CSU',
+      CORREO: 'Correo Electrónico',
+      SAC: 'SAC',
+      TELEFONO: 'Teléfono',
+      PRESENCIAL: 'Presencial'
     };
+
     return labels[canal] || canal;
   }
 
@@ -432,15 +535,12 @@ export class DetalleSolicitudComponent implements OnInit {
     this.router.navigate(['/solicitudes']);
   }
 
-  // Permisos condicionales
   get canCancel(): boolean {
     if (!this.solicitud || this.solicitud.estado !== 'REGISTRADA') return false;
-    
-    if (this.authService.isEstudiante()) {
-      return this.solicitud.solicitante.id === this.authService.getUserId();
-    }
-    
-    return this.authService.isAdministrativo();
+
+    if (this.authService.isAdministrativo()) return true;
+
+    return this.authService.isEstudiante();
   }
 
   get canClasificar(): boolean {
@@ -456,26 +556,60 @@ export class DetalleSolicitudComponent implements OnInit {
   }
 
   get canIniciarAtencion(): boolean {
-    return this.solicitud?.estado === 'CLASIFICADA' 
-      && !!this.solicitud?.responsable 
+    return this.solicitud?.estado === 'CLASIFICADA'
+      && !!this.solicitud?.responsable
       && (this.authService.isDocente() || this.authService.isAdministrativo());
   }
 
   get canMarcarAtendida(): boolean {
-    return this.solicitud?.estado === 'EN_ATENCION' 
+    return this.solicitud?.estado === 'EN_ATENCION'
       && (this.authService.isDocente() || this.authService.isAdministrativo());
   }
 
   get canCerrar(): boolean {
-    return this.solicitud?.estado === 'ATENDIDA' 
+    return this.solicitud?.estado === 'ATENDIDA'
       && (this.authService.isDocente() || this.authService.isAdministrativo());
   }
 
   get canConfirmarIA(): boolean {
-    return this.authService.isDocente() || this.authService.isAdministrativo();
+    return !this.isEstadoTerminal && (this.authService.isDocente() || this.authService.isAdministrativo());
   }
 
   get isEstadoTerminal(): boolean {
     return this.solicitud?.estado === 'CERRADA' || this.solicitud?.estado === 'CANCELADA';
+  }
+
+  get hasMainActions(): boolean {
+    return this.canClasificar ||
+      this.canPriorizar ||
+      this.canAsignarResponsable ||
+      this.canIniciarAtencion ||
+      this.canMarcarAtendida ||
+      this.canCerrar ||
+      this.canCancel;
+  }
+
+  get mensajeSinAcciones(): string {
+    if (!this.solicitud) return 'No hay acciones disponibles.';
+
+    if (this.authService.isEstudiante()) {
+      if (this.solicitud.estado === 'REGISTRADA') {
+        return 'La solicitud está registrada. Si corresponde, puede cancelarse antes de iniciar su gestión.';
+      }
+
+      return 'Como estudiante puedes consultar el estado y el historial. La gestión operativa corresponde al personal autorizado.';
+    }
+
+    if (this.authService.isDocente()) {
+      if (this.solicitud.estado === 'REGISTRADA') {
+        return 'La solicitud aún debe ser clasificada por un administrativo antes de iniciar la atención.';
+      }
+
+      if (this.solicitud.estado === 'CLASIFICADA' && !this.solicitud.responsable) {
+        return 'La solicitud está clasificada, pero aún no tiene responsable asignado.';
+      }
+    }
+
+    return 'No hay acciones principales disponibles para tu rol en el estado actual de la solicitud.';
   }
 }

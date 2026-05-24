@@ -8,7 +8,7 @@
     } @else if (solicitud) {
       <div class="detail-hero">
         <div class="hero-left">
-          <button class="btn-back" (click)="volver()">
+          <button type="button" class="btn-back" (click)="volver()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
@@ -21,7 +21,7 @@
             <div class="hero-title-row">
               <h1>Solicitud #{{ solicitud.id }}</h1>
               <span class="badge badge-lg" [ngClass]="getEstadoBadgeClass(solicitud.estado)">
-                {{ solicitud.estado }}
+                {{ formatEstado(solicitud.estado) }}
               </span>
             </div>
             <p>
@@ -55,7 +55,6 @@
 
       <div class="content-grid">
         <div class="primary-column">
-          <!-- Información principal -->
           <div class="card detail-card">
             <div class="card-header">
               <div class="card-title">
@@ -97,7 +96,10 @@
               <div class="detail-item">
                 <label>Impacto académico</label>
                 @if (solicitud.impactoAcademico) {
-                  <span>{{ solicitud.impactoAcademico }}/5 - {{ getImpactoDescripcion(solicitud.impactoAcademico) }}</span>
+                  <span>
+                    {{ solicitud.impactoAcademico }}/5 -
+                    {{ getImpactoDescripcion(solicitud.impactoAcademico) }}
+                  </span>
                 } @else {
                   <span class="text-muted">No evaluado</span>
                 }
@@ -115,13 +117,19 @@
 
               <div class="detail-item">
                 <label>Solicitante</label>
-                <span>{{ solicitud.solicitante.nombre }} <small>ID: {{ solicitud.solicitante.id }}</small></span>
+                <span>
+                  {{ solicitud.solicitante.nombre }}
+                  <small>ID: {{ solicitud.solicitante.id }}</small>
+                </span>
               </div>
 
               <div class="detail-item">
                 <label>Responsable</label>
                 @if (solicitud.responsable) {
-                  <span>{{ solicitud.responsable.nombre }} <small>ID: {{ solicitud.responsable.id }}</small></span>
+                  <span>
+                    {{ solicitud.responsable.nombre }}
+                    <small>ID: {{ solicitud.responsable.id }}</small>
+                  </span>
                 } @else {
                   <span class="text-danger">Sin asignar</span>
                 }
@@ -141,8 +149,7 @@
             }
           </div>
 
-          <!-- Historial -->
-          <div class="card historial-card">
+          <div class="card historial-card" id="historial-solicitud">
             <div class="card-header">
               <div class="card-title">
                 <span class="card-icon">
@@ -184,7 +191,7 @@
                         @if (entry.estadoAnterior) {
                           <span class="estado-change">
                             <span class="badge badge-sm" [ngClass]="getEstadoBadgeClass(entry.estadoAnterior)">
-                              {{ entry.estadoAnterior }}
+                              {{ formatEstado(entry.estadoAnterior) }}
                             </span>
 
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -193,12 +200,12 @@
                             </svg>
 
                             <span class="badge badge-sm" [ngClass]="getEstadoBadgeClass(entry.estadoNuevo)">
-                              {{ entry.estadoNuevo }}
+                              {{ formatEstado(entry.estadoNuevo) }}
                             </span>
                           </span>
                         } @else {
                           <span class="badge badge-sm" [ngClass]="getEstadoBadgeClass(entry.estadoNuevo)">
-                            {{ entry.estadoNuevo }}
+                            {{ formatEstado(entry.estadoNuevo) }}
                           </span>
                         }
                       </div>
@@ -215,7 +222,6 @@
         </div>
 
         <aside class="secondary-column">
-          <!-- Panel de acciones -->
           <div class="card actions-card">
             <div class="card-header compact">
               <div class="card-title">
@@ -232,100 +238,100 @@
               </div>
             </div>
 
-            @if (isEstadoTerminal) {
-              <div class="info-message">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="16" x2="12" y2="12"></line>
-                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                </svg>
-                <span>Esta solicitud está en estado terminal ({{ solicitud.estado }}).</span>
-              </div>
-            } @else {
-              <div class="actions-grid">
-                @if (authService.isEstudiante()) {
-                  @if (canCancel) {
-                    <button class="btn btn-danger action-button" (click)="cancelarSolicitud()" [disabled]="isLoadingAction">
-                      Cancelar solicitud
-                    </button>
-                  } @else {
-                    <div class="info-message">
-                      <span>No hay acciones disponibles para esta solicitud en su estado actual.</span>
-                    </div>
-                  }
+            <div class="action-status">
+              <span class="status-label">Estado actual</span>
+              <span class="badge" [ngClass]="getEstadoBadgeClass(solicitud.estado)">
+                {{ formatEstado(solicitud.estado) }}
+              </span>
+            </div>
+
+            <div class="actions-grid">
+              @if (isEstadoTerminal) {
+                <div class="info-message">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  <span>
+                    Esta solicitud está {{ formatEstado(solicitud.estado) }}.
+                    No se permiten modificaciones en estados terminales.
+                  </span>
+                </div>
+              } @else {
+                @if (canClasificar) {
+                  <button type="button" class="btn btn-info action-button" (click)="abrirClasificarModal()" [disabled]="isLoadingAction">
+                    Clasificar solicitud
+                  </button>
                 }
 
-                @if (authService.isDocente()) {
-                  @if (solicitud.estado === 'REGISTRADA') {
-                    <div class="info-message info">
-                      <span>Esta solicitud aún no ha sido clasificada por un administrativo.</span>
-                    </div>
-                  } @else if (solicitud.estado === 'CLASIFICADA') {
-                    @if (solicitud.responsable) {
-                      <button class="btn btn-primary action-button" (click)="abrirIniciarAtencionModal()" [disabled]="isLoadingAction">
-                        Iniciar atención
-                      </button>
-                    } @else {
-                      <div class="info-message warning">
-                        <span>Esta solicitud aún no tiene responsable asignado.</span>
-                      </div>
+                @if (canPriorizar) {
+                  <button type="button" class="btn btn-warning action-button" (click)="recalcularPrioridad()" [disabled]="isLoadingAction">
+                    @if (isLoadingAction) {
+                      <span class="spinner"></span>
                     }
-                  } @else if (solicitud.estado === 'EN_ATENCION') {
-                    <button class="btn btn-primary action-button" (click)="abrirMarcarAtendidaModal()" [disabled]="isLoadingAction">
-                      Marcar como atendida
-                    </button>
-                  } @else if (solicitud.estado === 'ATENDIDA') {
-                    <button class="btn btn-primary action-button" (click)="abrirCerrarModal()" [disabled]="isLoadingAction">
-                      Cerrar solicitud
-                    </button>
-                  }
+                    Recalcular prioridad
+                  </button>
                 }
 
-                @if (authService.isAdministrativo()) {
-                  @if (solicitud.estado === 'REGISTRADA') {
-                    <button class="btn btn-info action-button" (click)="abrirClasificarModal()" [disabled]="isLoadingAction">
-                      Clasificar solicitud
-                    </button>
-
-                    <button class="btn btn-danger action-button" (click)="cancelarSolicitud()" [disabled]="isLoadingAction">
-                      Cancelar solicitud
-                    </button>
-                  } @else if (solicitud.estado === 'CLASIFICADA') {
-                    <button class="btn btn-warning action-button" (click)="recalcularPrioridad()" [disabled]="isLoadingAction">
-                      @if (isLoadingAction) {
-                        <span class="spinner"></span>
-                      }
-                      Recalcular prioridad
-                    </button>
-
-                    <button class="btn btn-info action-button" (click)="abrirAsignarModal()" [disabled]="isLoadingAction">
-                      Asignar responsable
-                    </button>
-
-                    @if (solicitud.responsable) {
-                      <button class="btn btn-primary action-button" (click)="abrirIniciarAtencionModal()" [disabled]="isLoadingAction">
-                        Iniciar atención
-                      </button>
-                    } @else {
-                      <div class="info-message warning full-width">
-                        <span>Asigne un responsable antes de iniciar atención.</span>
-                      </div>
-                    }
-                  } @else if (solicitud.estado === 'EN_ATENCION') {
-                    <button class="btn btn-primary action-button" (click)="abrirMarcarAtendidaModal()" [disabled]="isLoadingAction">
-                      Marcar como atendida
-                    </button>
-                  } @else if (solicitud.estado === 'ATENDIDA') {
-                    <button class="btn btn-primary action-button" (click)="abrirCerrarModal()" [disabled]="isLoadingAction">
-                      Cerrar solicitud
-                    </button>
-                  }
+                @if (canAsignarResponsable) {
+                  <button type="button" class="btn btn-info action-button" (click)="abrirAsignarModal()" [disabled]="isLoadingAction">
+                    Asignar responsable
+                  </button>
                 }
+
+                @if (canIniciarAtencion) {
+                  <button type="button" class="btn btn-primary action-button" (click)="abrirIniciarAtencionModal()" [disabled]="isLoadingAction">
+                    Iniciar atención
+                  </button>
+                }
+
+                @if (canMarcarAtendida) {
+                  <button type="button" class="btn btn-primary action-button" (click)="abrirMarcarAtendidaModal()" [disabled]="isLoadingAction">
+                    Marcar como atendida
+                  </button>
+                }
+
+                @if (canCerrar) {
+                  <button type="button" class="btn btn-primary action-button" (click)="abrirCerrarModal()" [disabled]="isLoadingAction">
+                    Cerrar solicitud
+                  </button>
+                }
+
+                @if (canCancel) {
+                  <button type="button" class="btn btn-danger action-button" (click)="cancelarSolicitud()" [disabled]="isLoadingAction">
+                    Cancelar solicitud
+                  </button>
+                }
+
+                @if (!hasMainActions) {
+                  <div class="info-message info">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="16" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <span>{{ mensajeSinAcciones }}</span>
+                  </div>
+                }
+              }
+
+              <div class="secondary-actions">
+                <button type="button" class="btn btn-secondary action-button action-button-light" (click)="verHistorial()">
+                  Ver historial
+                </button>
+
+                <button type="button" class="btn btn-secondary action-button action-button-light" (click)="actualizarDatos()" [disabled]="isLoadingAction || isLoadingIA">
+                  Actualizar datos
+                </button>
+
+                <button type="button" class="btn btn-secondary action-button action-button-light" (click)="volver()">
+                  Volver al listado
+                </button>
               </div>
-            }
+            </div>
           </div>
 
-          <!-- Sugerencia IA -->
           <div class="card ia-card">
             <div class="card-header compact">
               <div class="card-title">
@@ -346,17 +352,52 @@
               </div>
             </div>
 
-            @if (!sugerenciaIA) {
-              <button class="btn btn-secondary ia-button" (click)="consultarSugerenciaIA()" [disabled]="isLoadingIA">
+            <div class="ia-description">
+              <p>
+                La IA actúa como asistente: sugiere tipo y prioridad, pero la decisión final
+                debe ser confirmada o ajustada por un usuario autorizado.
+              </p>
+            </div>
+
+            <div class="sugerencia-content">
+              @if (!sugerenciaIA) {
                 @if (isLoadingIA) {
-                  <span class="spinner"></span>
-                  Consultando...
+                  <button type="button" class="btn btn-secondary ia-button" disabled>
+                    <span class="spinner spinner-dark"></span>
+                    Consultando IA...
+                  </button>
                 } @else {
-                  Consultar IA
+                  <button
+                    type="button"
+                    class="btn btn-secondary ia-button"
+                    (click)="consultarSugerenciaIA()"
+                    [disabled]="isEstadoTerminal">
+
+                    Consultar sugerencia IA
+                  </button>
                 }
-              </button>
-            } @else {
-              <div class="sugerencia-content">
+
+                @if (iaErrorMessage) {
+                  <div class="info-message danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span>{{ iaErrorMessage }}</span>
+                  </div>
+                } @else {
+                  <div class="info-message info">
+                    <span>
+                      @if (isEstadoTerminal) {
+                        La solicitud está cerrada o cancelada. No se consulta IA para estados terminales.
+                      } @else {
+                        La sugerencia aparecerá aquí después de consultar el backend.
+                      }
+                    </span>
+                  </div>
+                }
+              } @else {
                 <div class="sugerencia-info">
                   <div class="sugerencia-item">
                     <label>Tipo sugerido</label>
@@ -371,13 +412,15 @@
                   </div>
 
                   <div class="sugerencia-item">
-                    <label>Confianza</label>
-                    <span class="confidence-pill">{{ sugerenciaIA.confirmada }}%</span>
+                    <label>Estado de confirmación</label>
+                    <span class="confidence-pill">
+                      {{ sugerenciaIA.confirmada ? 'Confirmada' : 'Pendiente de revisión humana' }}
+                    </span>
                   </div>
                 </div>
 
                 <div class="sugerencia-resumen">
-                  <label>Resumen</label>
+                  <label>Resumen generado</label>
                   <p>{{ sugerenciaIA.resumen }}</p>
                 </div>
 
@@ -407,34 +450,44 @@
                   </div>
 
                   <div class="sugerencia-actions">
-                    <button class="btn btn-primary" (click)="aplicarSugerenciaIA()" [disabled]="isLoadingIA">
+                    <button type="button" class="btn btn-primary" (click)="aplicarSugerenciaIA()" [disabled]="isLoadingIA || isEstadoTerminal">
                       Aplicar sugerencia
                     </button>
 
-                    <button class="btn btn-secondary" (click)="descartarSugerenciaIA()" [disabled]="isLoadingIA">
+                    <button type="button" class="btn btn-secondary" (click)="descartarSugerenciaIA()" [disabled]="isLoadingIA">
                       Descartar
+                    </button>
+
+                    <button type="button" class="btn btn-secondary" (click)="limpiarSugerenciaIA()" [disabled]="isLoadingIA">
+                      Consultar otra vez
                     </button>
                   </div>
                 } @else {
-                  <div class="info-message info">
-                    <span>Solo docentes y administrativos pueden confirmar sugerencias de IA.</span>
+                  <div class="info-message warning">
+                    <span>
+                      Puedes consultar la sugerencia, pero solo docentes y administrativos
+                      pueden confirmarla, ajustarla o aplicarla.
+                    </span>
                   </div>
+
+                  <button type="button" class="btn btn-secondary ia-button" (click)="limpiarSugerenciaIA()" [disabled]="isLoadingIA">
+                    Consultar nuevamente
+                  </button>
                 }
-              </div>
-            }
+              }
+            </div>
           </div>
         </aside>
       </div>
     }
   </section>
 
-  <!-- Modal Clasificar -->
   @if (showClasificarModal) {
     <div class="modal-overlay" (click)="showClasificarModal = false">
       <div class="modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2>Clasificar solicitud</h2>
-          <button class="modal-close" (click)="showClasificarModal = false">&times;</button>
+          <button type="button" class="modal-close" (click)="showClasificarModal = false">&times;</button>
         </div>
 
         <div class="modal-body">
@@ -464,9 +517,9 @@
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="showClasificarModal = false">Cancelar</button>
+          <button type="button" class="btn btn-secondary" (click)="showClasificarModal = false">Cancelar</button>
 
-          <button class="btn btn-primary" (click)="confirmarClasificar()" [disabled]="!clasificarForm.tipo || isLoadingAction">
+          <button type="button" class="btn btn-primary" (click)="confirmarClasificar()" [disabled]="!clasificarForm.tipo || isLoadingAction">
             @if (isLoadingAction) {
               <span class="spinner"></span>
             }
@@ -477,13 +530,12 @@
     </div>
   }
 
-  <!-- Modal Asignar Responsable -->
   @if (showAsignarModal) {
     <div class="modal-overlay" (click)="showAsignarModal = false">
       <div class="modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2>Asignar responsable</h2>
-          <button class="modal-close" (click)="showAsignarModal = false">&times;</button>
+          <button type="button" class="modal-close" (click)="showAsignarModal = false">&times;</button>
         </div>
 
         <div class="modal-body">
@@ -503,9 +555,9 @@
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="showAsignarModal = false">Cancelar</button>
+          <button type="button" class="btn btn-secondary" (click)="showAsignarModal = false">Cancelar</button>
 
-          <button class="btn btn-primary" (click)="confirmarAsignar()" [disabled]="!asignarForm.responsableId || isLoadingAction">
+          <button type="button" class="btn btn-primary" (click)="confirmarAsignar()" [disabled]="!asignarForm.responsableId || isLoadingAction">
             @if (isLoadingAction) {
               <span class="spinner"></span>
             }
@@ -516,13 +568,12 @@
     </div>
   }
 
-  <!-- Modal Acción -->
   @if (showAccionModal) {
     <div class="modal-overlay" (click)="showAccionModal = false">
       <div class="modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2>{{ accionModalTipo === 'iniciar' ? 'Iniciar atención' : 'Marcar como atendida' }}</h2>
-          <button class="modal-close" (click)="showAccionModal = false">&times;</button>
+          <button type="button" class="modal-close" (click)="showAccionModal = false">&times;</button>
         </div>
 
         <div class="modal-body">
@@ -533,9 +584,9 @@
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="showAccionModal = false">Cancelar</button>
+          <button type="button" class="btn btn-secondary" (click)="showAccionModal = false">Cancelar</button>
 
-          <button class="btn btn-primary" (click)="confirmarAccion()" [disabled]="isLoadingAction">
+          <button type="button" class="btn btn-primary" (click)="confirmarAccion()" [disabled]="isLoadingAction">
             @if (isLoadingAction) {
               <span class="spinner"></span>
             }
@@ -546,13 +597,12 @@
     </div>
   }
 
-  <!-- Modal Cerrar -->
   @if (showCerrarModal) {
     <div class="modal-overlay" (click)="showCerrarModal = false">
       <div class="modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2>Cerrar solicitud</h2>
-          <button class="modal-close" (click)="showCerrarModal = false">&times;</button>
+          <button type="button" class="modal-close" (click)="showCerrarModal = false">&times;</button>
         </div>
 
         <div class="modal-body">
@@ -567,9 +617,9 @@
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="showCerrarModal = false">Cancelar</button>
+          <button type="button" class="btn btn-secondary" (click)="showCerrarModal = false">Cancelar</button>
 
-          <button class="btn btn-primary" (click)="confirmarCerrar()" [disabled]="cerrarForm.observacion.length < 10 || isLoadingAction">
+          <button type="button" class="btn btn-primary" (click)="confirmarCerrar()" [disabled]="cerrarForm.observacion.length < 10 || isLoadingAction">
             @if (isLoadingAction) {
               <span class="spinner"></span>
             }
