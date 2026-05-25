@@ -39,6 +39,12 @@ export class ToastService {
     this.show(message, 'error');
   }
 
+  httpError(error: any, fallback: string = 'Ocurrió un error inesperado'): string {
+    const mensaje = error?.error?.mensaje || fallback;
+    this.show(mensaje, 'error');
+    return mensaje;
+  }
+
   remove(id: number): void {
     this.toasts = this.toasts.filter(t => t.id !== id);
     this.toastsSubject.next([...this.toasts]);

@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
-import { ApiError, Rol } from '../../core/models/models';
+import { Rol } from '../../core/models/models';
 
 @Component({
   selector: 'app-registro',
@@ -20,8 +20,7 @@ export class RegistroComponent {
 
   roles: { value: Rol; label: string }[] = [
     { value: 'ESTUDIANTE', label: 'Estudiante' },
-    { value: 'DOCENTE', label: 'Docente' },
-    { value: 'ADMINISTRATIVO', label: 'Administrativo' }
+    { value: 'DOCENTE', label: 'Docente' }
   ];
 
   constructor(
@@ -70,9 +69,7 @@ export class RegistroComponent {
       },
       error: (error) => {
         this.isLoading = false;
-        const apiError = error.error as ApiError;
-        this.errorMessage = apiError?.mensaje || 'Error al registrar. Intenta nuevamente.';
-        this.toastService.error(this.errorMessage);
+        this.errorMessage = this.toastService.httpError(error, 'Error al registrar. Intenta nuevamente.');
       }
     });
   }

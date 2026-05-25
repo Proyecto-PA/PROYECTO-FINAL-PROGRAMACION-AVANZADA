@@ -597,6 +597,38 @@
     </div>
   }
 
+  @if (showCancelarModal) {
+    <div class="modal-overlay" (click)="showCancelarModal = false">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Cancelar solicitud</h2>
+          <button type="button" class="modal-close" (click)="showCancelarModal = false">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="info-message warning">
+            <span>
+              ¿Está seguro de que desea cancelar esta solicitud? Esta acción no se puede deshacer.
+            </span>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="showCancelarModal = false" [disabled]="isLoadingAction">
+            Volver
+          </button>
+
+          <button type="button" class="btn btn-danger" (click)="confirmarCancelar()" [disabled]="isLoadingAction">
+            @if (isLoadingAction) {
+              <span class="spinner"></span>
+            }
+            Sí, cancelar solicitud
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
   @if (showCerrarModal) {
     <div class="modal-overlay" (click)="showCerrarModal = false">
       <div class="modal" (click)="$event.stopPropagation()">

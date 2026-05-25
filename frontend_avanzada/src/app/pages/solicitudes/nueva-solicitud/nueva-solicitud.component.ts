@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { MainLayoutComponent } from '../../../shared/components/main-layout/main-layout.component';
 import { SolicitudService } from '../../../core/services/solicitud.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { TipoSolicitud, CanalOrigen, ApiError } from '../../../core/models/models';
+import { TipoSolicitud, CanalOrigen } from '../../../core/models/models';
 
 @Component({
   selector: 'app-nueva-solicitud',
@@ -72,8 +72,7 @@ export class NuevaSolicitudComponent {
       },
       error: (error) => {
         this.isLoading = false;
-        const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al registrar la solicitud');
+        this.toastService.httpError(error, 'Error al registrar la solicitud');
       }
     });
   }

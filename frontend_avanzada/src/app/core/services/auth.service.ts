@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
 import { LoginRequest, LoginResponse, RegistroRequest, Rol } from '../models/models';
+import { environment } from '../../../environments/environment';
 
 interface JwtPayload {
   rol: Rol;
@@ -15,7 +16,7 @@ interface JwtPayload {
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly API_URL = 'http://localhost:8080/api';
+  private readonly API_URL = environment.apiUrl;
   private readonly TOKEN_KEY = 'token';
   
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.hasValidToken());

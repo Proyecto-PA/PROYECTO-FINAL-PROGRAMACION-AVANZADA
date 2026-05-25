@@ -13,8 +13,7 @@ import {
   SugerenciaIA,
   TipoSolicitud,
   Prioridad,
-  EstadoSolicitud,
-  ApiError
+  EstadoSolicitud
 } from '../../../core/models/models';
 
 @Component({
@@ -38,6 +37,7 @@ export class DetalleSolicitudComponent implements OnInit {
   showAsignarModal = false;
   showCerrarModal = false;
   showAccionModal = false;
+  showCancelarModal = false;
   accionModalTipo: 'iniciar' | 'atender' = 'iniciar';
 
   clasificarForm = {
@@ -114,8 +114,7 @@ export class DetalleSolicitudComponent implements OnInit {
       },
       error: (error) => {
         this.isLoading = false;
-        const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al cargar la solicitud');
+        this.toastService.httpError(error, 'Error al cargar la solicitud');
         this.router.navigate(['/solicitudes']);
       }
     });
@@ -156,23 +155,26 @@ export class DetalleSolicitudComponent implements OnInit {
 
   cancelarSolicitud(): void {
     if (!this.solicitud) return;
+    this.showCancelarModal = true;
+  }
 
-    if (confirm('¿Está seguro de que desea cancelar esta solicitud?')) {
-      this.isLoadingAction = true;
+  confirmarCancelar(): void {
+    if (!this.solicitud) return;
 
-      this.solicitudService.cancelar(this.solicitud.id).subscribe({
-        next: () => {
-          this.toastService.success('Solicitud cancelada exitosamente');
-          this.cargarSolicitud(this.solicitud!.id);
-          this.isLoadingAction = false;
-        },
-        error: (error) => {
-          this.isLoadingAction = false;
-          const apiError = error.error as ApiError;
-          this.toastService.error(apiError?.mensaje || 'Error al cancelar la solicitud');
-        }
-      });
-    }
+    this.isLoadingAction = true;
+
+    this.solicitudService.cancelar(this.solicitud.id).subscribe({
+      next: () => {
+        this.toastService.success('Solicitud cancelada exitosamente');
+        this.showCancelarModal = false;
+        this.cargarSolicitud(this.solicitud!.id);
+        this.isLoadingAction = false;
+      },
+      error: (error) => {
+        this.isLoadingAction = false;
+        this.toastService.httpError(error, 'Error al cancelar la solicitud');
+      }
+    });
   }
 
   abrirClasificarModal(): void {
@@ -203,8 +205,7 @@ export class DetalleSolicitudComponent implements OnInit {
       },
       error: (error) => {
         this.isLoadingAction = false;
-        const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al clasificar la solicitud');
+        this.toastService.httpError(error, 'Error al clasificar la solicitud');
       }
     });
   }
@@ -223,8 +224,7 @@ export class DetalleSolicitudComponent implements OnInit {
       },
       error: (error) => {
         this.isLoadingAction = false;
-        const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al recalcular la prioridad');
+        this.toastService.httpError(error, 'Error al recalcular la prioridad');
       }
     });
   }
@@ -255,8 +255,7 @@ export class DetalleSolicitudComponent implements OnInit {
       },
       error: (error) => {
         this.isLoadingAction = false;
-        const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al asignar responsable');
+        this.toastService.httpError(error, 'Error al asignar responsable');
       }
     });
   }
@@ -299,8 +298,7 @@ export class DetalleSolicitudComponent implements OnInit {
       },
       error: (error) => {
         this.isLoadingAction = false;
-        const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al realizar la acción');
+        this.toastService.httpError(error, 'Error al realizar la acción');
       }
     });
   }
@@ -326,8 +324,7 @@ export class DetalleSolicitudComponent implements OnInit {
       },
       error: (error) => {
         this.isLoadingAction = false;
-        const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al cerrar la solicitud');
+        this.toastService.httpError(error, 'Error al cerrar la solicitud');
       }
     });
   }
@@ -360,13 +357,10 @@ export class DetalleSolicitudComponent implements OnInit {
       },
       error: (error) => {
         this.isLoadingIA = false;
-        const apiError = error.error as ApiError;
-
-        this.iaErrorMessage =
-          apiError?.mensaje ||
-          'No fue posible consultar la sugerencia IA. La solicitud puede seguir gestionándose manualmente.';
-
-        this.toastService.error(this.iaErrorMessage);
+        this.iaErrorMessage = this.toastService.httpError(
+          error,
+          'No fue posible consultar la sugerencia IA. La solicitud puede seguir gestionándose manualmente.'
+        );
       }
     });
   }
@@ -397,8 +391,7 @@ export class DetalleSolicitudComponent implements OnInit {
       },
       error: (error) => {
         this.isLoadingIA = false;
-        const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al aplicar la sugerencia IA');
+        this.toastService.httpError(error, 'Error al aplicar la sugerencia IA');
       }
     });
   }
@@ -422,8 +415,7 @@ export class DetalleSolicitudComponent implements OnInit {
       },
       error: (error) => {
         this.isLoadingIA = false;
-        const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al descartar la sugerencia IA');
+        this.toastService.httpError(error, 'Error al descartar la sugerencia IA');
       }
     });
   }
@@ -540,7 +532,11 @@ export class DetalleSolicitudComponent implements OnInit {
 
     if (this.authService.isAdministrativo()) return true;
 
-    return this.authService.isEstudiante();
+    if (this.authService.isEstudiante()) {
+      return this.solicitud.solicitante.id === this.authService.getUserId();
+    }
+
+    return false;
   }
 
   get canClasificar(): boolean {

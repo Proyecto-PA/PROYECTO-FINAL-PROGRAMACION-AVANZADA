@@ -6,13 +6,12 @@ import { MainLayoutComponent } from '../../../shared/components/main-layout/main
 import { SolicitudService } from '../../../core/services/solicitud.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { 
-  Solicitud, 
-  EstadoSolicitud, 
-  TipoSolicitud, 
-  Prioridad, 
-  FiltrosSolicitud,
-  ApiError 
+import {
+  Solicitud,
+  EstadoSolicitud,
+  TipoSolicitud,
+  Prioridad,
+  FiltrosSolicitud
 } from '../../../core/models/models';
 
 @Component({
@@ -25,6 +24,9 @@ import {
 export class ListaSolicitudesComponent implements OnInit {
   solicitudes: Solicitud[] = [];
   isLoading = false;
+  isLoadingCancel = false;
+  showCancelarModal = false;
+  solicitudACancelar: Solicitud | null = null;
   
   // Paginacion
   currentPage = 0;
@@ -68,8 +70,7 @@ export class ListaSolicitudesComponent implements OnInit {
       },
       error: (error) => {
         this.isLoading = false;
-        const apiError = error.error as ApiError;
-        this.toastService.error(apiError?.mensaje || 'Error al cargar las solicitudes');
+        this.toastService.httpError(error, 'Error al cargar las solicitudes');
       }
     });
   }
@@ -97,18 +98,32 @@ export class ListaSolicitudesComponent implements OnInit {
   }
 
   cancelarSolicitud(solicitud: Solicitud): void {
-    if (confirm('Estas seguro de que deseas cancelar esta solicitud?')) {
-      this.solicitudService.cancelar(solicitud.id).subscribe({
-        next: () => {
-          this.toastService.success('Solicitud cancelada exitosamente');
-          this.cargarSolicitudes();
-        },
-        error: (error) => {
-          const apiError = error.error as ApiError;
-          this.toastService.error(apiError?.mensaje || 'Error al cancelar la solicitud');
-        }
-      });
-    }
+    this.solicitudACancelar = solicitud;
+    this.showCancelarModal = true;
+  }
+
+  confirmarCancelar(): void {
+    if (!this.solicitudACancelar) return;
+
+    this.isLoadingCancel = true;
+
+    this.solicitudService.cancelar(this.solicitudACancelar.id).subscribe({
+      next: () => {
+        this.toastService.success('Solicitud cancelada exitosamente');
+        this.cerrarCancelarModal();
+        this.cargarSolicitudes();
+      },
+      error: (error) => {
+        this.isLoadingCancel = false;
+        this.toastService.httpError(error, 'Error al cancelar la solicitud');
+      }
+    });
+  }
+
+  cerrarCancelarModal(): void {
+    this.showCancelarModal = false;
+    this.solicitudACancelar = null;
+    this.isLoadingCancel = false;
   }
 
   getEstadoBadgeClass(estado: EstadoSolicitud): string {

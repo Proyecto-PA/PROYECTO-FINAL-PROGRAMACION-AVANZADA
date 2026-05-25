@@ -244,4 +244,38 @@
       }
     </div>
   </section>
+
+  @if (showCancelarModal && solicitudACancelar) {
+    <div class="modal-overlay" (click)="cerrarCancelarModal()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Cancelar solicitud</h2>
+          <button type="button" class="modal-close" (click)="cerrarCancelarModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <p class="cancel-modal-text">
+            ¿Está seguro de que desea cancelar la solicitud
+            <strong>#{{ solicitudACancelar.id }}</strong>?
+          </p>
+          <p class="cancel-modal-warning">
+            Esta acción no se puede deshacer.
+          </p>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cerrarCancelarModal()" [disabled]="isLoadingCancel">
+            Volver
+          </button>
+
+          <button type="button" class="btn btn-danger" (click)="confirmarCancelar()" [disabled]="isLoadingCancel">
+            @if (isLoadingCancel) {
+              <span class="spinner"></span>
+            }
+            Sí, cancelar solicitud
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </app-main-layout>

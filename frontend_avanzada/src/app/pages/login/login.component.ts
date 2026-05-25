@@ -4,7 +4,6 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
-import { ApiError } from '../../core/models/models';
 
 @Component({
   selector: 'app-login',
@@ -46,9 +45,7 @@ export class LoginComponent {
       },
       error: (error) => {
         this.isLoading = false;
-        const apiError = error.error as ApiError;
-        this.errorMessage = apiError?.mensaje || 'Error al iniciar sesion. Verifica tus credenciales.';
-        this.toastService.error(this.errorMessage);
+        this.errorMessage = this.toastService.httpError(error, 'Error al iniciar sesion. Verifica tus credenciales.');
       }
     });
   }
