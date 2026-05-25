@@ -569,14 +569,6 @@ export class DetalleSolicitudComponent implements OnInit {
     return this.authService.isEstudiante();
   }
 
-  get puedeAtenderSolicitud(): boolean {
-    return this.isDocente || this.isAdministrativo;
-  }
-
-  get puedeGestionarAdministrativamente(): boolean {
-    return this.isAdministrativo;
-  }
-
   get isEstadoTerminal(): boolean {
     return this.solicitud?.estado === 'CERRADA'
       || this.solicitud?.estado === 'CANCELADA';
@@ -608,24 +600,24 @@ export class DetalleSolicitudComponent implements OnInit {
 
   get canIniciarAtencion(): boolean {
     return !!this.solicitud
-      && this.puedeAtenderSolicitud
+      && this.isAdministrativo
       && this.solicitud.estado === 'CLASIFICADA';
   }
 
   get canMarcarAtendida(): boolean {
     return !!this.solicitud
-      && this.puedeAtenderSolicitud
+      && this.isAdministrativo
       && this.solicitud.estado === 'EN_ATENCION';
   }
 
   get canCerrar(): boolean {
     return !!this.solicitud
-      && this.puedeAtenderSolicitud
+      && this.isAdministrativo
       && this.solicitud.estado === 'ATENDIDA';
   }
 
   get canVerPanelIA(): boolean {
-    return this.isAdministrativo;
+    return !!this.solicitud && this.isAdministrativo;
   }
 
   get canConsultarIA(): boolean {
@@ -647,8 +639,7 @@ export class DetalleSolicitudComponent implements OnInit {
       || this.canAsignarResponsable
       || this.canIniciarAtencion
       || this.canMarcarAtendida
-      || this.canCerrar
-      || this.canCancel;
+      || this.canCerrar;
   }
 
   get mensajeSinAcciones(): string {
@@ -665,15 +656,7 @@ export class DetalleSolicitudComponent implements OnInit {
     }
 
     if (this.isDocente) {
-      if (this.solicitud.estado === 'REGISTRADA') {
-        return 'La solicitud aún debe ser clasificada por un usuario administrativo.';
-      }
-
-      if (this.solicitud.estado === 'CLASIFICADA') {
-        return 'Como docente puedes iniciar la atención de esta solicitud.';
-      }
-
-      return 'Como docente puedes cambiar el estado de la solicitud cuando el flujo lo permita.';
+      return 'Como docente puedes consultar el detalle de solicitudes, pero no tienes acciones de flujo disponibles.';
     }
 
     if (this.isAdministrativo) {
