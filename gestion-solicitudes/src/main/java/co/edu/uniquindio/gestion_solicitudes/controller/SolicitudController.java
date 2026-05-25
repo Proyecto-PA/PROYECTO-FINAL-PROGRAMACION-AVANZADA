@@ -147,14 +147,14 @@ public class SolicitudController {
 
     // GET /solicitudes/{id}/sugerencia-ia
     @GetMapping("/{id}/sugerencia-ia")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('ADMINISTRATIVO')")
     public ResponseEntity<SugerenciaIAResponse> obtenerSugerencia(@PathVariable Long id){
         return ResponseEntity.ok(iaService.generarSugerencia(id));
     }
 
     // PUT /solicitudes/{id}/sugerencia-ia/confirmar
     @PutMapping("/{id}/sugerencia-ia/confirmar")
-    @PreAuthorize("hasAnyRole('DOCENTE', 'ADMINISTRATIVO')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATIVO')")
     public ResponseEntity<SolicitudResponse> confirmarSugerencia(
             @PathVariable Long id,
             @Valid @RequestBody ConfirmarSugerenciaRequest request,

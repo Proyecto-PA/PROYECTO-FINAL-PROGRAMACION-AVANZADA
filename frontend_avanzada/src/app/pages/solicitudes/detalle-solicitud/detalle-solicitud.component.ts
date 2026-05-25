@@ -2,11 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+
 import { MainLayoutComponent } from '../../../shared/components/main-layout/main-layout.component';
 import { SolicitudService } from '../../../core/services/solicitud.service';
 import { HistorialService } from '../../../core/services/historial.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+
 import {
   Solicitud,
   HistorialEntry,
@@ -38,6 +40,7 @@ export class DetalleSolicitudComponent implements OnInit {
   showCerrarModal = false;
   showAccionModal = false;
   showCancelarModal = false;
+
   accionModalTipo: 'iniciar' | 'atender' = 'iniciar';
 
   clasificarForm = {
@@ -153,13 +156,18 @@ export class DetalleSolicitudComponent implements OnInit {
     }
   }
 
+  volver(): void {
+    this.router.navigate(['/solicitudes']);
+  }
+
   cancelarSolicitud(): void {
-    if (!this.solicitud) return;
+    if (!this.solicitud || !this.canCancel) return;
+
     this.showCancelarModal = true;
   }
 
   confirmarCancelar(): void {
-    if (!this.solicitud) return;
+    if (!this.solicitud || !this.canCancel) return;
 
     this.isLoadingAction = true;
 
@@ -178,9 +186,11 @@ export class DetalleSolicitudComponent implements OnInit {
   }
 
   abrirClasificarModal(): void {
+    if (!this.solicitud || !this.canClasificar) return;
+
     this.clasificarForm = {
-      tipo: this.solicitud?.tipo || '',
-      impactoAcademico: this.solicitud?.impactoAcademico || 3,
+      tipo: this.solicitud.tipo || '',
+      impactoAcademico: this.solicitud.impactoAcademico || 3,
       observacion: ''
     };
 
@@ -188,7 +198,7 @@ export class DetalleSolicitudComponent implements OnInit {
   }
 
   confirmarClasificar(): void {
-    if (!this.solicitud || !this.clasificarForm.tipo) return;
+    if (!this.solicitud || !this.clasificarForm.tipo || !this.canClasificar) return;
 
     this.isLoadingAction = true;
 
@@ -211,7 +221,7 @@ export class DetalleSolicitudComponent implements OnInit {
   }
 
   recalcularPrioridad(): void {
-    if (!this.solicitud) return;
+    if (!this.solicitud || !this.canPriorizar) return;
 
     this.isLoadingAction = true;
 
@@ -230,6 +240,8 @@ export class DetalleSolicitudComponent implements OnInit {
   }
 
   abrirAsignarModal(): void {
+    if (!this.solicitud || !this.canAsignarResponsable) return;
+
     this.asignarForm = {
       responsableId: null,
       observacion: ''
@@ -239,7 +251,7 @@ export class DetalleSolicitudComponent implements OnInit {
   }
 
   confirmarAsignar(): void {
-    if (!this.solicitud || !this.asignarForm.responsableId) return;
+    if (!this.solicitud || !this.asignarForm.responsableId || !this.canAsignarResponsable) return;
 
     this.isLoadingAction = true;
 
@@ -261,12 +273,16 @@ export class DetalleSolicitudComponent implements OnInit {
   }
 
   abrirIniciarAtencionModal(): void {
+    if (!this.solicitud || !this.canIniciarAtencion) return;
+
     this.accionModalTipo = 'iniciar';
     this.accionForm = { observacion: '' };
     this.showAccionModal = true;
   }
 
   abrirMarcarAtendidaModal(): void {
+    if (!this.solicitud || !this.canMarcarAtendida) return;
+
     this.accionModalTipo = 'atender';
     this.accionForm = { observacion: '' };
     this.showAccionModal = true;
@@ -274,6 +290,9 @@ export class DetalleSolicitudComponent implements OnInit {
 
   confirmarAccion(): void {
     if (!this.solicitud) return;
+
+    if (this.accionModalTipo === 'iniciar' && !this.canIniciarAtencion) return;
+    if (this.accionModalTipo === 'atender' && !this.canMarcarAtendida) return;
 
     this.isLoadingAction = true;
 
@@ -304,12 +323,14 @@ export class DetalleSolicitudComponent implements OnInit {
   }
 
   abrirCerrarModal(): void {
+    if (!this.solicitud || !this.canCerrar) return;
+
     this.cerrarForm = { observacion: '' };
     this.showCerrarModal = true;
   }
 
   confirmarCerrar(): void {
-    if (!this.solicitud || this.cerrarForm.observacion.trim().length < 10) return;
+    if (!this.solicitud || !this.canCerrar || this.cerrarForm.observacion.trim().length < 10) return;
 
     this.isLoadingAction = true;
 
@@ -330,7 +351,12 @@ export class DetalleSolicitudComponent implements OnInit {
   }
 
   consultarSugerenciaIA(): void {
-    if (!this.solicitud || this.isEstadoTerminal) return;
+    if (!this.solicitud) return;
+
+    if (!this.canConsultarIA) {
+      this.toastService.error('Solo el rol ADMINISTRATIVO puede consultar sugerencias generadas por IA.');
+      return;
+    }
 
     this.isLoadingIA = true;
     this.iaErrorMessage = '';
@@ -523,87 +549,135 @@ export class DetalleSolicitudComponent implements OnInit {
     return this.impactoDescripciones.find(i => i.nivel === nivel)?.descripcion || '';
   }
 
-  volver(): void {
-    this.router.navigate(['/solicitudes']);
+  get rolActual(): string {
+    return this.authService.getRol() || 'SIN_ROL';
   }
 
-  get canCancel(): boolean {
-    if (!this.solicitud || this.solicitud.estado !== 'REGISTRADA') return false;
-
-    if (this.authService.isAdministrativo()) return true;
-
-    if (this.authService.isEstudiante()) {
-      return this.solicitud.solicitante.id === this.authService.getUserId();
-    }
-
-    return false;
+  get isAutenticado(): boolean {
+    return this.authService.isAuthenticated();
   }
 
-  get canClasificar(): boolean {
-    return this.solicitud?.estado === 'REGISTRADA' && this.authService.isAdministrativo();
+  get isAdministrativo(): boolean {
+    return this.authService.isAdministrativo();
   }
 
-  get canPriorizar(): boolean {
-    return this.solicitud?.estado === 'CLASIFICADA' && this.authService.isAdministrativo();
+  get isDocente(): boolean {
+    return this.authService.isDocente();
   }
 
-  get canAsignarResponsable(): boolean {
-    return this.solicitud?.estado === 'CLASIFICADA' && this.authService.isAdministrativo();
+  get isEstudiante(): boolean {
+    return this.authService.isEstudiante();
   }
 
-  get canIniciarAtencion(): boolean {
-    return this.solicitud?.estado === 'CLASIFICADA'
-      && !!this.solicitud?.responsable
-      && (this.authService.isDocente() || this.authService.isAdministrativo());
+  get puedeAtenderSolicitud(): boolean {
+    return this.isDocente || this.isAdministrativo;
   }
 
-  get canMarcarAtendida(): boolean {
-    return this.solicitud?.estado === 'EN_ATENCION'
-      && (this.authService.isDocente() || this.authService.isAdministrativo());
-  }
-
-  get canCerrar(): boolean {
-    return this.solicitud?.estado === 'ATENDIDA'
-      && (this.authService.isDocente() || this.authService.isAdministrativo());
-  }
-
-  get canConfirmarIA(): boolean {
-    return !this.isEstadoTerminal && (this.authService.isDocente() || this.authService.isAdministrativo());
+  get puedeGestionarAdministrativamente(): boolean {
+    return this.isAdministrativo;
   }
 
   get isEstadoTerminal(): boolean {
-    return this.solicitud?.estado === 'CERRADA' || this.solicitud?.estado === 'CANCELADA';
+    return this.solicitud?.estado === 'CERRADA'
+      || this.solicitud?.estado === 'CANCELADA';
+  }
+
+  get canCancel(): boolean {
+    return !!this.solicitud
+      && this.isAutenticado
+      && !this.isEstadoTerminal;
+  }
+
+  get canClasificar(): boolean {
+    return !!this.solicitud
+      && this.isAdministrativo
+      && this.solicitud.estado === 'REGISTRADA';
+  }
+
+  get canPriorizar(): boolean {
+    return !!this.solicitud
+      && this.isAdministrativo
+      && this.solicitud.estado === 'CLASIFICADA';
+  }
+
+  get canAsignarResponsable(): boolean {
+    return !!this.solicitud
+      && this.isAdministrativo
+      && !this.isEstadoTerminal;
+  }
+
+  get canIniciarAtencion(): boolean {
+    return !!this.solicitud
+      && this.puedeAtenderSolicitud
+      && this.solicitud.estado === 'CLASIFICADA';
+  }
+
+  get canMarcarAtendida(): boolean {
+    return !!this.solicitud
+      && this.puedeAtenderSolicitud
+      && this.solicitud.estado === 'EN_ATENCION';
+  }
+
+  get canCerrar(): boolean {
+    return !!this.solicitud
+      && this.puedeAtenderSolicitud
+      && this.solicitud.estado === 'ATENDIDA';
+  }
+
+  get canVerPanelIA(): boolean {
+    return this.isAdministrativo;
+  }
+
+  get canConsultarIA(): boolean {
+    return !!this.solicitud
+      && this.isAdministrativo
+      && !this.isEstadoTerminal;
+  }
+
+  get canConfirmarIA(): boolean {
+    return !!this.solicitud
+      && !!this.sugerenciaIA
+      && this.isAdministrativo
+      && !this.isEstadoTerminal;
   }
 
   get hasMainActions(): boolean {
-    return this.canClasificar ||
-      this.canPriorizar ||
-      this.canAsignarResponsable ||
-      this.canIniciarAtencion ||
-      this.canMarcarAtendida ||
-      this.canCerrar ||
-      this.canCancel;
+    return this.canClasificar
+      || this.canPriorizar
+      || this.canAsignarResponsable
+      || this.canIniciarAtencion
+      || this.canMarcarAtendida
+      || this.canCerrar
+      || this.canCancel;
   }
 
   get mensajeSinAcciones(): string {
-    if (!this.solicitud) return 'No hay acciones disponibles.';
-
-    if (this.authService.isEstudiante()) {
-      if (this.solicitud.estado === 'REGISTRADA') {
-        return 'La solicitud está registrada. Si corresponde, puede cancelarse antes de iniciar su gestión.';
-      }
-
-      return 'Como estudiante puedes consultar el estado y el historial. La gestión operativa corresponde al personal autorizado.';
+    if (!this.solicitud) {
+      return 'No hay acciones disponibles.';
     }
 
-    if (this.authService.isDocente()) {
+    if (this.isEstadoTerminal) {
+      return 'La solicitud se encuentra en un estado terminal. No se permiten nuevas acciones.';
+    }
+
+    if (this.isEstudiante) {
+      return 'Como estudiante puedes registrar, consultar, ver el detalle y cancelar solicitudes cuando el estado lo permita.';
+    }
+
+    if (this.isDocente) {
       if (this.solicitud.estado === 'REGISTRADA') {
-        return 'La solicitud aún debe ser clasificada por un administrativo antes de iniciar la atención.';
+        return 'La solicitud aún debe ser clasificada por un usuario administrativo.';
       }
 
-      if (this.solicitud.estado === 'CLASIFICADA' && !this.solicitud.responsable) {
-        return 'La solicitud está clasificada, pero aún no tiene responsable asignado.';
+      if (this.solicitud.estado === 'CLASIFICADA') {
+        return 'Como docente puedes iniciar la atención de esta solicitud.';
       }
+
+      return 'Como docente puedes cambiar el estado de la solicitud cuando el flujo lo permita.';
+    }
+
+    if (this.isAdministrativo) {
+      return 'Como administrativo tienes control completo del flujo, pero esta solicitud no tiene acciones disponibles en el estado actual.';
     }
 
     return 'No hay acciones principales disponibles para tu rol en el estado actual de la solicitud.';
