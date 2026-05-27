@@ -80,5 +80,5 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./gestion-solicitudes
-          file: Dockerfile
+          file: ./gestion-solicitudes/Dockerfile
           push: false
