@@ -79,13 +79,13 @@ jobs:
       - name: Validate backend Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./gestion-solicitudes
           file: gestion-solicitudes/Dockerfile
           push: false
 
       - name: Validate frontend Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./frontend_avanzada
           file: frontend_avanzada/Dockerfile
           push: false
