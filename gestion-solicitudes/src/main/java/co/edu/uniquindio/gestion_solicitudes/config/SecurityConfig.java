@@ -23,38 +23,22 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
         http
-                .cors(cors -> cors.configure(http))
+                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json");
-                            response.getWriter().write("""
-                                    {
-                                      "status": 401,
-                                      "error": "Unauthorized",
-                                      "mensaje": "Token JWT ausente o inválido.",
-                                      "path": "%s"
-                                    }
-                                    """.formatted(request.getRequestURI()));
                         })
-                        .accessDeniedHandler(((request, response, accessDeniedException) -> {
-                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                            response.setContentType("application/json");
-                            response.getWriter().write("""
-                                    {
-                                        "status": 403,
-                                        "error": "Forbidden",
-                                        "mensaje": "No tienes permisos para realizar esta acción.",
-                                        "path": "%s"
-                                    }
-                                    """.formatted(request.getRequestURI()));
-                        })))
+                )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
-                        .anyRequest().authenticated())
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .anyRequest().authenticated()
+                )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
