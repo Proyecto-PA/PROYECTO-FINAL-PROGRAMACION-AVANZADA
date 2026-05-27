@@ -1,0 +1,36 @@
+name: CD - Deploy to Render
+
+on:
+  workflow_run:
+    workflows: ["CI - Lint, Test & Build"]
+    types:
+      - completed
+
+jobs:
+
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+
+    # Solo despliega si CI pasó y viene de main
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+
+    steps:
+
+      - name: Trigger Backend Deploy
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_BACKEND_ID }}/deploys" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json"
+
+      - name: Trigger Frontend Deploy
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_FRONTEND_ID }}/deploys" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json"

@@ -1,0 +1,61 @@
+name: Data Pipeline - Reports & Backups
+
+on:
+
+  schedule:
+    - cron: "0 2 * * *"
+
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Pipeline mode"
+        required: true
+        default: "backup"
+        type: choice
+        options:
+          - backup
+          - reports
+          - cleanup
+          - full
+
+jobs:
+
+  data-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Create backup directory
+        run: mkdir -p backups reports
+
+      - name: Generate reports
+        if: ${{ github.event.inputs.mode == 'reports' || github.event.inputs.mode == 'full' }}
+        run: |
+          echo "Generating application reports..."
+          date > reports/report.txt
+
+      - name: Run cleanup tasks
+        if: ${{ github.event.inputs.mode == 'cleanup' || github.event.inputs.mode == 'full' }}
+        run: |
+          echo "Cleaning temporary files..."
+
+      - name: Generate backup
+        if: ${{ github.event.inputs.mode == 'backup' || github.event.inputs.mode == 'full' || github.event_name == 'schedule' }}
+        run: |
+          echo "Creating backup..."
+          tar -czf backups/app-backup.tar.gz .
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: system-data
+          path: |
+            backups/
+            reports/
