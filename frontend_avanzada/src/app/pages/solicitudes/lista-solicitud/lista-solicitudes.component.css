@@ -564,12 +564,19 @@ select.form-control {
 
 .cancel-button {
   color: #ffffff;
-  background: linear-gradient(135deg, #c62828, #a91717);
-  box-shadow: 0 12px 24px rgba(183, 28, 28, 0.18);
+  background: linear-gradient(135deg, #ef5350 0%, #e53935 45%, #b71c1c 100%);
+  box-shadow:
+    0 8px 18px rgba(183, 28, 28, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .cancel-button:hover {
-  background: linear-gradient(135deg, #b71c1c, #8f1414);
+  transform: translateY(-2px);
+  filter: saturate(1.08);
+  background: linear-gradient(135deg, #ef5350 0%, #e53935 45%, #b71c1c 100%);
+  box-shadow:
+    0 12px 24px rgba(183, 28, 28, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 /* Paginación */
