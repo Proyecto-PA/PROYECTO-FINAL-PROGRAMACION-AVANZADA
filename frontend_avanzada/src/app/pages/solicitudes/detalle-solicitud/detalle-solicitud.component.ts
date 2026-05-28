@@ -631,7 +631,7 @@ export class DetalleSolicitudComponent implements OnInit {
 
   get canCancel(): boolean {
     return !!this.solicitud
-      && !this.isEstadoTerminal
+      && this.solicitud.estado !== 'REGISTRADA'
       && (this.isEstudiante || this.isAdministrativo);
   }
 
