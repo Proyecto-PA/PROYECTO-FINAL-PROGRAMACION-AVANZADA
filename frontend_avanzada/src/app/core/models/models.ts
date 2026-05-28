@@ -58,13 +58,13 @@ export interface HistorialEntry {
   estadoNuevo: EstadoSolicitud;
   accionRealizada: string;
   observaciones?: string;
-  usuarioResumen: UsuarioResumen;
+  usuarioResponsable: UsuarioResumen;
   fechaAccion: string;
 }
 
 export interface SugerenciaIA {
-  tipoSugerido: TipoSolicitud;
-  prioridadSugerida: Prioridad;
+  tipoSugerido: string;
+  prioridadSugerida: string;
   resumen: string;
   confirmada: boolean;
   fechaSugerencia: string;

@@ -416,8 +416,8 @@ export class DetalleSolicitudComponent implements OnInit {
 
         this.sugerenciaIA = sugerenciaNormalizada;
         this.sugerenciaEditable = {
-          tipo: sugerenciaNormalizada.tipoSugerido,
-          prioridad: sugerenciaNormalizada.prioridadSugerida
+          tipo: sugerenciaNormalizada.tipoSugerido as TipoSolicitud,
+          prioridad: sugerenciaNormalizada.prioridadSugerida as Prioridad
         };
 
         this.toastService.success('Sugerencia IA consultada exitosamente');

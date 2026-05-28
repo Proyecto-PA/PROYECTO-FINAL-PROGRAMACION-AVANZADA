@@ -185,7 +185,7 @@ export class ListaSolicitudesComponent implements OnInit {
     const fechaUTC = dateString.endsWith('Z') || dateString.includes('+') 
     ? dateString 
     : dateString + 'Z';
-    return new Date(dateString).toLocaleDateString('es-CO', {
+    return new Date(fechaUTC).toLocaleDateString('es-CO', {
       timeZone: 'America/Bogota',
       day: '2-digit',
       month: '2-digit',
