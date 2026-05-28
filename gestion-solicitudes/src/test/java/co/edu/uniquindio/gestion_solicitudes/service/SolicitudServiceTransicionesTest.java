@@ -85,12 +85,14 @@ public class SolicitudServiceTransicionesTest {
     private SolicitudAcademica solicitudEn(EstadoSolicitud estado) {
         SolicitudAcademica s = TestDataFactory.crearSolicitud(1L, estudiante());
         s.setEstado(estado);
+        s.setResponsable(docente());
         return s;
     }
 
     private SolicitudAcademica solicitudGuardadaEn(EstadoSolicitud estado) {
         SolicitudAcademica s = TestDataFactory.crearSolicitud(1L, estudiante());
         s.setEstado(estado);
+        s.setResponsable(docente());
         return s;
     }
 
