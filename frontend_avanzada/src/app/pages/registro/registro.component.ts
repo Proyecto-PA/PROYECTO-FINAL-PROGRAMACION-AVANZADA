@@ -20,7 +20,8 @@ export class RegistroComponent {
 
   roles: { value: Rol; label: string }[] = [
     { value: 'ESTUDIANTE', label: 'Estudiante' },
-    { value: 'DOCENTE', label: 'Docente' }
+    { value: 'DOCENTE', label: 'Docente' },
+    { value: 'ADMINISTRATIVO', label: 'Administrativo' }
   ];
 
   constructor(

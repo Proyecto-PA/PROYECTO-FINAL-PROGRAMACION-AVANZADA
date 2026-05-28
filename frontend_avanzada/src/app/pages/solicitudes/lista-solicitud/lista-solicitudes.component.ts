@@ -199,7 +199,7 @@ export class ListaSolicitudesComponent implements OnInit {
   canCancel(solicitud: Solicitud): boolean {
     if (solicitud.estado !== 'REGISTRADA') return false;
     
-    if (this.authService.isEstudiante()) {
+    if (this.authService.isEstudiante() || this.authService.isDocente()) {
       const userId = this.authService.getUserId();
       return solicitud.solicitante.id === userId;
     }

@@ -633,9 +633,15 @@ export class DetalleSolicitudComponent implements OnInit {
   }
 
   get canCancel(): boolean {
-    return !!this.solicitud
-      && this.solicitud.estado !== 'REGISTRADA'
-      && (this.isEstudiante || this.isAdministrativo);
+    if (!this.solicitud) return false;
+    if (this.solicitud.estado !== 'REGISTRADA') return false;
+
+    if (this.authService.isEstudiante() || this.authService.isDocente()) {
+      const userId = this.authService.getUserId();
+      return this.solicitud.solicitante.id === userId;
+    }
+
+    return this.authService.isAdministrativo();
   }
 
   get canClasificar(): boolean {

@@ -178,6 +178,8 @@ public class SolicitudServiceImpl implements SolicitudService {
         SolicitudAcademica solicitud = buscarSolicitud(id);
         Usuario usuario = buscarUsuario(usuarioId);
 
+        validarPermisoDocente(solicitud, usuario);
+
         cadenaValidacionFactory.construirCadenaIniciarAtencion().validar(solicitud, usuario);
         EstadoSolicitud estadoAnterior = solicitud.getEstado();
 
@@ -204,6 +206,8 @@ public class SolicitudServiceImpl implements SolicitudService {
     public SolicitudResponse marcarAtendida(Long id, CambiarEstadoRequest request, Long usuarioId) {
         SolicitudAcademica solicitud = buscarSolicitud(id);
         Usuario usuario = buscarUsuario(usuarioId);
+
+        validarPermisoDocente(solicitud, usuario);
 
         cadenaValidacionFactory.construirCadenaBasica().validar(solicitud, usuario);
         EstadoSolicitud estadoAnterior = solicitud.getEstado();
@@ -232,6 +236,8 @@ public class SolicitudServiceImpl implements SolicitudService {
         SolicitudAcademica solicitud = buscarSolicitud(id);
         Usuario usuario = buscarUsuario(usuarioId);
 
+        validarPermisoDocente(solicitud, usuario);
+
         cadenaValidacionFactory.construirCadenaBasica().validar(solicitud, usuario);
         EstadoSolicitud estadoAnterior = solicitud.getEstado();
 
@@ -256,8 +262,11 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         cadenaValidacionFactory.construirCadenaBasica().validar(solicitud, usuario);
 
-        if (usuario.getRol() == RolUsuario.ESTUDIANTE && !solicitud.getSolicitante().getId().equals(usuarioId)) {
-            throw new IllegalStateException("Un estudiante solo puede cancelar sus propias solicitudes");
+        if (usuario.getRol() == RolUsuario.ESTUDIANTE || usuario.getRol() == RolUsuario.DOCENTE) {
+            if (!solicitud.getSolicitante().getId().equals(usuarioId)) {
+                throw new IllegalStateException(
+                    "Solo puedes cancelar tus propias solicitudes.");
+            }
         }
 
         EstadoSolicitud estadoAnterior = solicitud.getEstado();
@@ -338,4 +347,14 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         return solicitudFactory.toResponse(solicitud);
     }
+
+    private void validarPermisoDocente(SolicitudAcademica solicitud, Usuario usuario) {
+    if (usuario.getRol() == RolUsuario.DOCENTE) {
+        if (solicitud.getResponsable() == null || 
+            !solicitud.getResponsable().getId().equals(usuario.getId())) {
+            throw new IllegalStateException(
+                "El docente solo puede gestionar solicitudes que le han sido asignadas como responsable.");
+        }
+    }
+}
 }
