@@ -28,7 +28,7 @@ export class MainLayoutComponent {
     
     // DOCENTE menu
     { label: 'Todas las Solicitudes', route: '/solicitudes', roles: ['DOCENTE'] },
-    { label: 'Mis Acciones Pendientes', route: '/solicitudes', queryParams: { estado: 'CLASIFICADA' }, roles: ['DOCENTE'] },
+    { label: 'Mis Acciones Pendientes', route: '/solicitudes', queryParams: { estado: 'EN_ATENCION' }, roles: ['DOCENTE'] },
     
     // ADMINISTRATIVO menu
     { label: 'Todas las Solicitudes', route: '/solicitudes', roles: ['ADMINISTRATIVO'] },

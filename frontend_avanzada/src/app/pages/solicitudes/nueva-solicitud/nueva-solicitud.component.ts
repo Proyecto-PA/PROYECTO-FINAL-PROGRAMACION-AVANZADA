@@ -58,7 +58,7 @@ export class NuevaSolicitudComponent {
     this.isLoading = true;
     const formValue = this.solicitudForm.value;
 
-    //asegurar dormato ISO completo con segundos 
+    //asegurar dormato ISO completo con segundos
     let fechaLimite: string | undefined = undefined;
     if (formValue.fechaLimite) {
       const fecha = new Date(formValue.fechaLimite);

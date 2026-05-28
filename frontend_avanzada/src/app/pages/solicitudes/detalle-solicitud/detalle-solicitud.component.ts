@@ -169,7 +169,7 @@ export class DetalleSolicitudComponent implements OnInit {
   get estadosDisponibles(): { label: string; accion: string }[] {
     if (!this.solicitud || this.isEstadoTerminal) return [];
     
-    const opciones: { label: string; accion: string }[] = [];
+    const opciones = [];
 
     if (this.canClasificar)
       opciones.push({ label: 'Clasificar → CLASIFICADA', accion: 'clasificar' });
