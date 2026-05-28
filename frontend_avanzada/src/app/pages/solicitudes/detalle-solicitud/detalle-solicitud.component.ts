@@ -566,6 +566,7 @@ export class DetalleSolicitudComponent implements OnInit {
   formatDate(dateString: string | undefined): string {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('es-CO', {
+      timeZone: 'America/Bogota',
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -643,19 +644,19 @@ export class DetalleSolicitudComponent implements OnInit {
 
   get canIniciarAtencion(): boolean {
     return !!this.solicitud
-      && this.isAdministrativo
+      && (this.isAdministrativo || this.isDocente)
       && this.solicitud.estado === 'CLASIFICADA';
   }
 
   get canMarcarAtendida(): boolean {
     return !!this.solicitud
-      && this.isAdministrativo
+      && (this.isAdministrativo || this.isDocente)
       && this.solicitud.estado === 'EN_ATENCION';
   }
 
   get canCerrar(): boolean {
     return !!this.solicitud
-      && this.isAdministrativo
+      && (this.isAdministrativo || this.isDocente)
       && this.solicitud.estado === 'ATENDIDA';
   }
 

@@ -23,7 +23,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
-import co.edu.uniquindio.gestion_solicitudes.domain.validator.ValidadorTransicionEstado;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.ClasificarRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.CambiarEstadoRequest;
 import co.edu.uniquindio.gestion_solicitudes.dto.request.CerrarSolicitudRequest;
@@ -125,7 +124,8 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Transactional(readOnly = true)
     public SolicitudPageResponse consultar (EstadoSolicitud estado, TipoSolicitud tipo, Prioridad prioridad, Long responsableId, Long solicitanteId, Long userId, String rol, Pageable pageable){
        Long solicitanteIdFinal = "ESTUDIANTE".equals(rol) ? userId : solicitanteId;
-        Page<SolicitudAcademica> page = solicitudRepository.findWithFilters(estado, tipo, prioridad, responsableId, solicitanteIdFinal, pageable);
+       Long responsableIdFinal = "DOCENTE".equals(rol) ? userId : responsableId;
+        Page<SolicitudAcademica> page = solicitudRepository.findWithFilters(estado, tipo, prioridad, responsableIdFinal, solicitanteIdFinal, pageable);
 
         return SolicitudPageResponse.builder()
                 .contenido(page.getContent().stream().map(solicitudFactory::toResponse).toList())
