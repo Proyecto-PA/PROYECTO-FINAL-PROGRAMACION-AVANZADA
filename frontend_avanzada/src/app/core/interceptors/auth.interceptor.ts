@@ -19,8 +19,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return handled.pipe(
     catchError((error: HttpErrorResponse) => {
       const isAuthEndpoint = req.url.includes('/auth/login') || req.url.includes('/auth/registro');
+      const esErrorDeSesion = error.status === 401 && !isAuthEndpoint && 
+      !req.url.includes('/usuarios/');
 
-      if (error.status === 401 && !isAuthEndpoint) {
+      if (esErrorDeSesion) {
         authService.logout();
         toastService.error('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
         router.navigate(['/login']);

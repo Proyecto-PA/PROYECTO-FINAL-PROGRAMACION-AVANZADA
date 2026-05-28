@@ -11,7 +11,8 @@ import {
   ConfirmarSugerenciaIARequest,
   SugerenciaIA,
   PaginatedResponse,
-  FiltrosSolicitud
+  FiltrosSolicitud,
+  UsuarioResumen
 } from '../models/models';
 import { environment } from '../../../environments/environment';
 
@@ -89,5 +90,9 @@ export class SolicitudService {
 
   confirmarSugerenciaIA(id: number, data: ConfirmarSugerenciaIARequest): Observable<Solicitud> {
     return this.http.put<Solicitud>(`${this.API_URL}/solicitudes/${id}/sugerencia-ia/confirmar`, data);
+  }
+
+  listarDocentes(): Observable<UsuarioResumen[]> {
+    return this.http.get<UsuarioResumen[]>(`${this.API_URL}/usuarios/docentes`);
   }
 }

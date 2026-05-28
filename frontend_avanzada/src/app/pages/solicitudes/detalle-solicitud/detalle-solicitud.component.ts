@@ -15,7 +15,8 @@ import {
   SugerenciaIA,
   TipoSolicitud,
   Prioridad,
-  EstadoSolicitud
+  EstadoSolicitud,
+  UsuarioResumen
 } from '../../../core/models/models';
 
 @Component({
@@ -29,10 +30,12 @@ export class DetalleSolicitudComponent implements OnInit {
   solicitud: Solicitud | null = null;
   historial: HistorialEntry[] = [];
   sugerenciaIA: SugerenciaIA | null = null;
+  docentes: UsuarioResumen[] = [];
 
   isLoading = true;
   isLoadingAction = false;
   isLoadingIA = false;
+  isLoadingDocentes = false;
   iaErrorMessage = '';
 
   showClasificarModal = false;
@@ -42,6 +45,7 @@ export class DetalleSolicitudComponent implements OnInit {
   showCancelarModal = false;
 
   accionModalTipo: 'iniciar' | 'atender' = 'iniciar';
+  estadoSeleccionado = '';
 
   clasificarForm = {
     tipo: '' as TipoSolicitud | '',
@@ -160,15 +164,44 @@ export class DetalleSolicitudComponent implements OnInit {
     this.router.navigate(['/solicitudes']);
   }
 
+  // -- Estados disponibles --
+
+  get estadosDisponibles(): { label: string; accion: string }[] {
+    if (!this.solicitud || this.isEstadoTerminal) return [];
+    
+    const opciones: { label: string; accion: string }[] = [];
+
+    if (this.canClasificar)
+      opciones.push({ label: 'Clasificar → CLASIFICADA', accion: 'clasificar' });
+    if (this.canIniciarAtencion)
+      opciones.push({ label: 'Iniciar atención → EN ATENCIÓN', accion: 'iniciar' });
+    if (this.canMarcarAtendida)
+      opciones.push({ label: 'Marcar atendida → ATENDIDA', accion: 'atender' });
+    if (this.canCerrar)
+      opciones.push({ label: 'Cerrar solicitud → CERRADA', accion: 'cerrar' });
+
+    return opciones;
+  }
+
+  ejecutarAccionEstado(): void {
+    switch (this.estadoSeleccionado) {
+      case 'clasificar': this.abrirClasificarModal(); break;
+      case 'iniciar':    this.abrirIniciarAtencionModal(); break;
+      case 'atender':    this.abrirMarcarAtendidaModal(); break;
+      case 'cerrar':     this.abrirCerrarModal(); break;
+    }
+    this.estadoSeleccionado = '';
+  }
+
+  // -- Cancelar --
+
   cancelarSolicitud(): void {
     if (!this.solicitud || !this.canCancel) return;
-
     this.showCancelarModal = true;
   }
 
   confirmarCancelar(): void {
     if (!this.solicitud || !this.canCancel) return;
-
     this.isLoadingAction = true;
 
     this.solicitudService.cancelar(this.solicitud.id).subscribe({
@@ -185,21 +218,20 @@ export class DetalleSolicitudComponent implements OnInit {
     });
   }
 
+  // -- Clasificar -- 
+
   abrirClasificarModal(): void {
     if (!this.solicitud || !this.canClasificar) return;
-
     this.clasificarForm = {
       tipo: this.solicitud.tipo || '',
       impactoAcademico: this.solicitud.impactoAcademico || 3,
       observacion: ''
     };
-
     this.showClasificarModal = true;
   }
 
   confirmarClasificar(): void {
     if (!this.solicitud || !this.clasificarForm.tipo || !this.canClasificar) return;
-
     this.isLoadingAction = true;
 
     this.solicitudService.clasificar(this.solicitud.id, {
@@ -220,9 +252,10 @@ export class DetalleSolicitudComponent implements OnInit {
     });
   }
 
+  // -- Priorizar --
+
   recalcularPrioridad(): void {
     if (!this.solicitud || !this.canPriorizar) return;
-
     this.isLoadingAction = true;
 
     this.solicitudService.priorizar(this.solicitud.id).subscribe({
@@ -239,20 +272,29 @@ export class DetalleSolicitudComponent implements OnInit {
     });
   }
 
+  // -- Asignar responsable --
+
   abrirAsignarModal(): void {
     if (!this.solicitud || !this.canAsignarResponsable) return;
 
-    this.asignarForm = {
-      responsableId: null,
-      observacion: ''
-    };
-
+    this.asignarForm = { responsableId: null, observacion: '' };
+    this.isLoadingDocentes = true;
     this.showAsignarModal = true;
+
+    this.solicitudService.listarDocentes().subscribe({
+      next: (docentes) => {
+        this.docentes = docentes;
+        this.isLoadingDocentes = false;
+      },
+      error: () => {
+        this.isLoadingDocentes = false;
+        this.toastService.error('No se pudo cargar la lista de docentes');
+      }
+    });
   }
 
   confirmarAsignar(): void {
     if (!this.solicitud || !this.asignarForm.responsableId || !this.canAsignarResponsable) return;
-
     this.isLoadingAction = true;
 
     this.solicitudService.asignarResponsable(this.solicitud.id, {
@@ -272,9 +314,10 @@ export class DetalleSolicitudComponent implements OnInit {
     });
   }
 
+  // -- Iniciar atención / Marcar atendida --
+
   abrirIniciarAtencionModal(): void {
     if (!this.solicitud || !this.canIniciarAtencion) return;
-
     this.accionModalTipo = 'iniciar';
     this.accionForm = { observacion: '' };
     this.showAccionModal = true;
@@ -282,7 +325,6 @@ export class DetalleSolicitudComponent implements OnInit {
 
   abrirMarcarAtendidaModal(): void {
     if (!this.solicitud || !this.canMarcarAtendida) return;
-
     this.accionModalTipo = 'atender';
     this.accionForm = { observacion: '' };
     this.showAccionModal = true;
@@ -290,7 +332,6 @@ export class DetalleSolicitudComponent implements OnInit {
 
   confirmarAccion(): void {
     if (!this.solicitud) return;
-
     if (this.accionModalTipo === 'iniciar' && !this.canIniciarAtencion) return;
     if (this.accionModalTipo === 'atender' && !this.canMarcarAtendida) return;
 
@@ -322,16 +363,16 @@ export class DetalleSolicitudComponent implements OnInit {
     });
   }
 
+  // -- Cerrar --
+
   abrirCerrarModal(): void {
     if (!this.solicitud || !this.canCerrar) return;
-
     this.cerrarForm = { observacion: '' };
     this.showCerrarModal = true;
   }
 
   confirmarCerrar(): void {
     if (!this.solicitud || !this.canCerrar || this.cerrarForm.observacion.trim().length < 10) return;
-
     this.isLoadingAction = true;
 
     this.solicitudService.cerrar(this.solicitud.id, {
@@ -350,9 +391,10 @@ export class DetalleSolicitudComponent implements OnInit {
     });
   }
 
+  // -- Sugerencia IA --
+
   consultarSugerenciaIA(): void {
     if (!this.solicitud) return;
-
     if (!this.canConsultarIA) {
       this.toastService.error('Solo el rol ADMINISTRATIVO puede consultar sugerencias generadas por IA.');
       return;
@@ -469,6 +511,8 @@ export class DetalleSolicitudComponent implements OnInit {
     };
   }
 
+  // -- Helpers para visualización --
+
   getEstadoBadgeClass(estado: EstadoSolicitud): string {
     const classes: Record<EstadoSolicitud, string> = {
       REGISTRADA: 'badge-registrada',
@@ -484,14 +528,12 @@ export class DetalleSolicitudComponent implements OnInit {
 
   getPrioridadBadgeClass(prioridad: Prioridad | undefined): string {
     if (!prioridad) return '';
-
     const classes: Record<Prioridad, string> = {
       CRITICA: 'badge-critica',
       ALTA: 'badge-alta',
       MEDIA: 'badge-media',
       BAJA: 'badge-baja'
     };
-
     return classes[prioridad] || '';
   }
 
@@ -523,7 +565,6 @@ export class DetalleSolicitudComponent implements OnInit {
 
   formatDate(dateString: string | undefined): string {
     if (!dateString) return '-';
-
     return new Date(dateString).toLocaleDateString('es-CO', {
       day: '2-digit',
       month: '2-digit',
@@ -548,6 +589,8 @@ export class DetalleSolicitudComponent implements OnInit {
   getImpactoDescripcion(nivel: number): string {
     return this.impactoDescripciones.find(i => i.nivel === nivel)?.descripcion || '';
   }
+
+  // -- Helpers para permisos y estados --
 
   get rolActual(): string {
     return this.authService.getRol() || 'SIN_ROL';

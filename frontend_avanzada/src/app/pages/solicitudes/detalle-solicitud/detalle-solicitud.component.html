@@ -249,7 +249,6 @@
 
           <div class="action-status">
             <span class="status-label">Estado actual</span>
-
             <span class="badge" [ngClass]="getEstadoBadgeClass(solicitud.estado)">
               {{ formatEstado(solicitud.estado) }}
             </span>
@@ -263,21 +262,35 @@
                   <line x1="12" y1="16" x2="12" y2="12"></line>
                   <line x1="12" y1="8" x2="12.01" y2="8"></line>
                 </svg>
-
                 <span>
                   Esta solicitud está {{ formatEstado(solicitud.estado) }}.
                   No se permiten modificaciones en estados terminales.
                 </span>
               </div>
             } @else {
-              @if (canClasificar) {
-                <button
-                  type="button"
-                  class="btn btn-info action-button"
-                  (click)="abrirClasificarModal()"
-                  [disabled]="isLoadingAction">
-                  Clasificar solicitud
-                </button>
+
+              @if (estadosDisponibles.length > 0) {
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label style="font-size:12px; font-weight:900; color:var(--text-soft); text-transform:uppercase; letter-spacing:.08em; display:block; margin-bottom:8px;">
+                    Cambiar estado
+                  </label>
+                  <select [(ngModel)]="estadoSeleccionado" class="form-control" style="margin-bottom:10px;">
+                    <option value="">Selecciona una acción</option>
+                    @for (opcion of estadosDisponibles; track opcion.accion) {
+                      <option [value]="opcion.accion">{{ opcion.label }}</option>
+                    }
+                  </select>
+                  <button
+                    type="button"
+                    class="btn btn-primary action-button"
+                    (click)="ejecutarAccionEstado()"
+                    [disabled]="!estadoSeleccionado || isLoadingAction">
+                    @if (isLoadingAction) {
+                      <span class="spinner"></span>
+                    }
+                    Ejecutar acción
+                  </button>
+                </div>
               }
 
               @if (canAsignarResponsable) {
@@ -303,36 +316,6 @@
                 </button>
               }
 
-              @if (canIniciarAtencion) {
-                <button
-                  type="button"
-                  class="btn btn-primary action-button"
-                  (click)="abrirIniciarAtencionModal()"
-                  [disabled]="isLoadingAction">
-                  Cambiar estado: iniciar atención
-                </button>
-              }
-
-              @if (canMarcarAtendida) {
-                <button
-                  type="button"
-                  class="btn btn-primary action-button"
-                  (click)="abrirMarcarAtendidaModal()"
-                  [disabled]="isLoadingAction">
-                  Cambiar estado: marcar atendida
-                </button>
-              }
-
-              @if (canCerrar) {
-                <button
-                  type="button"
-                  class="btn btn-primary action-button"
-                  (click)="abrirCerrarModal()"
-                  [disabled]="isLoadingAction">
-                  Cambiar estado: cerrar solicitud
-                </button>
-              }
-
               @if (canCancel) {
                 <button
                   type="button"
@@ -343,14 +326,13 @@
                 </button>
               }
 
-              @if (!hasMainActions) {
+              @if (!hasMainActions && estadosDisponibles.length === 0) {
                 <div class="info-message info">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="12" y1="16" x2="12" y2="12"></line>
                     <line x1="12" y1="8" x2="12.01" y2="8"></line>
                   </svg>
-
                   <span>{{ mensajeSinAcciones }}</span>
                 </div>
               }
@@ -443,7 +425,6 @@
                     <line x1="12" y1="8" x2="12" y2="12"></line>
                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
                   </svg>
-
                   <span>{{ iaErrorMessage }}</span>
                 </div>
               }
@@ -483,7 +464,6 @@
                   <div class="edit-row">
                     <div class="form-group">
                       <label>Tipo</label>
-
                       <select [(ngModel)]="sugerenciaEditable.tipo" class="form-control">
                         @for (tipo of tipos; track tipo.value) {
                           <option [value]="tipo.value">{{ tipo.label }}</option>
@@ -493,7 +473,6 @@
 
                     <div class="form-group">
                       <label>Prioridad</label>
-
                       <select [(ngModel)]="sugerenciaEditable.prioridad" class="form-control">
                         @for (prioridad of prioridades; track prioridad) {
                           <option [value]="prioridad">{{ prioridad }}</option>
@@ -549,7 +528,6 @@
       <div class="modal-body">
         <div class="form-group">
           <label>Tipo de solicitud</label>
-
           <select [(ngModel)]="clasificarForm.tipo" class="form-control">
             @for (tipo of tipos; track tipo.value) {
             <option [value]="tipo.value">{{ tipo.label }}</option>
@@ -559,9 +537,7 @@
 
         <div class="form-group">
           <label>Impacto académico (1-5)</label>
-
           <input type="range" min="1" max="5" [(ngModel)]="clasificarForm.impactoAcademico" class="slider">
-
           <div class="impacto-display">
             <span class="impacto-nivel">Nivel {{ clasificarForm.impactoAcademico }}</span>
             <span class="impacto-desc">{{ getImpactoDescripcion(clasificarForm.impactoAcademico) }}</span>
@@ -570,10 +546,9 @@
 
         <div class="form-group">
           <label>Observación (opcional)</label>
-
           <textarea [(ngModel)]="clasificarForm.observacion" class="form-control" rows="3"
             placeholder="Agrega una observación...">
-            </textarea>
+          </textarea>
         </div>
       </div>
 
@@ -581,7 +556,6 @@
         <button type="button" class="btn btn-secondary" (click)="showClasificarModal = false">
           Cancelar
         </button>
-
         <button type="button" class="btn btn-primary" (click)="confirmarClasificar()"
           [disabled]="!clasificarForm.tipo || isLoadingAction">
           @if (isLoadingAction) {
@@ -603,25 +577,41 @@
       </div>
 
       <div class="modal-body">
-        <div class="info-message info">
+        <div class="info-message info" style="margin-bottom: 16px;">
           <span>
             Solo usuarios con rol DOCENTE o ADMINISTRATIVO activos pueden ser asignados como responsables.
           </span>
         </div>
 
         <div class="form-group">
-          <label>ID del responsable</label>
+          <label>Seleccionar responsable</label>
 
-          <input type="number" [(ngModel)]="asignarForm.responsableId" class="form-control"
-            placeholder="Ingresa el ID del usuario">
+          @if (isLoadingDocentes) {
+            <div style="padding: 12px; color: var(--text-soft); font-weight: 800; font-size: 14px;">
+              <span class="spinner spinner-dark" style="width:16px; height:16px; margin-right:8px; display:inline-block; vertical-align:middle;"></span>
+              Cargando docentes...
+            </div>
+          } @else if (docentes.length === 0) {
+            <div class="info-message warning">
+              <span>No hay docentes activos disponibles.</span>
+            </div>
+          } @else {
+            <select [(ngModel)]="asignarForm.responsableId" class="form-control">
+              <option [ngValue]="null">Selecciona un responsable</option>
+              @for (docente of docentes; track docente.id) {
+                <option [ngValue]="docente.id">
+                  {{ docente.nombre }} — {{ docente.email }}
+                </option>
+              }
+            </select>
+          }
         </div>
 
         <div class="form-group">
           <label>Observación (opcional)</label>
-
           <textarea [(ngModel)]="asignarForm.observacion" class="form-control" rows="3"
             placeholder="Agrega una observación...">
-            </textarea>
+          </textarea>
         </div>
       </div>
 
@@ -629,9 +619,8 @@
         <button type="button" class="btn btn-secondary" (click)="showAsignarModal = false">
           Cancelar
         </button>
-
         <button type="button" class="btn btn-primary" (click)="confirmarAsignar()"
-          [disabled]="!asignarForm.responsableId || isLoadingAction">
+          [disabled]="!asignarForm.responsableId || isLoadingAction || isLoadingDocentes">
           @if (isLoadingAction) {
           <span class="spinner"></span>
           }
@@ -651,12 +640,21 @@
       </div>
 
       <div class="modal-body">
+        <div class="info-message info" style="margin-bottom: 16px;">
+          <span>
+            @if (accionModalTipo === 'iniciar') {
+              La solicitud pasará al estado <strong>EN ATENCIÓN</strong>.
+            } @else {
+              La solicitud pasará al estado <strong>ATENDIDA</strong>.
+            }
+          </span>
+        </div>
+
         <div class="form-group">
           <label>Observación (opcional)</label>
-
           <textarea [(ngModel)]="accionForm.observacion" class="form-control" rows="3"
             placeholder="Agrega una observación...">
-            </textarea>
+          </textarea>
         </div>
       </div>
 
@@ -664,7 +662,6 @@
         <button type="button" class="btn btn-secondary" (click)="showAccionModal = false">
           Cancelar
         </button>
-
         <button type="button" class="btn btn-primary" (click)="confirmarAccion()" [disabled]="isLoadingAction">
           @if (isLoadingAction) {
           <span class="spinner"></span>
@@ -697,7 +694,6 @@
           [disabled]="isLoadingAction">
           Volver
         </button>
-
         <button type="button" class="btn btn-danger" (click)="confirmarCancelar()" [disabled]="isLoadingAction">
           @if (isLoadingAction) {
           <span class="spinner"></span>
@@ -718,13 +714,15 @@
       </div>
 
       <div class="modal-body">
+        <div class="info-message info" style="margin-bottom: 16px;">
+          <span>La solicitud pasará al estado <strong>CERRADA</strong>. Esta acción es definitiva.</span>
+        </div>
+
         <div class="form-group">
           <label>Observación de cierre <span class="required">*</span></label>
-
           <textarea [(ngModel)]="cerrarForm.observacion" class="form-control" rows="4"
             placeholder="Describe el resultado del cierre. Mínimo 10 caracteres.">
-            </textarea>
-
+          </textarea>
           <span class="char-counter"
             [class.error]="cerrarForm.observacion.length < 10 && cerrarForm.observacion.length > 0">
             {{ cerrarForm.observacion.length }}/10 caracteres mínimos
@@ -736,7 +734,6 @@
         <button type="button" class="btn btn-secondary" (click)="showCerrarModal = false">
           Cancelar
         </button>
-
         <button type="button" class="btn btn-primary" (click)="confirmarCerrar()"
           [disabled]="cerrarForm.observacion.length < 10 || isLoadingAction">
           @if (isLoadingAction) {
