@@ -618,10 +618,21 @@ export class DetalleSolicitudComponent implements OnInit {
       || this.solicitud?.estado === 'CANCELADA';
   }
 
+  get esResponsableActual(): boolean {
+    if (!this.solicitud?.responsable) return false;
+
+    const userId = this.authService.getUserId();
+    return this.solicitud.responsable.id === userId;
+  }
+
+  get puedeGestionarComoDocente(): boolean {
+    return this.isDocente && this.esResponsableActual;
+  }
+
   get canCancel(): boolean {
     return !!this.solicitud
-      && this.isAutenticado
-      && !this.isEstadoTerminal;
+      && !this.isEstadoTerminal
+      && (this.isEstudiante || this.isAdministrativo);
   }
 
   get canClasificar(): boolean {
@@ -644,19 +655,19 @@ export class DetalleSolicitudComponent implements OnInit {
 
   get canIniciarAtencion(): boolean {
     return !!this.solicitud
-      && (this.isAdministrativo || this.isDocente)
+      && (this.isAdministrativo || this.puedeGestionarComoDocente)
       && this.solicitud.estado === 'CLASIFICADA';
   }
 
   get canMarcarAtendida(): boolean {
     return !!this.solicitud
-      && (this.isAdministrativo || this.isDocente)
+      && (this.isAdministrativo || this.puedeGestionarComoDocente)
       && this.solicitud.estado === 'EN_ATENCION';
   }
 
   get canCerrar(): boolean {
     return !!this.solicitud
-      && (this.isAdministrativo || this.isDocente)
+      && (this.isAdministrativo || this.puedeGestionarComoDocente)
       && this.solicitud.estado === 'ATENDIDA';
   }
 
@@ -700,7 +711,7 @@ export class DetalleSolicitudComponent implements OnInit {
     }
 
     if (this.isDocente) {
-      return 'Como docente puedes consultar el detalle de solicitudes, pero no tienes acciones de flujo disponibles.';
+      return 'Como docente puedes gestionar solicitudes asignadas cuando se le asignen';
     }
 
     if (this.isAdministrativo) {

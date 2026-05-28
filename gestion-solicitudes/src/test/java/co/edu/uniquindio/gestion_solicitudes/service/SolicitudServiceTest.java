@@ -30,6 +30,7 @@ import org.springframework.data.domain.*;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -168,39 +169,39 @@ public class SolicitudServiceTest {
     }
 
     @Test
-    @DisplayName("Consultar con rol ESTUDIANTE fuerza solicitanteId al userId")
-    void consultar_rolEstudiante_fuerzaSolicitanteIdAlUserId() {
-        Usuario solicitante = TestDataFactory.crearUsuario(5L, RolUsuario.ESTUDIANTE);
-        SolicitudAcademica solicitud = TestDataFactory.crearSolicitud(1L, solicitante);
+    @DisplayName("Consultar con rol DOCENTE fuerza responsableId al userId")
+    void consultar_rolDocente_fuerzaResponsableIdAlUserId() {
+        Usuario docente = TestDataFactory.crearUsuario(2L, RolUsuario.DOCENTE);
+        SolicitudAcademica solicitud = TestDataFactory.crearSolicitud(1L, docente);
         Page<SolicitudAcademica> page = new PageImpl<>(List.of(solicitud));
 
         when(solicitudRepository.findWithFilters(
-                null, null, null, null, 5L, PageRequest.of(0, 10)))
-                .thenReturn(page);
+            null, null, null, 2L, null, PageRequest.of(0, 10)))
+            .thenReturn(page);
 
         SolicitudPageResponse response = solicitudService.consultar(
-                null, null, null, null, null,
-                5L, "ESTUDIANTE", PageRequest.of(0, 10));
+            null, null, null, null, null,
+            2L, "DOCENTE", PageRequest.of(0, 10));
 
         assertThat(response.getTotalElementos()).isEqualTo(1);
         verify(solicitudRepository).findWithFilters(
-                null, null, null, null, 5L, PageRequest.of(0, 10));
+            null, null, null, 2L, null, PageRequest.of(0, 10));
     }
 
     @Test
-    @DisplayName("Consultar con rol DOCENTE respeta el solicitanteId del query param")
-    void consultar_rolDocente_respetaSolicitanteIdDelQueryParam() {
+    @DisplayName("Consultar con rol DOCENTE ignora responsableId externo y usa el suyo")
+    void consultar_rolDocente_ignoraResponsableIdExterno() {
         Page<SolicitudAcademica> page = new PageImpl<>(List.of());
 
         when(solicitudRepository.findWithFilters(
-                null, null, null, null, 3L, PageRequest.of(0, 10)))
-                .thenReturn(page);
+            null, null, null, 2L, null, PageRequest.of(0, 10)))
+            .thenReturn(page);
 
         solicitudService.consultar(
-                null, null, null, null, 3L,
-                2L, "DOCENTE", PageRequest.of(0, 10));
+            null, null, null, 99L, null,
+            2L, "DOCENTE", PageRequest.of(0, 10));
 
         verify(solicitudRepository).findWithFilters(
-                null, null, null, null, 3L, PageRequest.of(0, 10));
+            null, null, null, 2L, null, PageRequest.of(0, 10));
     }
 }
