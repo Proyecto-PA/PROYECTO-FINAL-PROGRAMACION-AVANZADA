@@ -88,12 +88,13 @@ input, select, textarea {
 }
 
 .btn-danger {
-  background-color: var(--estado-cancelada);
+  background: linear-gradient(135deg, #ef5350 0%, #e53935 45%, #b71c1c 100%);
   color: var(--blanco);
 }
 
 .btn-danger:hover {
-  background-color: #8B0000;
+  filter: saturate(1.08);
+  background: linear-gradient(135deg, #ef5350 0%, #e53935 45%, #b71c1c 100%);
 }
 
 .btn-warning {
