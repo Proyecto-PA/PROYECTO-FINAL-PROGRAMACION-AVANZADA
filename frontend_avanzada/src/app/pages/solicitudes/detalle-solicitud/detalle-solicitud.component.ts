@@ -565,6 +565,9 @@ export class DetalleSolicitudComponent implements OnInit {
 
   formatDate(dateString: string | undefined): string {
     if (!dateString) return '-';
+    const fechaUTC = dateString.endsWith('Z') || dateString.includes('+') 
+    ? dateString 
+    : dateString + 'Z';
     return new Date(dateString).toLocaleDateString('es-CO', {
       timeZone: 'America/Bogota',
       day: '2-digit',

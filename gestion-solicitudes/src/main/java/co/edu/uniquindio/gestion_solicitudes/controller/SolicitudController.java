@@ -85,7 +85,7 @@ public class SolicitudController {
     @PreAuthorize("hasAnyRole('DOCENTE', 'ADMINISTRATIVO')")
     public ResponseEntity<SolicitudResponse> iniciarAtencion(
             @PathVariable Long id,
-            @RequestBody(required = false) CambiarEstadoRequest request,
+            @Valid @RequestBody(required = false) CambiarEstadoRequest request,
             @RequestHeader("Authorization") String authHeader) {
 
         return ResponseEntity.ok(solicitudService.iniciarAtencion(id, request, extraerUserId(authHeader)));
@@ -96,7 +96,7 @@ public class SolicitudController {
     @PreAuthorize("hasAnyRole('DOCENTE', 'ADMINISTRATIVO')")
     public ResponseEntity<SolicitudResponse> marcarAtendida(
             @PathVariable Long id,
-            @RequestBody(required = false) CambiarEstadoRequest request,
+            @Valid @RequestBody(required = false) CambiarEstadoRequest request,
             @RequestHeader("Authorization") String authHeader) {
 
         return ResponseEntity.ok(solicitudService.marcarAtendida(id, request, extraerUserId(authHeader)));
@@ -118,7 +118,7 @@ public class SolicitudController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<SolicitudResponse> cancelar(
             @PathVariable Long id,
-            @RequestBody(required = false) CambiarEstadoRequest request,
+            @Valid@RequestBody(required = false) CambiarEstadoRequest request,
             @RequestHeader("Authorization") String authHeader) {
 
         return ResponseEntity.ok(solicitudService.cancelar(id, request, extraerUserId(authHeader)));
