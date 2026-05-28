@@ -194,7 +194,7 @@
                 </div>
 
                 <div class="historial-meta">
-                  <span>Por: {{ entry.usuarioResponsable?.nombre ?? 'Sistema' }}</span>
+                  <span>Por: {{ entry.usuarioResponsable?.nombre || 'Sistema' }}</span>
 
                   @if (entry.estadoAnterior) {
                   <span class="estado-change">
@@ -433,13 +433,13 @@
                 <div class="sugerencia-item">
                   <label>Tipo sugerido</label>
                   <span class="badge badge-info">
-                    {{ formatTipo(sugerenciaIA.tipoSugerido) }}
+                    {{ formatTipo($any(sugerenciaIA.tipoSugerido)) }}
                   </span>
                 </div>
 
                 <div class="sugerencia-item">
                   <label>Prioridad sugerida</label>
-                  <span class="badge" [ngClass]="getPrioridadBadgeClass(sugerenciaIA.prioridadSugerida)">
+                  <span class="badge" [ngClass]="getPrioridadBadgeClass($any(sugerenciaIA.prioridadSugerida))">
                     {{ sugerenciaIA.prioridadSugerida }}
                   </span>
                 </div>
