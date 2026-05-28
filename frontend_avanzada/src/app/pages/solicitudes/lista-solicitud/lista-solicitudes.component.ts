@@ -54,6 +54,9 @@ export class ListaSolicitudesComponent implements OnInit {
       if (params['estado']) {
         this.filtros.estado = params['estado'] as EstadoSolicitud;
       }
+      if (params['sinResponsable'] === 'true') { // ✅ agregar
+      this.filtros.sinResponsable = true;
+      }
       this.cargarSolicitudes();
     });
   }

@@ -17,6 +17,7 @@ public interface SolicitudRepository extends JpaRepository<SolicitudAcademica, L
       AND (:prioridad IS NULL OR s.prioridad = :prioridad)
       AND (:responsableId IS NULL OR s.responsable.id = :responsableId)
       AND (:solicitanteId IS NULL OR s.solicitante.id = :solicitanteId)
+      AND (:sinResponsable IS NULL OR :sinResponsable = false OR s.responsable IS NULL)
 """)
     Page<SolicitudAcademica> findWithFilters(
             @Param("estado") EstadoSolicitud estado,
@@ -24,6 +25,7 @@ public interface SolicitudRepository extends JpaRepository<SolicitudAcademica, L
             @Param("prioridad") Prioridad prioridad,
             @Param("responsableId") Long responsableId,
             @Param("solicitanteId") Long solicitanteId,
+            @Param("sinResponsable") Boolean sinResponsable,
             Pageable pageable
     );
 }

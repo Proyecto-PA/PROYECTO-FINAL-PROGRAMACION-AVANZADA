@@ -59,6 +59,7 @@ public class SolicitudController {
             @RequestParam(required = false) Prioridad prioridad,
             @RequestParam(required = false) Long responsableId,
             @RequestParam(required = false) Long solicitanteId,
+            @RequestParam(required = false) Boolean sinResponsable,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestHeader("Authorization") String authHeader)
@@ -66,7 +67,7 @@ public class SolicitudController {
                 Long userId = extraerUserId(authHeader);
                 String rol = extraerRol(authHeader);
 
-        return ResponseEntity.ok(solicitudService.consultar(estado, tipo, prioridad, responsableId, solicitanteId, userId, rol,PageRequest.of(page,size)));
+        return ResponseEntity.ok(solicitudService.consultar(estado, tipo, prioridad, responsableId, solicitanteId, sinResponsable, userId, rol,PageRequest.of(page,size)));
     }
 
     // PUT /solicitudes/{id}/clasificar

@@ -140,11 +140,11 @@ public class SolicitudServiceTest {
         Page<SolicitudAcademica> page = new PageImpl<>(List.of(solicitud));
 
         when(solicitudRepository.findWithFilters(
-                any(), any(), any(), any(), any(), any()))
+                any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(page);
 
         SolicitudPageResponse response = solicitudService.consultar(
-                null, null, null, null, null,
+                null, null, null, null, null, null,
                 1L, "DOCENTE", PageRequest.of(0, 10));
 
         assertThat(response.getTotalElementos()).isEqualTo(1);
@@ -157,11 +157,11 @@ public class SolicitudServiceTest {
         Page<SolicitudAcademica> page = new PageImpl<>(List.of());
 
         when(solicitudRepository.findWithFilters(
-                any(), any(), any(), any(), any(), any()))
+                any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(page);
 
         SolicitudPageResponse response = solicitudService.consultar(
-                null, null, null, null, null,
+                null, null, null, null, null, null,
                 1L, "DOCENTE", PageRequest.of(0, 10));
 
         assertThat(response.getTotalElementos()).isZero();
@@ -176,16 +176,16 @@ public class SolicitudServiceTest {
         Page<SolicitudAcademica> page = new PageImpl<>(List.of(solicitud));
 
         when(solicitudRepository.findWithFilters(
-            null, null, null, 2L, null, PageRequest.of(0, 10)))
+            null, null, null, 2L, null, null, PageRequest.of(0, 10)))
             .thenReturn(page);
 
         SolicitudPageResponse response = solicitudService.consultar(
-            null, null, null, null, null,
+            null, null, null, null, null, null,
             2L, "DOCENTE", PageRequest.of(0, 10));
 
         assertThat(response.getTotalElementos()).isEqualTo(1);
         verify(solicitudRepository).findWithFilters(
-            null, null, null, 2L, null, PageRequest.of(0, 10));
+            null, null, null, 2L, null, null, PageRequest.of(0, 10));
     }
 
     @Test
@@ -194,14 +194,14 @@ public class SolicitudServiceTest {
         Page<SolicitudAcademica> page = new PageImpl<>(List.of());
 
         when(solicitudRepository.findWithFilters(
-            null, null, null, 2L, null, PageRequest.of(0, 10)))
+            null, null, null, 2L, null, null, PageRequest.of(0, 10)))
             .thenReturn(page);
 
         solicitudService.consultar(
-            null, null, null, 99L, null,
+            null, null, null, 99L, null, null,
             2L, "DOCENTE", PageRequest.of(0, 10));
 
         verify(solicitudRepository).findWithFilters(
-            null, null, null, 2L, null, PageRequest.of(0, 10));
+            null, null, null, 2L, null, null, PageRequest.of(0, 10));
     }
 }

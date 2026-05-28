@@ -28,12 +28,13 @@ export class MainLayoutComponent {
     
     // DOCENTE menu
     { label: 'Todas las Solicitudes', route: '/solicitudes', roles: ['DOCENTE'] },
+    {label: 'Nueva Solicitud', route: '/solicitudes/nueva', roles: ['DOCENTE'] },
     { label: 'Mis Acciones Pendientes', route: '/solicitudes', queryParams: { estado: 'EN_ATENCION' }, roles: ['DOCENTE'] },
     
     // ADMINISTRATIVO menu
     { label: 'Todas las Solicitudes', route: '/solicitudes', roles: ['ADMINISTRATIVO'] },
     { label: 'Pendientes de Clasificar', route: '/solicitudes', queryParams: { estado: 'REGISTRADA' }, roles: ['ADMINISTRATIVO'] },
-    { label: 'Pendientes de Responsable', route: '/solicitudes', queryParams: { estado: 'CLASIFICADA' }, roles: ['ADMINISTRATIVO'] },
+    { label: 'Pendientes de Responsable', route: '/solicitudes', queryParams: { estado: 'CLASIFICADA', sinResponsable: 'true' }, roles: ['ADMINISTRATIVO'] },
     { label: 'Nueva Solicitud', route: '/solicitudes/nueva', roles: ['ADMINISTRATIVO'] }
   ];
 

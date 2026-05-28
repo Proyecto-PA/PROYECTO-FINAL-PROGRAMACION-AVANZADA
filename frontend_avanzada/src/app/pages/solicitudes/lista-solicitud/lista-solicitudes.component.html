@@ -22,7 +22,7 @@
           {{ totalElements }} registros
         </span>
 
-        @if (authService.isEstudiante() || authService.isAdministrativo()) {
+        @if (authService.isEstudiante() || authService.isAdministrativo() || authService.isDocente()) {
           <a routerLink="/solicitudes/nueva" class="btn btn-primary new-request-button">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <line x1="12" y1="5" x2="12" y2="19"></line>

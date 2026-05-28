@@ -37,66 +37,63 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final HistorialRepository historialRepository;
 
     // ---- Patrones ----
-    private final SolicitudFactory solicitudFactory; // Factory
-    private final SolicitudStateContext stateContext; // State
-    private final CadenaValidacionFactory cadenaValidacionFactory; // Chain of Responsability
-    private final MotorReglasPrioridad motorReglasPrioridad; // Strategy
-    private final List<SolicitudObserver> observadores; //Observer
+    private final SolicitudFactory solicitudFactory;
+    private final SolicitudStateContext stateContext;
+    private final CadenaValidacionFactory cadenaValidacionFactory;
+    private final MotorReglasPrioridad motorReglasPrioridad;
+    private final List<SolicitudObserver> observadores;
 
     // ---- Constantes de dominio ----
     private static final Set<RolUsuario> ROLES_RESPONSABLE_VALIDOS =
             Set.of(RolUsuario.DOCENTE, RolUsuario.ADMINISTRATIVO);
 
-    // --- HELPERS - notificación a observers
+    // --- HELPERS - notificación a observers ---
 
-    /**
-     * Notifica a todos los observers sobre un cambio de estado.
-     */
-    private void notificarCambioEstado(SolicitudAcademica solicitud, EstadoSolicitud estadoAnterior, EstadoSolicitud estadoNuevo, Usuario responsable, String observacion){
-        for (SolicitudObserver obs : observadores){
+    private void notificarCambioEstado(SolicitudAcademica solicitud, EstadoSolicitud estadoAnterior,
+            EstadoSolicitud estadoNuevo, Usuario responsable, String observacion) {
+        for (SolicitudObserver obs : observadores) {
             obs.onCambioEstado(solicitud, estadoAnterior, estadoNuevo, responsable, observacion);
         }
     }
 
-    private void notificarAsignacionResponsable(SolicitudAcademica solicitud, Usuario responsable, Usuario ejecutor, String observacionn){
-        for (SolicitudObserver obs : observadores){
-            obs.onAsignacionResponsable(solicitud, responsable, ejecutor, observacionn);
+    private void notificarAsignacionResponsable(SolicitudAcademica solicitud, Usuario responsable,
+            Usuario ejecutor, String observacion) {
+        for (SolicitudObserver obs : observadores) {
+            obs.onAsignacionResponsable(solicitud, responsable, ejecutor, observacion);
         }
     }
 
-    private void notificarPrioridadCalculada(SolicitudAcademica solicitud, Usuario ejecutor, String justificacion){
-        for (SolicitudObserver obs : observadores){
+    private void notificarPrioridadCalculada(SolicitudAcademica solicitud, Usuario ejecutor,
+            String justificacion) {
+        for (SolicitudObserver obs : observadores) {
             obs.onPrioridadCalculada(solicitud, ejecutor, justificacion);
         }
     }
 
-    // ---- HELPERS - Lookups comunes
+    // ---- HELPERS - Lookups comunes ---
 
-    private SolicitudAcademica buscarSolicitud(Long id){
-        return solicitudRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No existe una solicitud con id " + id));
+    private SolicitudAcademica buscarSolicitud(Long id) {
+        return solicitudRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No existe una solicitud con id " + id));
     }
 
-    private Usuario buscarUsuario(Long id){
-        return usuarioRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No existe un usuario con id " + id));
+    private Usuario buscarUsuario(Long id) {
+        return usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No existe un usuario con id " + id));
     }
 
     // ====================
     // RF-01 - Registrar Solicitud
     // ====================
 
-    /**
-     * Crea una nueva solicitud en estado REGISTRADA y registra la entrada inicial en el historial
-     */
     @Override
     @Transactional
-    public SolicitudResponse registrar(SolicitudRequest request, Long solicitanteId){
+    public SolicitudResponse registrar(SolicitudRequest request, Long solicitanteId) {
         Usuario solicitante = buscarUsuario(solicitanteId);
 
-        // Patrón Factory: delega la creación de la entidad
         SolicitudAcademica solicitud = solicitudFactory.crearDesdeRequest(request, solicitante);
         solicitud = solicitudRepository.save(solicitud);
 
-        // Entrada inicial en historial (caso especial: no es un cambio de estado)
         historialRepository.save(HistorialSolicitud.builder()
                 .solicitud(solicitud)
                 .fechaAccion(LocalDateTime.now())
@@ -106,7 +103,6 @@ public class SolicitudServiceImpl implements SolicitudService {
                 .estadoNuevo(EstadoSolicitud.REGISTRADA)
                 .build());
 
-        // Factory: mapeo a DTO
         return solicitudFactory.toResponse(solicitud);
     }
 
@@ -116,16 +112,22 @@ public class SolicitudServiceImpl implements SolicitudService {
 
     @Override
     @Transactional(readOnly = true)
-    public SolicitudResponse obtenerPorId(Long id){
-        return  solicitudFactory.toResponse(buscarSolicitud(id));
+    public SolicitudResponse obtenerPorId(Long id) {
+        return solicitudFactory.toResponse(buscarSolicitud(id));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SolicitudPageResponse consultar (EstadoSolicitud estado, TipoSolicitud tipo, Prioridad prioridad, Long responsableId, Long solicitanteId, Long userId, String rol, Pageable pageable){
-       Long solicitanteIdFinal = "ESTUDIANTE".equals(rol) ? userId : solicitanteId;
-       Long responsableIdFinal = "DOCENTE".equals(rol) ? userId : responsableId;
-        Page<SolicitudAcademica> page = solicitudRepository.findWithFilters(estado, tipo, prioridad, responsableIdFinal, solicitanteIdFinal, pageable);
+    public SolicitudPageResponse consultar(EstadoSolicitud estado, TipoSolicitud tipo, Prioridad prioridad,
+            Long responsableId, Long solicitanteId, Boolean sinResponsable,
+            Long userId, String rol, Pageable pageable) {
+
+        Long solicitanteIdFinal = "ESTUDIANTE".equals(rol) ? userId : solicitanteId;
+        Long responsableIdFinal = "DOCENTE".equals(rol) ? userId : responsableId;
+
+        Page<SolicitudAcademica> page = solicitudRepository.findWithFilters(
+                estado, tipo, prioridad, responsableIdFinal, solicitanteIdFinal,
+                sinResponsable, pageable);
 
         return SolicitudPageResponse.builder()
                 .contenido(page.getContent().stream().map(solicitudFactory::toResponse).toList())
@@ -136,38 +138,38 @@ public class SolicitudServiceImpl implements SolicitudService {
     }
 
     // ======================================
-    // RF-02 - Clasificar  (REGISTRADA a CLASIFICADA)
+    // RF-02 - Clasificar (REGISTRADA a CLASIFICADA)
     // ======================================
 
-    //Método para clasificar la solicitud, que es el paso siguiente a registrarla solicitud
     @Override
     @Transactional
     public SolicitudResponse clasificar(Long id, ClasificarRequest request, Long usuarioId) {
         SolicitudAcademica solicitud = buscarSolicitud(id);
         Usuario usuario = buscarUsuario(usuarioId);
 
-        cadenaValidacionFactory.construirCadenaBasica().validar(solicitud, usuario); // Chain of Responsability
+        cadenaValidacionFactory.construirCadenaBasica().validar(solicitud, usuario);
         EstadoSolicitud estadoAnterior = solicitud.getEstado();
 
-        stateContext.resolverEstado(solicitud).clasificar(solicitud, usuario, request); // State
+        stateContext.resolverEstado(solicitud).clasificar(solicitud, usuario, request);
 
         ResultadoPrioridad resultado = motorReglasPrioridad.calcular(solicitud);
         solicitud.setPrioridad(resultado.getPrioridad());
         solicitud.setJustificacionPrioridad(resultado.getJustificacion());
 
-        solicitud =  solicitudRepository.save(solicitud);
+        solicitud = solicitudRepository.save(solicitud);
 
-        //Observer
-        String observacion = request.getObservacion() != null ? request.getObservacion()
+        String observacion = request.getObservacion() != null
+                ? request.getObservacion()
                 : "Clasificada como " + request.getTipo().name() + " con impacto académico " + request.getImpactoAcademico();
+
         notificarCambioEstado(solicitud, estadoAnterior, EstadoSolicitud.CLASIFICADA, usuario, observacion);
         notificarPrioridadCalculada(solicitud, usuario, resultado.getJustificacion());
 
-        return  solicitudFactory.toResponse(solicitud);
+        return solicitudFactory.toResponse(solicitud);
     }
 
     // ============================================
-    // RF-04 - Iniciar atención (CLASIFICADA a EN_ATENCION
+    // RF-04 - Iniciar atención (CLASIFICADA a EN_ATENCION)
     // ============================================
 
     @Override
@@ -176,42 +178,54 @@ public class SolicitudServiceImpl implements SolicitudService {
         SolicitudAcademica solicitud = buscarSolicitud(id);
         Usuario usuario = buscarUsuario(usuarioId);
 
-        cadenaValidacionFactory.construirCadenaIniciarAtencion().validar(solicitud, usuario); // Chain of Responsabilityy
+        cadenaValidacionFactory.construirCadenaIniciarAtencion().validar(solicitud, usuario);
         EstadoSolicitud estadoAnterior = solicitud.getEstado();
 
-        stateContext.resolverEstado(solicitud).iniciarAtencion(solicitud, usuario, request != null ? request.getObservacion() : null); //State
+        stateContext.resolverEstado(solicitud).iniciarAtencion(solicitud, usuario,
+                request != null ? request.getObservacion() : null);
 
         solicitud = solicitudRepository.save(solicitud);
 
-        String observacion = (request != null && request.getObservacion() != null) ? request.getObservacion() : "Se inico la atención de la solicitud";
+        String observacion = (request != null && request.getObservacion() != null)
+                ? request.getObservacion()
+                : "Se inició la atención de la solicitud";
 
         notificarCambioEstado(solicitud, estadoAnterior, EstadoSolicitud.EN_ATENCION, usuario, observacion);
 
-        return  solicitudFactory.toResponse(solicitud);
+        return solicitudFactory.toResponse(solicitud);
     }
 
-    // Marcar Antendida  (EN_ATENCION a ATENDIDA)
+    // ============================================
+    // RF-04 - Marcar atendida (EN_ATENCION a ATENDIDA)
+    // ============================================
+
     @Override
     @Transactional
     public SolicitudResponse marcarAtendida(Long id, CambiarEstadoRequest request, Long usuarioId) {
         SolicitudAcademica solicitud = buscarSolicitud(id);
         Usuario usuario = buscarUsuario(usuarioId);
 
-        cadenaValidacionFactory.construirCadenaBasica().validar(solicitud, usuario); // Chain of Responsabilituy
+        cadenaValidacionFactory.construirCadenaBasica().validar(solicitud, usuario);
         EstadoSolicitud estadoAnterior = solicitud.getEstado();
 
-        stateContext.resolverEstado(solicitud).marcarAtendida(solicitud, usuario, request != null ? request.getObservacion() : null); // State
+        stateContext.resolverEstado(solicitud).marcarAtendida(solicitud, usuario,
+                request != null ? request.getObservacion() : null);
 
         solicitud = solicitudRepository.save(solicitud);
 
-        String observacion = (request != null && request.getObservacion() != null) ? request.getObservacion() : "Solicitud marcada como atendida.";
+        String observacion = (request != null && request.getObservacion() != null)
+                ? request.getObservacion()
+                : "Solicitud marcada como atendida.";
 
         notificarCambioEstado(solicitud, estadoAnterior, EstadoSolicitud.ATENDIDA, usuario, observacion);
 
-        return  solicitudFactory.toResponse(solicitud);
+        return solicitudFactory.toResponse(solicitud);
     }
 
-    // Cerrar (ATENDIDA a CERRADA
+    // ============================================
+    // Cerrar (ATENDIDA a CERRADA)
+    // ============================================
+
     @Override
     @Transactional
     public SolicitudResponse cerrar(Long id, CerrarSolicitudRequest request, Long usuarioId) {
@@ -230,7 +244,10 @@ public class SolicitudServiceImpl implements SolicitudService {
         return solicitudFactory.toResponse(solicitud);
     }
 
+    // ============================================
     // Cancelar (REGISTRADA a CANCELADA)
+    // ============================================
+
     @Override
     @Transactional
     public SolicitudResponse cancelar(Long id, CambiarEstadoRequest request, Long usuarioId) {
@@ -242,24 +259,27 @@ public class SolicitudServiceImpl implements SolicitudService {
         if (usuario.getRol() == RolUsuario.ESTUDIANTE && !solicitud.getSolicitante().getId().equals(usuarioId)) {
             throw new IllegalStateException("Un estudiante solo puede cancelar sus propias solicitudes");
         }
+
         EstadoSolicitud estadoAnterior = solicitud.getEstado();
 
-        stateContext.resolverEstado(solicitud).cancelar(solicitud, usuario, request != null ? request.getObservacion() : null);
+        stateContext.resolverEstado(solicitud).cancelar(solicitud, usuario,
+                request != null ? request.getObservacion() : null);
 
         solicitud = solicitudRepository.save(solicitud);
 
-        String observacion = (request != null && request.getObservacion() != null) ? request.getObservacion() : "Solicitud cancelada";
+        String observacion = (request != null && request.getObservacion() != null)
+                ? request.getObservacion()
+                : "Solicitud cancelada";
 
         notificarCambioEstado(solicitud, estadoAnterior, EstadoSolicitud.CANCELADA, usuario, observacion);
 
-        return  solicitudFactory.toResponse(solicitud);
+        return solicitudFactory.toResponse(solicitud);
     }
 
     // ============
-    // RF -03 - Priorizar
+    // RF-03 - Priorizar
     // ============
 
-    // Recalcula la prioridad - No cambia el estado de la solicitud
     @Override
     @Transactional
     public SolicitudResponse priorizar(Long id, Long usuarioId) {
@@ -268,8 +288,9 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         cadenaValidacionFactory.construirCadenaBasica().validar(solicitud, usuario);
 
-        if(solicitud.getEstado() != EstadoSolicitud.CLASIFICADA){
-            throw new IllegalStateException("Solo se puede priorizar una solicitud en estado CLASIFICADA. " + "Estado actual: " + solicitud.getEstado());
+        if (solicitud.getEstado() != EstadoSolicitud.CLASIFICADA) {
+            throw new IllegalStateException("Solo se puede priorizar una solicitud en estado CLASIFICADA. "
+                    + "Estado actual: " + solicitud.getEstado());
         }
 
         ResultadoPrioridad resultado = motorReglasPrioridad.calcular(solicitud);
@@ -297,24 +318,24 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         if (!responsable.estaActivo()) {
             throw new IllegalStateException(
-                "El usuario con id " + request.getResponsableId() + " no está activo.");
+                    "El usuario con id " + request.getResponsableId() + " no está activo.");
         }
 
-        if(!ROLES_RESPONSABLE_VALIDOS.contains(responsable.getRol())){
-            throw new IllegalStateException("El usuario con id " + request.getResponsableId() + " tiene rol "
-            + responsable.getRol().name() + " Solo un DOCENTE o ADMINISTRATIVO puede ser asignado como responsable.");
+        if (!ROLES_RESPONSABLE_VALIDOS.contains(responsable.getRol())) {
+            throw new IllegalStateException("El usuario con id " + request.getResponsableId()
+                    + " tiene rol " + responsable.getRol().name()
+                    + ". Solo un DOCENTE o ADMINISTRATIVO puede ser asignado como responsable.");
         }
 
         solicitud.asignarResponsable(responsable);
         solicitud = solicitudRepository.save(solicitud);
 
         String observacion = request.getObservacion() != null
-            ? request.getObservacion()
-            : "Responsable asignado: " + responsable.getNombre();
+                ? request.getObservacion()
+                : "Responsable asignado: " + responsable.getNombre();
 
         notificarAsignacionResponsable(solicitud, responsable, solicitanteAccion, observacion);
 
         return solicitudFactory.toResponse(solicitud);
     }
-
 }

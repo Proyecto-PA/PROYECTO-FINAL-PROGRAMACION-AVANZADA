@@ -52,6 +52,7 @@ export class SolicitudService {
     if (filtros.solicitanteId) {
       params = params.set('solicitanteId', filtros.solicitanteId.toString());
     }
+    if (filtros.sinResponsable) params = params.set('sinResponsable', 'true');
 
     return this.http.get<PaginatedResponse<Solicitud>>(`${this.API_URL}/solicitudes`, { params });
   }

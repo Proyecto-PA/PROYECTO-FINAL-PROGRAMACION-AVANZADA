@@ -139,6 +139,7 @@ export interface FiltrosSolicitud {
   prioridad?: Prioridad;
   responsableId?: number;
   solicitanteId?: number;
+  sinResponsable?: boolean;
 }
 
 export interface ApiError {

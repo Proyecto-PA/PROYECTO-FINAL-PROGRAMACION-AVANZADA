@@ -112,7 +112,7 @@ class SolicitudRepositoryTest {
                 TipoSolicitud.CONSULTA_ACADEMICA, EstadoSolicitud.CLASIFICADA, Prioridad.MEDIA));
 
         Page<SolicitudAcademica> result = solicitudRepository.findWithFilters(
-                null, null, null, null, null, PageRequest.of(0, 10));
+                null, null, null, null, null, null, PageRequest.of(0, 10));
 
         assertThat(result.getTotalElements()).isEqualTo(2);
     }
@@ -126,7 +126,7 @@ class SolicitudRepositoryTest {
                 TipoSolicitud.CONSULTA_ACADEMICA, EstadoSolicitud.CLASIFICADA, Prioridad.MEDIA));
 
         Page<SolicitudAcademica> result = solicitudRepository.findWithFilters(
-                EstadoSolicitud.REGISTRADA, null, null, null, null, PageRequest.of(0, 10));
+                EstadoSolicitud.REGISTRADA, null, null, null, null, null, PageRequest.of(0, 10));
 
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().get(0).getEstado()).isEqualTo(EstadoSolicitud.REGISTRADA);
@@ -141,7 +141,7 @@ class SolicitudRepositoryTest {
                 TipoSolicitud.CONSULTA_ACADEMICA, EstadoSolicitud.REGISTRADA, null));
 
         Page<SolicitudAcademica> result = solicitudRepository.findWithFilters(
-                null, TipoSolicitud.HOMOLOGACION, null, null, null, PageRequest.of(0, 10));
+                null, TipoSolicitud.HOMOLOGACION, null, null, null, null, PageRequest.of(0, 10));
 
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().get(0).getTipo()).isEqualTo(TipoSolicitud.HOMOLOGACION);
@@ -156,7 +156,7 @@ class SolicitudRepositoryTest {
                 TipoSolicitud.CONSULTA_ACADEMICA, EstadoSolicitud.CLASIFICADA, Prioridad.BAJA));
 
         Page<SolicitudAcademica> result = solicitudRepository.findWithFilters(
-                null, null, Prioridad.ALTA, null, null, PageRequest.of(0, 10));
+                null, null, Prioridad.ALTA, null, null, null, PageRequest.of(0, 10));
 
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().get(0).getPrioridad()).isEqualTo(Prioridad.ALTA);
@@ -174,7 +174,7 @@ class SolicitudRepositoryTest {
                 TipoSolicitud.CONSULTA_ACADEMICA, EstadoSolicitud.REGISTRADA, null));
 
         Page<SolicitudAcademica> result = solicitudRepository.findWithFilters(
-                null, null, null, responsable.getId(), null, PageRequest.of(0, 10));
+                null, null, null, responsable.getId(), null, null, PageRequest.of(0, 10));
 
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().get(0).getResponsable().getId())
@@ -207,7 +207,7 @@ class SolicitudRepositoryTest {
         solicitudRepository.save(deOtro);
 
         Page<SolicitudAcademica> result = solicitudRepository.findWithFilters(
-                null, null, null, null, solicitante.getId(), PageRequest.of(0, 10));
+                null, null, null, null, solicitante.getId(), null, PageRequest.of(0, 10));
 
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().get(0).getSolicitante().getId())
@@ -226,7 +226,7 @@ class SolicitudRepositoryTest {
 
         Page<SolicitudAcademica> result = solicitudRepository.findWithFilters(
                 EstadoSolicitud.CLASIFICADA, TipoSolicitud.HOMOLOGACION,
-                Prioridad.ALTA, null, null, PageRequest.of(0, 10));
+                Prioridad.ALTA, null, null, null, PageRequest.of(0, 10));
 
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().get(0).getTipo()).isEqualTo(TipoSolicitud.HOMOLOGACION);
@@ -242,9 +242,9 @@ class SolicitudRepositoryTest {
         }
 
         Page<SolicitudAcademica> paginaUno = solicitudRepository.findWithFilters(
-                null, null, null, null, null, PageRequest.of(0, 3));
+                null, null, null, null, null, null, PageRequest.of(0, 3));
         Page<SolicitudAcademica> paginaDos = solicitudRepository.findWithFilters(
-                null, null, null, null, null, PageRequest.of(1, 3));
+                null, null, null, null, null, null, PageRequest.of(1, 3));
 
         assertThat(paginaUno.getContent()).hasSize(3);
         assertThat(paginaDos.getContent()).hasSize(2);

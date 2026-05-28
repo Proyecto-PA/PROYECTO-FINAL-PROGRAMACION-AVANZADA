@@ -16,7 +16,8 @@ public interface SolicitudService {
     SolicitudResponse registrar(SolicitudRequest request, Long solicitanteId);
     SolicitudResponse obtenerPorId(Long id);
     SolicitudPageResponse consultar (EstadoSolicitud estado, TipoSolicitud tipo, Prioridad prioridad,
-                                     Long responsableId, Long solicitanteId, Long userId, String rol, Pageable pageable);
+                                 Long responsableId, Long solicitanteId, Boolean sinResponsable,
+                                 Long userId, String rol, Pageable pageable);
     SolicitudResponse clasificar(Long id, ClasificarRequest request, Long usuarioId);
     SolicitudResponse iniciarAtencion(Long id, CambiarEstadoRequest request, Long usuarioId);
     SolicitudResponse marcarAtendida(Long id, CambiarEstadoRequest request, Long usuarioId);

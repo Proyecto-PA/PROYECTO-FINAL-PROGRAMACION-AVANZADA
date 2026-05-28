@@ -104,12 +104,12 @@ public class SolicitudControllerTest {
                 when(jwtUtil.extraerRol(TOKEN_DOCENTE)).thenReturn("DOCENTE");
                 when(jwtUtil.extraerUserId(TOKEN_DOCENTE)).thenReturn(ID_DOCENTE);
                 when(solicitudService.consultar(
-                        EstadoSolicitud.REGISTRADA, null, null, null, null,
+                        EstadoSolicitud.REGISTRADA, null, null, null, null, null,
                         ID_DOCENTE, "DOCENTE", PageRequest.of(0, 10)))
                         .thenReturn(pageResponse);
 
                 ResponseEntity<SolicitudPageResponse> response = solicitudController.consultar(
-                        EstadoSolicitud.REGISTRADA, null, null, null, null,
+                        EstadoSolicitud.REGISTRADA, null, null, null, null, null,
                         0, 10, AUTH_DOCENTE);
 
                 assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -131,12 +131,13 @@ public class SolicitudControllerTest {
                 when(jwtUtil.extraerRol(TOKEN_DOCENTE)).thenReturn("DOCENTE");
                 when(jwtUtil.extraerUserId(TOKEN_DOCENTE)).thenReturn(ID_DOCENTE);
                 when(solicitudService.consultar(
-                        null, null, null, null, null,
+                        null, null, null, null, null, null,
                         ID_DOCENTE, "DOCENTE", PageRequest.of(0, 20)))
                         .thenReturn(pageResponse);
 
                 ResponseEntity<SolicitudPageResponse> response = solicitudController.consultar(
-                        null, null, null, null, null, 0, 20, AUTH_DOCENTE);
+                        null, null, null, null, null, null,
+                        0, 20, AUTH_DOCENTE);
 
                 assertThat(response.getBody()).isNotNull();
                 assertThat(response.getBody().getTotalElementos()).isEqualTo(2L);
@@ -158,16 +159,17 @@ public class SolicitudControllerTest {
                 when(jwtUtil.extraerUserId(tokenEstudiante)).thenReturn(idEstudiante);
 
                 when(solicitudService.consultar(
-                        null, null, null, null, idEstudiante,
+                        null, null, null, null, idEstudiante, null,
                         idEstudiante, "ESTUDIANTE", PageRequest.of(0, 20)))
                         .thenReturn(pageResponse);
 
                 ResponseEntity<SolicitudPageResponse> response = solicitudController.consultar(
-                        null, null, null, null, 1L, 0, 20, authEstudiante);
+                        null, null, null, null, 1L, null,
+                        0, 20, authEstudiante);
 
                 assertThat(response.getStatusCode().value()).isEqualTo(200);
                 verify(solicitudService).consultar(
-                        null, null, null, null, idEstudiante,
+                        null, null, null, null, idEstudiante, null,
                         idEstudiante, "ESTUDIANTE", PageRequest.of(0, 20));
         }
 
